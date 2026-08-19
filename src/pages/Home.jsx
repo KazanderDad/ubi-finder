@@ -9,12 +9,23 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Users, PlusCircle, Info, Sparkles, Globe, DollarSign, ExternalLink } from "lucide-react";
 import UserForm from "../components/UserForm";
 
+import { Helmet } from "react-helmet-async";
+
 export default function Home() {
   const { isAuthenticated, user } = useAuth();
   const [formData, setFormData] = useState(null);
   const [featuredPrograms, setFeaturedPrograms] = useState([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
   const navigate = useNavigate();
+
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "UBI Finder",
+    "url": "https://ubifinder.org",
+    "logo": "https://ubifinder.org/leaf.png",
+    "description": "Connecting individuals with verified Universal Basic Income and income support programs worldwide."
+  };
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -48,6 +59,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50">
+      <Helmet>
+        <title>UBI Finder — Universal Basic Income Programs & Cash Grants</title>
+        <meta name="description" content="Discover and qualify for verified Universal Basic Income (UBI) and guaranteed income initiatives in your country." />
+        <script type="application/ld+json">
+          {JSON.stringify(organizationSchema)}
+        </script>
+      </Helmet>
       <div>
         {/* Hero Section */}
         <section className="container mx-auto px-4 py-16 md:py-24">

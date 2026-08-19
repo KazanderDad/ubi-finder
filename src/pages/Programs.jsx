@@ -19,8 +19,10 @@ import { Link } from 'react-router-dom';
 import { Switch } from "@/components/ui/switch";
 import PageHeader from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Helmet } from "react-helmet-async";
 
 export default function Programs() {
+  const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
@@ -192,6 +194,10 @@ export default function Programs() {
 
   return (
     <>
+      <Helmet>
+        <title>Browse All UBI Programs & Pilots | UBI Finder</title>
+        <meta name="description" content="Filter and search active, waitlist, and upcoming Universal Basic Income programs by country, region, income limit, and payment rails." />
+      </Helmet>
       <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-12">
         <div className="max-w-5xl mx-auto">
           <PageHeader 

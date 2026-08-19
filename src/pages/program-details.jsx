@@ -28,6 +28,7 @@ import {
   Check
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import { Helmet } from "react-helmet-async";
 
 export default function ProgramDetailsPage() {
   const location = useLocation();
@@ -244,8 +245,31 @@ export default function ProgramDetailsPage() {
     );
   }
 
+  const programSchema = {
+    "@context": "https://schema.org",
+    "@type": "FinancialProduct",
+    "name": program.name,
+    "description": program.description,
+    "provider": {
+      "@type": "Organization",
+      "name": program.organization
+    },
+    "amount": {
+      "@type": "MonetaryAmount",
+      "currency": program.currency || "USD",
+      "value": program.monthly_amount_usd
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-10 pb-24 md:pb-12">
+      <Helmet>
+        <title>{`${program.name} — Basic Income & Payout Details | UBI Finder`}</title>
+        <meta name="description" content={`Learn about ${program.name} by ${program.organization}. Estimated monthly support: $${program.monthly_amount_usd} ${program.currency}. Check eligibility requirements and how to apply.`} />
+        <script type="application/ld+json">
+          {JSON.stringify(programSchema)}
+        </script>
+      </Helmet>
       <div className="max-w-6xl mx-auto">
         
         {/* 9c: Breadcrumbs */}
