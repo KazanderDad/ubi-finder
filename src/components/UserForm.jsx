@@ -48,26 +48,33 @@ const MUNICIPAL_PILOTS = {
   "Alaska": ["Anchorage", "Fairbanks", "Juneau", "Statewide / Other"],
 };
 
-const WHY_TOOLTIP = "Many programs are geared towards women. We do our utmost to keep your information safe, but you should only disclose if you are comfortable doing so. We only use this information to show you programs applicable to you. It's always your decision if you then apply to them or not.";
+const WHY_GENDER = "Many programs are geared towards women. We do our utmost to keep your information safe, but you should only disclose if you are comfortable doing so. We only use this information to show you programs applicable to you. It's always your decision if you then apply to them or not.";
+const WHY_HOUSEHOLD = "Program payout amounts and qualification thresholds often scale based on the number of people and dependents sharing living expenses in your household.";
+const WHY_INCOME = "Most guaranteed income pilots have income limits (often tied to federal poverty guidelines or area median income) to prioritize support for eligible households.";
 
-function WhyTooltip() {
+function WhyTooltip({ text = WHY_GENDER }) {
   const [show, setShow] = useState(false);
+
   return (
-    <div className="relative ml-auto">
+    <div 
+      className="relative ml-auto inline-flex items-center"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
       <span
-        className="text-xs text-gray-400 underline cursor-help whitespace-nowrap"
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
+        className="text-xs text-gray-400 underline cursor-help whitespace-nowrap hover:text-green-700 transition-colors py-0.5"
+        tabIndex={0}
         onFocus={() => setShow(true)}
         onBlur={() => setShow(false)}
-        tabIndex={0}
       >
         why do we ask?
       </span>
       {show && (
-        <div className="absolute right-0 top-5 z-50 w-72 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl leading-relaxed">
-          {WHY_TOOLTIP}
-          <div className="absolute -top-1.5 right-3 w-3 h-3 bg-gray-900 rotate-45" />
+        <div className="pointer-events-none absolute right-0 top-full pt-1.5 z-50 w-72 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl leading-relaxed relative">
+            {text}
+            <div className="absolute -top-1 right-3 w-2.5 h-2.5 bg-gray-900 rotate-45" />
+          </div>
         </div>
       )}
     </div>
@@ -315,14 +322,17 @@ export default function UserForm({ onSubmit }) {
           {step === 2 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div>
-                <Label htmlFor="household" className="text-sm font-semibold text-gray-800">
-                  Household Size <span className="text-red-500">*</span>
-                </Label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label htmlFor="household" className="text-sm font-semibold text-gray-800">
+                    Household Size <span className="text-red-500">*</span>
+                  </Label>
+                  <WhyTooltip text={WHY_HOUSEHOLD} />
+                </div>
                 <Select
                   value={formData.household_size.toString()}
                   onValueChange={(v) => handleChange("household_size", parseInt(v))}
                 >
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select household size" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select household size" /></SelectTrigger>
                   <SelectContent>
                     {[1,2,3,4,5,6,7,8].map(n => (
                       <SelectItem key={n} value={n.toString()}>{n} {n === 1 ? "person" : "people"}</SelectItem>
@@ -337,7 +347,7 @@ export default function UserForm({ onSubmit }) {
                     <Label htmlFor="gender" className="text-sm font-semibold text-gray-800">
                       Gender <span className="text-red-500">*</span>
                     </Label>
-                    <WhyTooltip />
+                    <WhyTooltip text={WHY_GENDER} />
                   </div>
                   <Select value={formData.gender} onValueChange={(v) => handleChange("gender", v)}>
                     <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
@@ -354,7 +364,7 @@ export default function UserForm({ onSubmit }) {
                     <Label htmlFor="women_count" className="text-sm font-semibold text-gray-800">
                       How many in your household are girls / women? <span className="text-red-500">*</span>
                     </Label>
-                    <WhyTooltip />
+                    <WhyTooltip text={WHY_GENDER} />
                   </div>
                   <Select value={formData.women_count} onValueChange={(v) => handleChange("women_count", v)}>
                     <SelectTrigger><SelectValue placeholder="Select number" /></SelectTrigger>
@@ -369,11 +379,14 @@ export default function UserForm({ onSubmit }) {
               )}
 
               <div>
-                <Label htmlFor="income" className="text-sm font-semibold text-gray-800">
-                  Annual Household Income <span className="text-red-500">*</span>
-                </Label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label htmlFor="income" className="text-sm font-semibold text-gray-800">
+                    Annual Household Income <span className="text-red-500">*</span>
+                  </Label>
+                  <WhyTooltip text={WHY_INCOME} />
+                </div>
                 <Select value={formData.income_range} onValueChange={(v) => handleChange("income_range", v)}>
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select income range" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select income range" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0-20k">$0 – $20,000</SelectItem>
                     <SelectItem value="20k-40k">$20,001 – $40,000</SelectItem>
