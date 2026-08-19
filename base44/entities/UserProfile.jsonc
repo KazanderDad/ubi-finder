@@ -1,0 +1,82 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "User's full name"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "female",
+        "male",
+        "abstain"
+      ],
+      "description": "User's gender preference for program matching"
+    },
+    "country": {
+      "type": "string",
+      "description": "User's country of residence"
+    },
+    "state": {
+      "type": "string",
+      "description": "State/province (for USA/Canada)",
+      "nullable": true
+    },
+    "currency": {
+      "type": "string",
+      "description": "User's preferred currency code (e.g., USD, EUR)",
+      "default": "USD"
+    },
+    "accepts_digital_currency": {
+      "type": "boolean",
+      "description": "Accepts digital payments",
+      "default": true
+    },
+    "accepts_foreign_currency": {
+      "type": "boolean",
+      "description": "Accepts foreign currencies",
+      "default": true
+    },
+    "household_size": {
+      "type": "integer",
+      "description": "Number of people in household",
+      "minimum": 1
+    },
+    "income_range": {
+      "type": "string",
+      "enum": [
+        "0-20k",
+        "20k-40k",
+        "40k-60k",
+        "60k+"
+      ],
+      "description": "Annual household income range in USD"
+    },
+    "min_monthly_payment": {
+      "type": "number",
+      "description": "Minimum monthly payment desired in USD",
+      "minimum": 0,
+      "nullable": true
+    },
+    "profile_picture": {
+      "type": "string",
+      "description": "URL to user's profile picture",
+      "nullable": true
+    },
+    "dismissed_program_info": {
+      "type": "boolean",
+      "description": "Whether the user has dismissed the program info box",
+      "default": false
+    }
+  },
+  "required": [
+    "name",
+    "gender",
+    "country",
+    "household_size",
+    "income_range"
+  ]
+}
+

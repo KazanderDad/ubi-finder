@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+.env
+*.log
+check*
+fix*
+patch*
+rewrite*
+*.cjs
+*.py
+*.mjs

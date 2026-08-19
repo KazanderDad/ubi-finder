@@ -1,0 +1,1375 @@
+================================================================================
+UBI FINDER — PAGES SOURCE DUMP (Part 2 of 5: Program Catalog Pages)
+Each section below lists a file's location and filename, followed by the exact
+verbatim content of that file.
+================================================================================
+
+
+================================================================================
+LOCATION: src/pages/
+FILE: Programs.jsx
+================================================================================
+
+import React, { useState, useEffect } from "react";
+import { Program } from "@/entities/Program";
+import { User } from "@/entities/User"; 
+import { UserProfile } from "@/entities/UserProfile";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Leaf, Filter, Search, ArrowUpDown, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import ProgramList from "../components/dashboard/ProgramList";
+import { Link } from 'react-router-dom'; // Import Link from react-router-dom
+import { Switch } from "@/components/ui/switch"
+import Footer from "@/components/Footer";
+
+export default function Programs() {
+  const [programs, setPrograms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({
+    country: "all",
+    state: "all",
+    paymentType: "all",
+    status: "all",
+    includeUnverified: false
+  });
+  const [favoritePrograms, setFavoritePrograms] = useState([]);
+  const [showInfoBox, setShowInfoBox] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
+  const [profileId, setProfileId] = useState(null);
+  const [availableCountries, setAvailableCountries] = useState(['all']);
+  const [availableStatuses, setAvailableStatuses] = useState(['all']);
+  const [sortConfig, setSortConfig] = useState({
+    field: 'name',
+    direction: 'asc'
+  });
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Add state for user data
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, []); // Remove checkUserInfo from initial load
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [programsData, userData] = await Promise.all([
+        Program.list(),
+        User.me().catch(() => null) // Handle unauthenticated users
+      ]);
+      
+      setPrograms(programsData);
+      setUser(userData);
+
+      if (userData) {
+        const profiles = await UserProfile.filter({ created_by: userData.email });
+        if (profiles.length > 0) {
+          setUserProfile(profiles[0]);
+          setProfileId(profiles[0].id);
+          setShowInfoBox(!profiles[0].dismissed_program_info);
+        }
+      }
+
+      // Set these after we have the programs data
+      setAvailableCountries(['all', ...[...new Set(programsData.flatMap(p => p.available_regions))].sort()]);
+      setAvailableStatuses(['all', ...[...new Set(programsData.map(p => p.status))].sort()]);
+      
+      setLoading(false);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      setLoading(false);
+    }
+  };
+
+  const toggleFavorite = (programId) => {
+    const newFavorites = favoritePrograms.includes(programId)
+      ? favoritePrograms.filter(id => id !== programId)
+      : [...favoritePrograms, programId];
+    
+    setFavoritePrograms(newFavorites);
+    localStorage.setItem('favoritePrograms', JSON.stringify(newFavorites));
+  };
+
+  const dismissInfoBox = async () => {
+    setShowInfoBox(false);
+    
+    if (profileId) {
+      try {
+        await UserProfile.update(profileId, {
+          dismissed_program_info: true
+        });
+      } catch (error) {
+        console.error("Error updating profile:", error);
+      }
+    }
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      country: "all",
+      state: "all",
+      paymentType: "all",
+      status: "all"
+    });
+    setSearchTerm("");
+    setSortConfig({
+      field: 'name',
+      direction: 'asc'
+    });
+  };
+
+  const handleSort = (field) => {
+    setSortConfig({
+      field,
+      direction: sortConfig.field === field && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+    });
+  };
+
+  const createPageUrl = (pageName) => {
+    // Define your page URLs here.  Adjust to your routing setup.
+    const base = "/";
+    switch (pageName) {
+      case "SubmitProgram":
+        return "/submit-program";  // Adjust this to your actual route
+      default:
+        return base;
+    }
+  };
+  
+  const filteredPrograms = programs.filter(program => {
+    if (!filters.includeUnverified && !program.verified) {
+      return false;
+    }
+    
+    if (searchTerm && !program.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
+        !program.description.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
+    
+    if (filters.country !== "all" && !program.available_regions.includes(filters.country)) {
+      return false;
+    }
+    
+    if (filters.status !== "all" && program.status !== filters.status) {
+      return false;
+    }
+    
+    if (filters.paymentType !== "all" && program.payment_method !== filters.paymentType) {
+      return false;
+    }
+    
+    return true;
+  });
+
+  return (
+    <>
+      <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-12">
+        <div className="max-w-5xl mx-auto">
+          <section className="mb-10">
+            <div className="text-center mb-8">
+              <div className="inline-block p-2 bg-green-100 rounded-full mb-4">
+                <Leaf className="w-8 h-8 text-green-700" />
+              </div>
+              <h1 className="text-3xl font-bold text-green-900">UBI Programs</h1>
+              <p className="text-lg text-green-700 mt-2">
+                Explore available Universal Basic Income opportunities
+              </p>
+            </div>
+
+            <div className="flex justify-end mb-6">
+              <Link to="/Submit-Program">
+                <Button className="bg-green-700 hover:bg-green-800">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Add missing program
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="space-y-4">
+              <Card className="mb-4">
+                <CardHeader className="py-3">
+                  <div 
+                    className="flex justify-between items-center cursor-pointer"
+                    onClick={() => setShowSearch(!showSearch)}
+                  >
+                    <CardTitle className="flex items-center gap-2">
+                      <Search className="w-5 h-5 text-green-700" />
+                      Search Programs
+                    </CardTitle>
+                    <Button variant="ghost" size="sm">
+                      {showSearch ? "Hide" : "Show"}
+                    </Button>
+                  </div>
+                </CardHeader>
+                {showSearch && (
+                  <CardContent>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Search by program name or description"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+
+              <Card>
+                <CardHeader className="py-3">
+                  <div 
+                    className="flex justify-between items-center cursor-pointer"
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
+                    <CardTitle className="flex items-center gap-2">
+                      <Filter className="w-5 h-5 text-green-700" />
+                      Filter Programs
+                    </CardTitle>
+                    <Button variant="ghost" size="sm">
+                      {showFilters ? "Hide" : "Show"}
+                    </Button>
+                  </div>
+                </CardHeader>
+                {showFilters && (
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Existing filters */}
+                        <div>
+                          <Label className="text-green-700">Country</Label>
+                          <Select
+                            value={filters.country}
+                            onValueChange={(value) => setFilters({ ...filters, country: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Countries</SelectItem>
+                              {availableCountries.map(country => (
+                                <SelectItem key={country} value={country}>
+                                  {country === "all" ? "All Countries" : 
+                                    country.charAt(0).toUpperCase() + country.slice(1)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label className="text-green-700">Payment Type</Label>
+                          <Select
+                            value={filters.paymentType}
+                            onValueChange={(value) => setFilters({ ...filters, paymentType: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select payment type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Types</SelectItem>
+                              <SelectItem value="standard">Standard Only</SelectItem>
+                              <SelectItem value="digital">Digital Only</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label className="text-green-700">Status</Label>
+                          <Select
+                            value={filters.status}
+                            onValueChange={(value) => setFilters({ ...filters, status: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              {availableStatuses.map(status => (
+                                <SelectItem key={status} value={status}>
+                                  {status === "all" ? "All Statuses" : 
+                                    status.charAt(0).toUpperCase() + status.slice(1)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label className="text-green-700">Sort By</Label>
+                          <div className="flex space-x-2">
+                            <Select
+                              value={sortConfig.field}
+                              onValueChange={(value) => handleSort(value)}
+                            >
+                              <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Sort by" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="name">Alphabetically</SelectItem>
+                                <SelectItem value="amount">Monthly Payout</SelectItem>
+                                <SelectItem value="date">Date Added</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setSortConfig({
+                                ...sortConfig,
+                                direction: sortConfig.direction === 'asc' ? 'desc' : 'asc'
+                              })}
+                              className="h-10 w-10"
+                            >
+                              <ArrowUpDown className={`h-4 w-4 transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="include-unverified"
+                          checked={filters.includeUnverified}
+                          onCheckedChange={(checked) => 
+                            setFilters(prev => ({ ...prev, includeUnverified: checked }))
+                          }
+                        />
+                        <Label htmlFor="include-unverified">
+                          Include non-reviewed programs
+                        </Label>
+                      </div>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            </div>
+          </section>
+
+          {/* Programs List */}
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>Available Programs</CardTitle>
+              <CardDescription>
+                {filteredPrograms.length} programs found matching your criteria
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProgramList 
+                programs={filteredPrograms}
+                filters={filters}
+                favoritePrograms={favoritePrograms}
+                onToggleFavorite={toggleFavorite}
+                userEmail={user?.email}
+                isAdmin={user?.role === 'admin'}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+}
+
+
+================================================================================
+LOCATION: src/pages/
+FILE: program-details.jsx
+================================================================================
+
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Program } from "@/entities/Program";
+import { BlogPost } from "@/entities/BlogPost";
+import { User } from "@/entities/User";
+import { UserProfile } from "@/entities/UserProfile";
+import { ProgramManager } from "@/entities/ProgramManager";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { format, parseISO } from "date-fns";
+import { 
+  ChevronLeft, 
+  ExternalLink, 
+  Calendar, 
+  User as UserIcon, 
+  Pencil,
+  MapPin, 
+  DollarSign, 
+  FileText,
+  Info,
+  Users,
+  Coins,
+  Banknote,
+  AlertTriangle,
+  CheckCircle,
+  XCircle
+} from "lucide-react";
+import { createPageUrl } from "@/utils";
+
+export default function ProgramDetailsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { programId } = location.state || {};
+  
+  const [program, setProgram] = useState(null);
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [canManage, setCanManage] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    
+    if (!programId) {
+      navigate("/Programs");
+      return;
+    }
+    
+    loadData();
+  }, [programId]);
+
+  const loadData = async () => {
+    try {
+      // Load user first to check permissions
+      const userData = await User.me().catch(() => null);
+      setUser(userData);
+      
+      // Load program data
+      const programs = await Program.filter({ program_id: parseInt(programId) });
+      if (programs.length === 0) {
+        navigate("/Programs");
+        return;
+      }
+      
+      const programData = programs[0];
+      setProgram(programData);
+      
+      // Load blog posts related to this program
+      const allPosts = await BlogPost.list("-posted_date");
+      const relatedPosts = allPosts.filter(post => 
+        post.related_programs && 
+        post.related_programs.some(id => parseInt(id) === parseInt(programId))
+      );
+      setBlogPosts(relatedPosts);
+      
+      // Check if user can manage this program through ProgramManager table only
+      if (userData) {
+        const managers = await ProgramManager.filter({ 
+          program_id: parseInt(programId),
+          user_email: userData.email
+        });
+        setCanManage(managers.length > 0);
+        
+        // If user is logged in, also load their profile for eligibility checks
+        const profiles = await UserProfile.filter({ created_by: userData.email });
+        if (profiles.length > 0) {
+          setUserProfile(profiles[0]);
+        }
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error("Error loading program details:", error);
+      setLoading(false);
+      navigate("/Programs");
+    }
+  };
+  
+  const formatDate = (dateString) => {
+    try {
+      if (!dateString) return "";
+      const date = parseISO(dateString);
+      return format(date, 'MMM d, yyyy');
+    } catch (error) {
+      return "";
+    }
+  };
+  
+  // Check if user meets each eligibility requirement
+  const checkGenderRequirement = () => {
+    if (!program.gender_requirement || !userProfile) return true;
+    return program.gender_requirement === userProfile.gender;
+  };
+  
+  const checkLocationRequirement = () => {
+    if (!program.available_regions || program.available_regions.length === 0 || !userProfile) return true;
+    
+    // Check if user's country is in available regions
+    const inRegion = program.available_regions.includes(userProfile.country);
+    
+    // If state/province is required, check that too
+    if (inRegion && program.required_states && program.required_states.length > 0) {
+      return program.required_states.includes(userProfile.state);
+    }
+    
+    return inRegion;
+  };
+  
+  const checkIncomeRequirement = () => {
+    if (!program.max_household_income_usd || !userProfile) return true;
+    
+    const getIncomeRange = (range) => {
+      switch (range) {
+        case "0-20k": return 20000;
+        case "20k-40k": return 40000;
+        case "40k-60k": return 60000;
+        case "60k+": return 100000; // Assuming a high value for the highest bracket
+        default: return 0;
+      }
+    };
+    
+    return getIncomeRange(userProfile.income_range) <= program.max_household_income_usd;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700"></div>
+      </div>
+    );
+  }
+
+  if (!program) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">Program not found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-12">
+      <div className="max-w-6xl mx-auto">
+        <Button
+          variant="ghost"
+          className="mb-8 text-green-700 hover:text-green-800 hover:bg-green-50"
+          onClick={() => navigate("/Programs")}
+        >
+          <ChevronLeft className="w-4 h-4 mr-2" />
+          Back to Programs
+        </Button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left column - Program details */}
+          <div className="lg:col-span-2 space-y-8">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl font-bold text-green-900">
+                      {program.name}
+                    </CardTitle>
+                    <CardDescription className="text-md mt-1">
+                      By {program.organization}
+                    </CardDescription>
+                  </div>
+                  {canManage && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-green-700 text-green-700 hover:bg-green-50"
+                      onClick={() => navigate("/Manage-Program", { state: { programId: program.program_id } })}
+                    >
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Manage Program
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Status badges */}
+                <div className="flex flex-wrap gap-2">
+                  <Badge className={`${program.status === 'active_open' ? 'bg-green-100 text-green-800' : 
+                                    program.status === 'active_closed' ? 'bg-orange-100 text-orange-800' : 
+                                    program.status === 'upcoming' ? 'bg-blue-100 text-blue-800' : 
+                                    'bg-gray-100 text-gray-800'}`}>
+                    {program.status === 'active_open' ? 'Active • Open' : 
+                     program.status === 'active_closed' ? 'Active • Closed' : 
+                     program.status === 'upcoming' ? 'Upcoming' : 'Closed'}
+                  </Badge>
+                  
+                  <Badge className={program.payment_method === 'digital' 
+                    ? 'bg-purple-100 text-purple-800' 
+                    : 'bg-blue-100 text-blue-800'}>
+                    {program.payment_method === 'digital' 
+                      ? 'Digital Payment' 
+                      : 'Standard Payment'}
+                  </Badge>
+                  
+                  {!program.verified && (
+                    <Badge className="bg-amber-100 text-amber-800 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      Not Yet Reviewed
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Program description */}
+                <div>
+                  <h3 className="text-lg font-semibold text-green-900 mb-2">Description</h3>
+                  <p className="text-gray-700">{program.description}</p>
+                </div>
+
+                <Separator />
+
+                {/* Payment details */}
+                <div>
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-green-900">Payment Details</h3>
+                    
+                    {program.website && (
+                      <Button 
+                        onClick={() => window.open(program.website, '_blank')}
+                        variant="outline"
+                        className="border-green-700 text-green-700 hover:bg-green-50"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Visit Program Website
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="bg-green-50 p-5 rounded-lg border border-green-100">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        {program.payment_method === 'digital' ? (
+                          <Coins className="w-8 h-8 text-purple-600 mr-3" />
+                        ) : (
+                          <Banknote className="w-8 h-8 text-blue-600 mr-3" />
+                        )}
+                        <div>
+                          <h4 className="text-2xl font-bold text-green-800">${program.monthly_amount_usd}</h4>
+                          <p className="text-sm text-gray-600">monthly comparison value</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 space-y-3">
+                      <div className="p-3 bg-white rounded border border-green-100">
+                        <h5 className="font-medium text-green-800 mb-1">Actual Payment Structure:</h5>
+                        <p className="text-sm text-gray-700">{program.amount_description}</p>
+                      </div>
+                      
+                      <div className="p-3 bg-white rounded border border-green-100">
+                        <h5 className="font-medium text-green-800 mb-1">Currency:</h5>
+                        <p className="text-sm text-gray-700 flex items-center gap-2">
+                          <span className="font-semibold">{program.currency}</span>
+                          {program.currency !== "USD" && (
+                            <span className="text-gray-500">
+                              (${program.monthly_amount_usd} USD equivalent)
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Eligibility and Apply Now */}
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="md:w-2/3 space-y-3">
+                    <h3 className="text-lg font-semibold text-green-900 mb-2">Eligibility Requirements</h3>
+                    
+                    <div className="flex items-start gap-2">
+                      <Users className="w-5 h-5 text-green-700 mt-0.5 min-w-5" />
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <p className="font-medium text-gray-800 mr-2">Demographics</p>
+                          {userProfile && (
+                            checkGenderRequirement() 
+                              ? <CheckCircle className="w-4 h-4 text-green-600" />
+                              : <XCircle className="w-4 h-4 text-red-600" />
+                          )}
+                        </div>
+                        <p className="text-gray-600">
+                          {program.gender_requirement 
+                            ? `Open to ${program.gender_requirement} applicants only` 
+                            : "Open to all genders"}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-5 h-5 text-green-700 mt-0.5 min-w-5" />
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <p className="font-medium text-gray-800 mr-2">Location</p>
+                          {userProfile && (
+                            checkLocationRequirement() 
+                              ? <CheckCircle className="w-4 h-4 text-green-600" />
+                              : <XCircle className="w-4 h-4 text-red-600" />
+                          )}
+                        </div>
+                        <p className="text-gray-600">
+                          {program.available_regions && program.available_regions.length > 0 
+                            ? `Available in: ${program.available_regions.join(", ")}` 
+                            : "Available worldwide"}
+                          {program.required_states && program.required_states.length > 0 &&
+                            ` (${program.required_states.join(", ")})`}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2">
+                      <DollarSign className="w-5 h-5 text-green-700 mt-0.5 min-w-5" />
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <p className="font-medium text-gray-800 mr-2">Income Limit</p>
+                          {userProfile && (
+                            checkIncomeRequirement() 
+                              ? <CheckCircle className="w-4 h-4 text-green-600" />
+                              : <XCircle className="w-4 h-4 text-red-600" />
+                          )}
+                        </div>
+                        <p className="text-gray-600">
+                          {program.max_household_income_usd
+                            ? `Maximum household income: $${program.max_household_income_usd.toLocaleString()} per year`
+                            : "No income limit specified"}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2">
+                      <Info className="w-5 h-5 text-green-700 mt-0.5 min-w-5" />
+                      <div>
+                        <p className="font-medium text-gray-800">Additional Requirements</p>
+                        <p className="text-gray-600">{program.eligibility}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="md:w-1/3 flex flex-col justify-center items-center">
+                    <Button className="bg-green-700 hover:bg-green-800 w-full py-6 text-lg">
+                      Apply Now
+                      <span className="block text-sm opacity-80">(Coming Soon)</span>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right column - Related blog posts */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-green-700" />
+                  Related Articles
+                </CardTitle>
+                <CardDescription>
+                  Learn more about this program
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {blogPosts.length > 0 ? (
+                  <div className="space-y-6">
+                    {blogPosts.map(post => (
+                      <div 
+                        key={post.id}
+                        className="cursor-pointer group"
+                        onClick={() => navigate(createPageUrl("BlogPost"), { 
+                          state: { postId: post.id } 
+                        })}
+                      >
+                        {post.image_url && (
+                          <img 
+                            src={post.image_url} 
+                            alt={post.title}
+                            className="w-full h-32 object-cover rounded-lg mb-3"
+                          />
+                        )}
+                        <h3 className="text-lg font-semibold text-green-900 group-hover:text-green-700 transition-colors">
+                          {post.title}
+                        </h3>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {formatDate(post.posted_date)}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <UserIcon className="w-4 h-4" />
+                            {post.author}
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-700 line-clamp-2">{post.summary}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">No articles available for this program yet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+================================================================================
+LOCATION: src/pages/
+FILE: SubmitProgram.jsx
+================================================================================
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Program } from "@/entities/Program";
+import { User } from "@/entities/User";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { createPageUrl } from "@/utils";
+import { Separator } from "@/components/ui/separator";
+import { ChevronLeft, Save, Plus, X, Leaf, AlertTriangle } from "lucide-react";
+
+const COUNTRIES = [
+  "United States",
+  "Canada",
+  "United Kingdom",
+  "Germany",
+  "France",
+  "Spain",
+  "Italy",
+  "Australia",
+  "Japan",
+  "Brazil",
+  "South Africa",
+  "Kenya",
+  "India"
+];
+
+export default function SubmitProgram() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginAlertOpen, setLoginAlertOpen] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    name: "",
+    organization: "",
+    description: "",
+    gender_requirement: null,
+    monthly_amount_usd: 0,
+    available_regions: [],
+    required_states: [],
+    payment_method: "standard",
+    accepts_foreign_currency: false,
+    amount_description: "",
+    max_household_income_usd: null,
+    eligibility: "",
+    status: "active",
+    website: "",
+    verified: false
+  });
+  
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [regions, setRegions] = useState([]);
+  const [newRegion, setNewRegion] = useState("");
+  
+  useEffect(() => {
+    checkAuth();
+    loadNextProgramId();
+  }, []);
+  
+  const checkAuth = async () => {
+    try {
+      const userData = await User.me();
+      setUser(userData);
+      setIsAuthenticated(true);
+    } catch (error) {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
+  
+  const loadNextProgramId = async () => {
+    try {
+      const programs = await Program.list();
+      // Find the maximum program_id and add 1
+      const maxId = programs.length > 0 
+        ? Math.max(...programs.map(p => p.program_id))
+        : 0;
+      setFormData(prev => ({
+        ...prev,
+        program_id: maxId + 1
+      }));
+    } catch (error) {
+      console.error("Error loading programs:", error);
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  const addRegion = () => {
+    if (selectedCountry && !regions.includes(selectedCountry)) {
+      setRegions([...regions, selectedCountry]);
+      setFormData(prev => ({
+        ...prev,
+        available_regions: [...prev.available_regions, selectedCountry]
+      }));
+      setSelectedCountry("");
+    }
+  };
+  
+  const addCustomRegion = () => {
+    if (newRegion && !regions.includes(newRegion)) {
+      setRegions([...regions, newRegion]);
+      setFormData(prev => ({
+        ...prev,
+        available_regions: [...prev.available_regions, newRegion]
+      }));
+      setNewRegion("");
+    }
+  };
+  
+  const removeRegion = (region) => {
+    setRegions(regions.filter(r => r !== region));
+    setFormData(prev => ({
+      ...prev,
+      available_regions: prev.available_regions.filter(r => r !== region)
+    }));
+  };
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!isAuthenticated) {
+      setLoginAlertOpen(true);
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      // Include the submitter's email
+      await Program.create({
+        ...formData,
+        submitter_email: user.email
+      });
+      
+      setSubmissionSuccess(true);
+      setTimeout(() => {
+        navigate(createPageUrl("Programs"));
+      }, 2000);
+    } catch (error) {
+      console.error("Error submitting program:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-12">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <Button 
+            variant="ghost" 
+            className="text-green-700"
+            onClick={() => navigate(createPageUrl("Programs"))}
+          >
+            <ChevronLeft className="w-5 h-5 mr-1" />
+            Back to Programs
+          </Button>
+        </div>
+        
+        <div className="text-center mb-8">
+          <div className="inline-block p-2 bg-green-100 rounded-full mb-4">
+            <Leaf className="w-8 h-8 text-green-700" />
+          </div>
+          <h1 className="text-2xl font-bold text-green-900">Submit a UBI Program</h1>
+          <p className="text-green-700 mt-2">
+            Help us grow our database by adding a program that's not listed
+          </p>
+        </div>
+        
+        <Card className="shadow-lg mb-8">
+          <CardHeader>
+            <CardTitle>Program Details</CardTitle>
+            <CardDescription>
+              Please provide as much information as possible about the UBI program
+            </CardDescription>
+          </CardHeader>
+          
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Program Name *</Label>
+                  <Input
+                    id="name"
+                    required
+                    value={formData.name}
+                    onChange={(e) => handleChange("name", e.target.value)}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="organization">Organization Name *</Label>
+                  <Input
+                    id="organization"
+                    required
+                    value={formData.organization}
+                    onChange={(e) => handleChange("organization", e.target.value)}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="website">Program Website *</Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    required
+                    value={formData.website}
+                    onChange={(e) => handleChange("website", e.target.value)}
+                    placeholder="https://"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">Program Description *</Label>
+                  <Textarea
+                    id="description"
+                    required
+                    value={formData.description}
+                    onChange={(e) => handleChange("description", e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <Label htmlFor="status">Program Status *</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => handleChange("status", value)}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active (Currently accepting applications)</SelectItem>
+                      <SelectItem value="upcoming">Upcoming (Not yet launched)</SelectItem>
+                      <SelectItem value="closed">Closed (No longer accepting applications)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="monthly_amount">Monthly Amount (USD) *</Label>
+                    <Input
+                      id="monthly_amount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required
+                      value={formData.monthly_amount_usd}
+                      onChange={(e) => handleChange("monthly_amount_usd", parseFloat(e.target.value))}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="max_income">Maximum Income Requirement (USD)</Label>
+                    <Input
+                      id="max_income"
+                      type="number"
+                      min="0"
+                      placeholder="Optional"
+                      value={formData.max_household_income_usd || ''}
+                      onChange={(e) => handleChange("max_household_income_usd", 
+                        e.target.value ? parseFloat(e.target.value) : null
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="amount_description">Payment Description *</Label>
+                  <Input
+                    id="amount_description"
+                    required
+                    placeholder="e.g., $500 paid monthly for 12 months"
+                    value={formData.amount_description}
+                    onChange={(e) => handleChange("amount_description", e.target.value)}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="payment_method">Payment Method *</Label>
+                  <Select
+                    value={formData.payment_method}
+                    onValueChange={(value) => handleChange("payment_method", value)}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">Standard (Bank transfer, check)</SelectItem>
+                      <SelectItem value="digital">Digital (Cryptocurrency)</SelectItem>
+                      <SelectItem value="both">Both Options Available</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Accepts Foreign Currency</Label>
+                    <p className="text-sm text-gray-500">
+                      Can make payments in currencies other than local currency
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.accepts_foreign_currency}
+                    onCheckedChange={(value) => handleChange("accepts_foreign_currency", value)}
+                  />
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <Label>Geographic Eligibility *</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    <div>
+                      <Select
+                        value={selectedCountry}
+                        onValueChange={setSelectedCountry}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COUNTRIES.map(country => (
+                            <SelectItem key={country} value={country}>
+                              {country}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={addRegion}
+                      disabled={!selectedCountry}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Country
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      placeholder="Or type a custom region..."
+                      value={newRegion}
+                      onChange={(e) => setNewRegion(e.target.value)}
+                    />
+                    
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={addCustomRegion}
+                      disabled={!newRegion}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Custom Region
+                    </Button>
+                  </div>
+                  
+                  {regions.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {regions.map(region => (
+                        <div 
+                          key={region} 
+                          className="bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center gap-2"
+                        >
+                          {region}
+                          <button
+                            type="button"
+                            onClick={() => removeRegion(region)}
+                            className="hover:bg-green-200 rounded-full p-1"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-amber-600 mt-2 flex items-center">
+                      <AlertTriangle className="w-4 h-4 mr-1" />
+                      Please add at least one region where this program is available
+                    </p>
+                  )}
+                  
+                  <p className="text-sm text-gray-500 mt-2">
+                    For worldwide programs, add "Worldwide" as a custom region.
+                  </p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="gender_requirement">Gender Requirement</Label>
+                  <Select
+                    value={formData.gender_requirement || ""}
+                    onValueChange={(value) => handleChange("gender_requirement", value || null)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender requirement" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>No specific requirement</SelectItem>
+                      <SelectItem value="female">Female only</SelectItem>
+                      <SelectItem value="male">Male only</SelectItem>
+                      <SelectItem value="other">Other specific requirement</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="eligibility">Eligibility Requirements</Label>
+                  <Textarea
+                    id="eligibility"
+                    value={formData.eligibility}
+                    onChange={(e) => handleChange("eligibility", e.target.value)}
+                    placeholder="e.g., Must be over 18, resident of the region, income below threshold..."
+                    className="min-h-[100px]"
+                  />
+                </div>
+              </div>
+            </CardContent>
+            
+            <CardFooter className="flex justify-between">
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => navigate(createPageUrl("Programs"))}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                className="bg-green-700 hover:bg-green-800"
+                disabled={loading || regions.length === 0}
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin mr-2 h-4 w-4 border-2 border-b-0 border-r-0 border-white rounded-full"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Submit Program
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+        
+        {/* Success Alert */}
+        <AlertDialog open={submissionSuccess}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Program Submitted</AlertDialogTitle>
+              <AlertDialogDescription>
+                Thank you for adding this program! Our team will review the submission before it appears in the main program listings.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction>OK</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        {/* Login Alert */}
+        <AlertDialog open={loginAlertOpen} onOpenChange={setLoginAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Login Required</AlertDialogTitle>
+              <AlertDialogDescription>
+                You need to be logged in to submit a program. Would you like to log in now?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => User.login()}>Log In</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  );
+}
+
+
+================================================================================
+END OF PART 2
+================================================================================
+

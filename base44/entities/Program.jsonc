@@ -1,0 +1,118 @@
+{
+  "name": "Program",
+  "type": "object",
+  "properties": {
+    "program_id": {
+      "type": "integer",
+      "description": "Unique integer identifier for the program",
+      "minimum": 1
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the program"
+    },
+    "organization": {
+      "type": "string",
+      "description": "Organization running the program"
+    },
+    "description": {
+      "type": "string",
+      "description": "Program description"
+    },
+    "gender_requirement": {
+      "type": "string",
+      "enum": [
+        "female",
+        "male",
+        "other",
+        null
+      ],
+      "description": "Required gender for eligibility. Null means open to all.",
+      "nullable": true
+    },
+    "monthly_amount_usd": {
+      "type": "number",
+      "description": "Monthly payment amount in USD",
+      "minimum": 0
+    },
+    "currency": {
+      "type": "string",
+      "description": "Currency of program payments (e.g., USD, EUR, BTC)",
+      "default": "USD"
+    },
+    "available_regions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Regions where program is available. Empty array means worldwide."
+    },
+    "required_states": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Required states/provinces if region-specific. Empty if not state-specific.",
+      "nullable": true
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "digital"
+      ],
+      "description": "Payment method used"
+    },
+    "amount_description": {
+      "type": "string",
+      "description": "Human readable description of payment amount and frequency"
+    },
+    "max_household_income_usd": {
+      "type": "number",
+      "description": "Maximum annual household income in USD. Null if no income limit.",
+      "nullable": true
+    },
+    "eligibility": {
+      "type": "string",
+      "description": "Eligibility requirements"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active_open",
+        "active_closed",
+        "upcoming",
+        "closed"
+      ],
+      "description": "Current program status"
+    },
+    "website": {
+      "type": "string",
+      "description": "Program website",
+      "format": "uri"
+    },
+    "verified": {
+      "type": "boolean",
+      "description": "Program verification status",
+      "default": false
+    },
+    "submitter_email": {
+      "type": "string",
+      "description": "Email of the user who submitted the program",
+      "nullable": true
+    }
+  },
+  "required": [
+    "program_id",
+    "name",
+    "organization",
+    "description",
+    "available_regions",
+    "payment_method",
+    "status",
+    "monthly_amount_usd",
+    "amount_description",
+    "currency"
+  ]
+}
+

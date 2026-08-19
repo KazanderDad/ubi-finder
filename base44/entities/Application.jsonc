@@ -1,0 +1,41 @@
+{
+  "name": "Application",
+  "type": "object",
+  "properties": {
+    "program_id": {
+      "type": "integer",
+      "description": "ID of the program being applied to"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the applying user"
+    },
+    "user_profile_id": {
+      "type": "string",
+      "description": "ID of the user profile"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Current status of the application"
+    },
+    "submitted_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the application was submitted"
+    }
+  },
+  "required": [
+    "program_id",
+    "user_email",
+    "user_profile_id",
+    "status",
+    "submitted_date"
+  ]
+}
+
