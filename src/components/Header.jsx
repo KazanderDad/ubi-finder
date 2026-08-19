@@ -87,7 +87,6 @@ export default function Header() {
 
   const handleModalFormSubmit = (data) => {
     localStorage.setItem("pendingProfile", JSON.stringify(data));
-    window.location.href = '/login?view=signup';
   };
 
   const navLinks = [

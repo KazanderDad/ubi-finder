@@ -202,17 +202,17 @@ export default function UserForm({ onSubmit }) {
 
   if (sent) {
     return (
-      <Card className="shadow-lg border-green-100 bg-white/95">
+      <Card className="shadow-lg border-green-100 bg-white/95 animate-in fade-in duration-300">
         <CardContent className="p-8 text-center space-y-4">
-          <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
+          <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner border border-green-200">
             📬
           </div>
-          <h3 className="text-2xl font-bold text-green-950">Almost There!</h3>
-          <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
-            We've sent a magic login link to <span className="font-semibold text-green-800">{email}</span>. Please click the link in your inbox to verify your email and instantly access your personalized report.
+          <h3 className="text-2xl font-bold text-green-950">Thank You!</h3>
+          <p className="text-gray-700 text-sm max-w-md mx-auto leading-relaxed">
+            We've sent a verification email to <span className="font-semibold text-green-800">{email}</span>. Please check your inbox for the link. Once you click it, this site will unlock for you and you can find your personalized listing of available programs.
           </p>
           <div className="pt-2 text-xs text-gray-400">
-            Did not receive it? Check your spam folder or try again.
+            Didn't receive the email? Check your spam/junk folder or try again in a few moments.
           </div>
         </CardContent>
       </Card>

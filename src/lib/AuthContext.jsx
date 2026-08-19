@@ -41,6 +41,19 @@ export const AuthProvider = ({ children }) => {
       } else {
         setUser(user);
         setIsAuthenticated(true);
+
+        const pendingProfile = localStorage.getItem("pendingProfile");
+        if (pendingProfile) {
+          try {
+            const data = JSON.parse(pendingProfile);
+            await supabase.from('user_profiles').upsert([
+              { ...data, created_by_id: user.id, email: user.email }
+            ]);
+            localStorage.removeItem("pendingProfile");
+          } catch (e) {
+            console.error("Error saving pending profile:", e);
+          }
+        }
       }
       setAuthChecked(true);
     } catch (error) {

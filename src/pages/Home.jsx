@@ -48,11 +48,9 @@ export default function Home() {
 
   const handleFormSubmit = async (data) => {
     setFormData(data);
-    if (!isAuthenticated) {
-      localStorage.setItem("pendingProfile", JSON.stringify(data));
-      window.location.href = '/login';
-    } else {
-      await supabase.from('user_profiles').insert([{ ...data, created_by_id: user.id }]);
+    localStorage.setItem("pendingProfile", JSON.stringify(data));
+    if (isAuthenticated && user) {
+      await supabase.from('user_profiles').upsert([{ ...data, created_by_id: user.id }]);
       navigate("/Dashboard");
     }
   };
