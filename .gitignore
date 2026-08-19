@@ -10,3 +10,5 @@ rewrite*
 *.cjs
 *.py
 *.mjs
+.temp
+supabase/.temp
