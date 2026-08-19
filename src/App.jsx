@@ -26,6 +26,7 @@ import Disclaimer from './pages/Disclaimer';
 import Accessibility from './pages/Accessibility';
 import Community from './pages/Community';
 import Login from './pages/Login';
+import MyReport from './pages/MyReport';
 import ServicesPage from './pages/Services';
 import EcosystemPage from './pages/Ecosystem';
 import Header from './components/Header';
@@ -78,6 +79,8 @@ const AuthenticatedApp = () => {
       <Route path="/Disclaimer" element={<Disclaimer />} />
       <Route path="/Accessibility" element={<Accessibility />} />
       <Route path="/Community" element={<Community />} />
+      <Route path="/My-Report" element={<MyReport />} />
+      <Route path="/report" element={<MyReport />} />
       <Route path="/Services" element={<ServicesPage />} />
       <Route path="/Ecosystem" element={<EcosystemPage />} />
       {/* Add your page Route elements here */}

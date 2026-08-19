@@ -13,7 +13,10 @@ import {
   LogOut, 
   ChevronDown,
   Sparkles,
-  Layers
+  Layers,
+  Bell,
+  CheckCheck,
+  FileSpreadsheet
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -26,6 +29,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import UserForm from "@/components/UserForm";
+import { getUserNotifications, markNotificationsAsRead } from "@/lib/matchDeltaService";
 
 export default function Header() {
   const { user, signOut } = useAuth();
@@ -33,9 +37,23 @@ export default function Header() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
   const [eligibilityModalOpen, setEligibilityModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      getUserNotifications(user).then(setNotifications);
+    }
+  }, [user, location]);
+
+  const unreadNotifications = notifications.filter(n => !n.read);
+
+  const handleMarkAllRead = async () => {
+    await markNotificationsAsRead(user);
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -91,6 +109,7 @@ export default function Header() {
 
   const navLinks = [
     { name: "Programs", path: "/Programs" },
+    ...(user ? [{ name: "My Report", path: "/My-Report", badge: "Personalized" }] : []),
     { name: "Community", path: "/Community" },
     { name: "Blog", path: "/Blog" },
     { name: "For Builders", path: "/Services", badge: "New" },
@@ -133,9 +152,59 @@ export default function Header() {
         );
       })}
 
-      {/* 9a. Authenticated User Dropdown Menu */}
+      {/* 9a. Authenticated User Dropdown Menu & Notifications */}
       {user ? (
         <div className="flex items-center space-x-3 border-l pl-5 border-gray-200">
+          
+          {/* Notification Bell */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="relative p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-green-800 transition-colors focus:outline-none">
+                <Bell className="w-4 h-4" />
+                {unreadNotifications.length > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 bg-white shadow-xl border-gray-200 p-0">
+              <div className="p-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-900">Notifications ({unreadNotifications.length} unread)</span>
+                {unreadNotifications.length > 0 && (
+                  <button 
+                    onClick={handleMarkAllRead}
+                    className="text-[11px] text-green-700 hover:underline flex items-center gap-1 font-medium"
+                  >
+                    <CheckCheck className="w-3 h-3" />
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-72 overflow-y-auto divide-y divide-gray-100">
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-gray-400">
+                    No recent notifications
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div 
+                      key={n.id} 
+                      className={`p-3 text-xs space-y-1 hover:bg-gray-50 cursor-pointer transition-colors ${!n.read ? 'bg-green-50/50' : ''}`}
+                      onClick={() => {
+                        if (n.action_url) navigate(n.action_url);
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-gray-900">{n.title}</span>
+                        {!n.read && <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full" />}
+                      </div>
+                      <p className="text-gray-600 text-[11px] leading-relaxed">{n.message}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 p-1.5 rounded-full hover:bg-gray-100 transition-colors focus:outline-none">
@@ -158,6 +227,14 @@ export default function Header() {
               </div>
 
               <DropdownMenuGroup className="p-1">
+                <DropdownMenuItem 
+                  onClick={() => navigate("/My-Report")}
+                  className="cursor-pointer text-xs font-medium flex items-center gap-2 p-2 hover:bg-green-50 text-green-950 font-bold"
+                >
+                  <Sparkles className="w-4 h-4 text-green-700" />
+                  My Custom Report
+                </DropdownMenuItem>
+
                 <DropdownMenuItem 
                   onClick={() => navigate("/Dashboard")}
                   className="cursor-pointer text-xs font-medium flex items-center gap-2 p-2 hover:bg-green-50"
@@ -252,6 +329,10 @@ export default function Header() {
             <div className="pt-3 pb-1 border-t border-gray-100">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Account ({user.email})</p>
             </div>
+            <Link to="/My-Report" className="py-2 border-b border-gray-50 flex items-center gap-2 text-green-950 font-bold">
+              <Sparkles className="w-4 h-4 text-green-700" />
+              My Custom Report
+            </Link>
             <Link to="/Dashboard" className="py-2 border-b border-gray-50 flex items-center gap-2 text-gray-800 font-medium">
               <LayoutDashboard className="w-4 h-4 text-green-700" />
               My Dashboard

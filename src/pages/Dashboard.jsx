@@ -32,6 +32,7 @@ import ApplicationsList from "../components/dashboard/ApplicationsList";
 import MatchingPrograms from "../components/dashboard/MatchingPrograms";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { syncMatchSnapshotAndDetectDeltas } from "@/lib/matchDeltaService";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ export default function Dashboard() {
   const [blogPosts, setBlogPosts] = useState([]);
   const [applications, setApplications] = useState([]);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
+  const [matchDeltas, setMatchDeltas] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -97,13 +99,24 @@ export default function Dashboard() {
         }
       }
 
+      let currentProf = null;
       const profiles = (await supabase.from('user_profiles').select('*').match({ created_by: userData.email })).data;
       if (profiles && profiles.length > 0) {
-        setUserProfile(profiles[0]);
+        currentProf = profiles[0];
+        setUserProfile(currentProf);
       }
 
-      const allPrograms = (await supabase.from('programs').select('*')).data;
-      setPrograms(allPrograms || []);
+      const allPrograms = (await supabase.from('programs').select('*').neq('internal_status', 'deleted')).data;
+      const activePrograms = (allPrograms || []).filter(p => p.internal_status !== 'deleted');
+      setPrograms(activePrograms);
+
+      // Run dynamic snapshot delta comparison
+      if (activePrograms.length > 0) {
+        const deltaRes = await syncMatchSnapshotAndDetectDeltas(userData, currentProf, activePrograms);
+        if (deltaRes?.deltas) {
+          setMatchDeltas(deltaRes.deltas);
+        }
+      }
 
       const allPosts = (await supabase.from('blog_posts').select('*')).data;
       setBlogPosts(allPosts || []);
@@ -133,6 +146,7 @@ export default function Dashboard() {
     if (!userProfile) return [];
     return programs
       .filter(program => {
+        if (program.internal_status === 'deleted') return false;
         if (program.gender_requirement && program.gender_requirement !== userProfile.gender) return false;
         if (program.available_regions && program.available_regions.length > 0) {
           const inRegion = program.available_regions.includes(userProfile.country) || 
@@ -215,14 +229,42 @@ export default function Dashboard() {
               Your centralized dashboard for Universal Basic Income matches, applications, and updates.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link to="/My-Report">
+              <Button className="bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-sm flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                View Personalized Report
+              </Button>
+            </Link>
             <Link to="/Programs">
-              <Button className="bg-green-700 hover:bg-green-800 text-white font-medium text-xs shadow-sm">
+              <Button variant="outline" className="border-green-700 text-green-700 hover:bg-green-50 font-medium text-xs shadow-sm">
                 Browse All Programs &rarr;
               </Button>
             </Link>
           </div>
         </div>
+
+        {/* Dynamic Match Delta Notification Banner */}
+        {matchDeltas.length > 0 && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3 shadow-sm animate-in fade-in">
+            <Bell className="w-5 h-5 text-emerald-700 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 text-xs text-emerald-950">
+              <span className="font-bold text-sm block mb-1">
+                Recent Updates to Your Matching Programs ({matchDeltas.length})
+              </span>
+              <ul className="list-disc pl-4 space-y-1 text-emerald-900">
+                {matchDeltas.map((d, idx) => (
+                  <li key={idx}><strong>{d.programName}:</strong> {d.message}</li>
+                ))}
+              </ul>
+            </div>
+            <Link to="/My-Report">
+              <Button size="sm" variant="outline" className="border-emerald-700 text-emerald-900 text-[11px] h-7">
+                Review Report
+              </Button>
+            </Link>
+          </div>
+        )}
 
         {/* 5a. Onboarding Checklist & 5d. Alerts row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
