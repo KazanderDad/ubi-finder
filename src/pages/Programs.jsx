@@ -377,12 +377,24 @@ export default function Programs() {
           </section>
 
           {/* Programs List */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle>Available Programs</CardTitle>
-              <CardDescription>
-                {filteredPrograms.length} programs found matching your criteria
-              </CardDescription>
+          <Card className="shadow-lg border-green-100 bg-white/95">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4">
+              <div>
+                <CardTitle className="text-2xl text-green-950 font-bold">Available Programs</CardTitle>
+                <CardDescription className="text-sm text-gray-500 mt-1">
+                  Showing <span className="font-semibold text-green-800">{filteredPrograms.length}</span> of {programs.length} verified programs
+                </CardDescription>
+              </div>
+              {(searchTerm || filters.country !== "all" || filters.paymentType !== "all" || filters.status !== "all" || filters.includeUnverified) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="text-xs text-green-700 hover:text-green-800 hover:bg-green-50 self-start sm:self-auto"
+                >
+                  Clear All Filters
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <ProgramList 
@@ -392,6 +404,7 @@ export default function Programs() {
                 onToggleFavorite={toggleFavorite}
                 userEmail={user?.email}
                 isAdmin={user?.role === 'admin'}
+                onClearFilters={clearFilters}
               />
             </CardContent>
           </Card>
