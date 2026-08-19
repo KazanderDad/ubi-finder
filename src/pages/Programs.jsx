@@ -375,7 +375,6 @@ export default function Programs() {
                 )}
               </Card>
             </div>
-          </section>
 
           {/* Programs List */}
           <Card className="shadow-lg border-green-100 bg-white/95">
