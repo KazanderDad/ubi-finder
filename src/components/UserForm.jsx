@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2, MapPin, Building, CreditCard, Coins, Smartphone } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 // Country to currency mapping
@@ -40,6 +40,14 @@ const CANADIAN_PROVINCES = [
   "Quebec","Saskatchewan","Yukon"
 ];
 
+// Capability 1: Hierarchical municipal pilots mapping
+const MUNICIPAL_PILOTS = {
+  "California": ["Stockton", "San Francisco", "Compton", "Los Angeles", "Other / Not listed"],
+  "New Brunswick": ["Moncton", "Saint John", "Fredericton", "Other / Not listed"],
+  "Ontario": ["Thunder Bay", "Hamilton", "Lindsay", "Other / Not listed"],
+  "Alaska": ["Anchorage", "Fairbanks", "Juneau", "Statewide / Other"],
+};
+
 const WHY_TOOLTIP = "Many programs are geared towards women. We do our utmost to keep your information safe, but you should only disclose if you are comfortable doing so. We only use this information to show you programs applicable to you. It's always your decision if you then apply to them or not.";
 
 function WhyTooltip() {
@@ -71,6 +79,7 @@ export default function UserForm({ onSubmit }) {
   const [formData, setFormData] = useState({
     country: "",
     state: "",
+    municipality: "",
     accepts_digital_currency: true,
     household_size: 1,
     income_range: "",
@@ -90,6 +99,7 @@ export default function UserForm({ onSubmit }) {
 
   const needsState = ["United States", "Canada"].includes(formData.country);
   const stateOptions = formData.country === "United States" ? US_STATES : CANADIAN_PROVINCES;
+  const municipalOptions = MUNICIPAL_PILOTS[formData.state] || null;
   const isMultiPerson = formData.household_size > 1;
 
   // 2b: Inline program count preview query
@@ -103,11 +113,18 @@ export default function UserForm({ onSubmit }) {
       try {
         const { data, error } = await supabase
           .from('programs')
-          .select('id, available_regions');
+          .select('id, available_regions, required_states, municipalities');
         if (!error && data) {
           const matching = data.filter(p => {
             const regions = p.available_regions || [];
-            return regions.length === 0 || regions.includes(formData.country) || regions.includes("Global") || regions.includes("Worldwide");
+            const states = p.required_states || [];
+            const countryMatch = regions.length === 0 || regions.includes(formData.country) || regions.includes("Global") || regions.includes("Worldwide");
+            if (!countryMatch) return false;
+            
+            if (formData.state && states.length > 0 && !states.includes(formData.state)) {
+              return false;
+            }
+            return true;
           });
           setMatchingCount(matching.length || data.length);
         }
@@ -118,7 +135,7 @@ export default function UserForm({ onSubmit }) {
       }
     };
     fetchCount();
-  }, [formData.country]);
+  }, [formData.country, formData.state, formData.municipality]);
 
   // Step 1 validation
   const isStep1Valid = formData.country !== "" && (!needsState || formData.state !== "");
@@ -138,6 +155,10 @@ export default function UserForm({ onSubmit }) {
       if (field === "country" && value) {
         newData.currency = getCurrencyForCountry(value);
         newData.state = "";
+        newData.municipality = "";
+      }
+      if (field === "state") {
+        newData.municipality = "";
       }
       if (field === "household_size") {
         newData.gender = "";
@@ -197,9 +218,9 @@ export default function UserForm({ onSubmit }) {
         {/* 2a. Multi-step Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between text-xs font-semibold text-gray-500 mb-2">
-            <span className={step >= 1 ? "text-green-700 font-bold" : ""}>1. Location</span>
-            <span className={step >= 2 ? "text-green-700 font-bold" : ""}>2. Household</span>
-            <span className={step >= 3 ? "text-green-700 font-bold" : ""}>3. Delivery</span>
+            <span className={step >= 1 ? "text-green-700 font-bold" : ""}>1. Location & Region</span>
+            <span className={step >= 2 ? "text-green-700 font-bold" : ""}>2. Household & Income</span>
+            <span className={step >= 3 ? "text-green-700 font-bold" : ""}>3. Delivery Rails</span>
           </div>
           <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
             <div 
@@ -210,7 +231,7 @@ export default function UserForm({ onSubmit }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* STEP 1: Location */}
+          {/* STEP 1: Location & Regional Sub-questions */}
           {step === 1 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div>
@@ -239,6 +260,29 @@ export default function UserForm({ onSubmit }) {
                 </div>
               )}
 
+              {/* Capability 1: Conditional Municipal Pilot Sub-Question */}
+              {municipalOptions && (
+                <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+                    Do you reside in any of these specific pilot municipalities?
+                  </div>
+                  <Select value={formData.municipality} onValueChange={(v) => handleChange("municipality", v)}>
+                    <SelectTrigger className="bg-white mt-1">
+                      <SelectValue placeholder="Select municipality (or choose Other)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {municipalOptions.map(m => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-emerald-700">
+                    Some municipal experiments are restricted to specific city boundaries (e.g. Moncton in NB or Stockton in CA).
+                  </p>
+                </div>
+              )}
+
               {/* 2b. Inline program count preview */}
               {formData.country && (
                 <div className="p-3.5 bg-green-50/90 border border-green-200 rounded-xl flex items-center gap-2.5 text-xs text-green-900 animate-in fade-in">
@@ -247,7 +291,7 @@ export default function UserForm({ onSubmit }) {
                     {loadingCount ? (
                       "Checking available programs..."
                     ) : matchingCount ? (
-                      <>We found <strong>{matchingCount} income programs</strong> available in {formData.country}.</>
+                      <>We found <strong>{matchingCount} income programs</strong> available in {formData.state ? `${formData.state}, ` : ""}{formData.country}.</>
                     ) : (
                       <>Programs found in {formData.country}.</>
                     )}
@@ -362,14 +406,18 @@ export default function UserForm({ onSubmit }) {
             </div>
           )}
 
-          {/* STEP 3: Delivery & Email */}
+          {/* STEP 3: Delivery Rails & Email */}
           {step === 3 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div className="p-4 bg-gray-50/80 rounded-xl space-y-4 border border-gray-100">
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                  Delivery Preferences (Capability 4)
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label className="text-sm font-medium text-gray-900">Accept Foreign Currency</Label>
-                    <p className="text-xs text-gray-500">Willing to receive payments in non-local currencies</p>
+                    <p className="text-xs text-gray-500">Willing to receive payments in non-local fiat</p>
                   </div>
                   <Switch
                     checked={formData.accepts_foreign_currency}
@@ -379,8 +427,8 @@ export default function UserForm({ onSubmit }) {
 
                 <div className="flex items-center justify-between pt-2 border-t border-gray-200/60">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium text-gray-900">Accept Digital Currency</Label>
-                    <p className="text-xs text-gray-500">Willing to receive digital wallet / crypto payments</p>
+                    <Label className="text-sm font-medium text-gray-900">Accept Crypto & Digital Wallets</Label>
+                    <p className="text-xs text-gray-500">Include Web3 daily claim protocols (e.g. GoodDollar, Circles)</p>
                   </div>
                   <Switch
                     checked={formData.accepts_digital_currency}

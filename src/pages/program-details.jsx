@@ -434,25 +434,55 @@ export default function ProgramDetailsPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
                         <div className="p-3.5 bg-white/90 rounded-xl border border-green-100">
-                          <div className="text-xs font-semibold text-green-800 mb-1">Disbursement Schedule</div>
-                          <p className="text-sm text-gray-700">
-                            <span className={!user ? "blur-sm select-none opacity-50 block" : ""}>{program.amount_description}</span>
+                          <div className="text-[11px] font-bold text-green-800 uppercase tracking-wider mb-1">Distribution Model</div>
+                          <p className="text-xs text-gray-800 font-semibold">
+                            {program.distribution_type === 'daily_claim_protocol' ? 'Daily Claim Protocol' :
+                             program.distribution_type === 'lottery_raffle' ? 'Lottery / Community Raffle' :
+                             'Guaranteed Recurring'}
                           </p>
                         </div>
-                        
+
                         <div className="p-3.5 bg-white/90 rounded-xl border border-green-100">
-                          <div className="text-xs font-semibold text-green-800 mb-1">Native Currency</div>
-                          <p className="text-sm text-gray-700 font-medium">
+                          <div className="text-[11px] font-bold text-green-800 uppercase tracking-wider mb-1">Delivery Rail</div>
+                          <p className="text-xs text-gray-800 font-semibold">
+                            {program.payout_rail === 'crypto_wallet' ? 'Crypto / Smart Contract' :
+                             program.payout_rail === 'prepaid_card' ? 'Prepaid Debit Card' :
+                             program.payout_rail === 'mobile_money' ? 'Mobile Money (M-Pesa)' :
+                             'Direct Deposit / Bank'}
+                          </p>
+                        </div>
+
+                        <div className="p-3.5 bg-white/90 rounded-xl border border-green-100">
+                          <div className="text-[11px] font-bold text-green-800 uppercase tracking-wider mb-1">Funding Source</div>
+                          <p className="text-xs text-gray-800 font-semibold">
+                            {program.funding_source === 'municipal_government' ? 'Municipal Government' :
+                             program.funding_source === 'state_federal' ? 'State / Federal Budget' :
+                             program.funding_source === 'protocol_yield' ? 'Protocol Yield / DAO' :
+                             program.funding_source === 'community_crowdfund' ? 'Community Crowdfund' :
+                             'Philanthropic Grant'}
+                          </p>
+                        </div>
+
+                        <div className="p-3.5 bg-white/90 rounded-xl border border-green-100">
+                          <div className="text-[11px] font-bold text-green-800 uppercase tracking-wider mb-1">Payout Currency</div>
+                          <p className="text-xs text-gray-800 font-semibold">
                             {program.currency}
                             {program.currency !== "USD" && (
-                              <span className="text-xs font-normal text-gray-500 ml-1.5">
-                                (${program.monthly_amount_usd} USD equivalent)
+                              <span className="text-[10px] font-normal text-gray-500 block">
+                                (~${program.monthly_amount_usd} USD eq.)
                               </span>
                             )}
                           </p>
                         </div>
+                      </div>
+
+                      <div className="p-3.5 bg-white/90 rounded-xl border border-green-100 mt-2">
+                        <div className="text-xs font-semibold text-green-800 mb-0.5">Disbursement Frequency & Schedule</div>
+                        <p className="text-xs text-gray-700">
+                          <span className={!user ? "blur-sm select-none opacity-50 inline-block" : ""}>{program.amount_description || "Monthly regular disbursement"}</span>
+                        </p>
                       </div>
                     </div>
                   </div>
