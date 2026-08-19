@@ -15,12 +15,12 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import ProgramList from "../components/dashboard/ProgramList";
-import { Link } from 'react-router-dom'; // Import Link from react-router-dom
-import { Switch } from "@/components/ui/switch"
-
+import { Link } from 'react-router-dom';
+import { Switch } from "@/components/ui/switch";
+import PageHeader from "@/components/ui/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Programs() {
-  const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
@@ -194,25 +194,20 @@ export default function Programs() {
     <>
       <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-12">
         <div className="max-w-5xl mx-auto">
-          <section className="mb-10">
-            <div className="text-center mb-8">
-              <div className="inline-block p-2 bg-green-100 rounded-full mb-4">
-                <Leaf className="w-8 h-8 text-green-700" />
-              </div>
-              <h1 className="text-3xl font-bold text-green-900">UBI Programs</h1>
-              <p className="text-lg text-green-700 mt-2">
-                Explore available Universal Basic Income opportunities
-              </p>
-            </div>
+          <PageHeader 
+            icon={Leaf}
+            title="Universal Basic Income Programs"
+            subtitle="Explore active, planned, and waitlist-ready cash and digital basic income opportunities worldwide."
+          />
 
-            <div className="flex justify-end mb-6">
-              <Link to="/Submit-Program">
-                <Button className="bg-green-700 hover:bg-green-800">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Add missing program
-                </Button>
-              </Link>
-            </div>
+          <div className="flex justify-end mb-6">
+            <Link to="/Submit-Program">
+              <Button className="bg-green-700 hover:bg-green-800 text-xs shadow-sm">
+                <Plus className="w-4 h-4 mr-1.5" />
+                Submit Missing Program
+              </Button>
+            </Link>
+          </div>
             
             <div className="space-y-4">
               <Card className="mb-4">
@@ -397,15 +392,36 @@ export default function Programs() {
               )}
             </CardHeader>
             <CardContent>
-              <ProgramList 
-                programs={filteredPrograms}
-                filters={filters}
-                favoritePrograms={favoritePrograms}
-                onToggleFavorite={toggleFavorite}
-                userEmail={user?.email}
-                isAdmin={user?.role === 'admin'}
-                onClearFilters={clearFilters}
-              />
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="p-6 bg-white rounded-xl border border-gray-100 shadow-sm animate-pulse space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-2 w-2/3">
+                          <div className="h-5 bg-gray-200 rounded w-1/2" />
+                          <div className="h-4 bg-gray-100 rounded w-1/3" />
+                        </div>
+                        <div className="h-10 bg-green-50 rounded-xl w-32" />
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="h-6 bg-gray-100 rounded-full w-24" />
+                        <div className="h-6 bg-gray-100 rounded-full w-28" />
+                      </div>
+                      <div className="h-10 bg-gray-50 rounded w-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <ProgramList 
+                  programs={filteredPrograms}
+                  filters={filters}
+                  favoritePrograms={favoritePrograms}
+                  onToggleFavorite={toggleFavorite}
+                  userEmail={user?.email}
+                  isAdmin={user?.role === 'admin'}
+                  onClearFilters={clearFilters}
+                />
+              )}
             </CardContent>
           </Card>
         </div>

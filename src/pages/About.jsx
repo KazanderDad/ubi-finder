@@ -14,6 +14,8 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 
+import PageHeader from "@/components/ui/page-header";
+
 export default function About() {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -23,17 +25,11 @@ export default function About() {
     <>
       <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-12">
         <div className="max-w-4xl mx-auto">
-          <section className="mb-16">
-            <div className="text-center mb-8">
-              <div className="inline-block p-2 bg-green-100 rounded-full mb-4">
-                <Leaf className="w-8 h-8 text-green-700" />
-              </div>
-              <h1 className="text-3xl font-bold text-green-900">About UBI Finder</h1>
-              <p className="text-lg text-green-700 mt-2">
-                Connecting people with Universal Basic Income opportunities
-              </p>
-            </div>
-          </section>
+          <PageHeader
+            icon={Leaf}
+            title="About UBI Finder"
+            subtitle="Connecting people with verified Universal Basic Income and cash support opportunities worldwide."
+          />
 
           {/* About UBI Section */}
           <Card className="mb-10 shadow-md">
