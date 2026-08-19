@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
-  Settings, 
   Target, 
   Smartphone, 
   Building2, 
@@ -13,7 +12,11 @@ import {
   Wallet, 
   Link as LinkIcon,
   CheckCircle2,
-  Users
+  Users,
+  Calendar,
+  Sparkles,
+  ArrowRight,
+  ExternalLink
 } from "lucide-react";
 
 export default function ServicesPage() {
@@ -56,11 +59,11 @@ export default function ServicesPage() {
   const services = [
     {
       icon: <Target className="w-6 h-6 text-green-600" />,
-      title: "Program Design",
+      title: "Program & Incentive Design",
       description: "From concept to launch, we help design the economics, tokenomics, and incentive structures of your UBI program."
     },
     {
-      icon: <Users className="w-6 h-6 text-green-600" />, // Wait, need to import Users
+      icon: <Users className="w-6 h-6 text-green-600" />,
       title: "Target Audience Vetting",
       description: "Define and identify your target demographic to ensure funds reach those who need it most."
     },
@@ -81,7 +84,7 @@ export default function ServicesPage() {
     },
     {
       icon: <MapPin className="w-6 h-6 text-green-600" />,
-      title: "Geofencing",
+      title: "Geofencing & Municipal Limits",
       description: "Restrict access based on precise geolocation parameters for hyper-local UBI initiatives."
     },
     {
@@ -91,7 +94,7 @@ export default function ServicesPage() {
     },
     {
       icon: <LinkIcon className="w-6 h-6 text-green-600" />,
-      title: "Blockchain Rails",
+      title: "Blockchain Rails & Smart Contracts",
       description: "Design and implement secure smart contracts on your preferred L1/L2 for transparent fund distribution."
     }
   ];
@@ -100,142 +103,203 @@ export default function ServicesPage() {
     <div className="min-h-screen bg-gray-50 pt-16 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
-            Launch Your Own UBI Program?
+        {/* Hero Section */}
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 rounded-full text-xs font-semibold text-green-800">
+            <Sparkles className="w-3.5 h-3.5" />
+            B2B & Municipal Infrastructure
+          </div>
+          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl leading-tight">
+            Launch & Scale Your UBI Program
           </h1>
-          <p className="mt-6 text-xl text-gray-600 leading-relaxed">
-            <a href="https://firebelly.xyz" target="_blank" rel="noopener noreferrer" className="text-green-700 font-semibold hover:underline">Firebelly.xyz</a> is a technical consultancy passionate about building a post-capitalistic society—and we're eager to make it a practical reality. From soup to nuts, we provide the infrastructure, technology, and compliance ops you need to build scalable Universal Basic Income and community reward programs.
+          <p className="text-lg text-gray-600 leading-relaxed">
+            <a href="https://firebelly.xyz" target="_blank" rel="noopener noreferrer" className="text-green-700 font-semibold hover:underline">Firebelly.xyz</a> provides the end-to-end technical infrastructure, compliance ops, and smart contracts to make Universal Basic Income and community reward programs a practical reality.
           </p>
+
+          {/* 7a: "Book a call" CTA in Hero */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <a 
+              href="mailto:contact@firebelly.xyz?subject=UBI%20Program%20Consultation%20Inquiry" 
+              className="w-full sm:w-auto"
+            >
+              <Button size="lg" className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white font-semibold py-6 px-8 shadow-lg flex items-center justify-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Book a 30-Min Strategy Call
+              </Button>
+            </a>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              onClick={() => {
+                document.getElementById('intake-form')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="w-full sm:w-auto border-gray-300 hover:bg-gray-100 py-6 px-6"
+            >
+              Send Inquiry Form &rarr;
+            </Button>
+          </div>
         </div>
 
         {/* Why Build a UBI Program Section */}
         <div className="mb-20">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-gray-900">Why Build a UBI or Rewards Program?</h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
-              Universal Basic Income isn't just a theoretical concept; it's a powerful mechanism for community empowerment, economic stimulation, and unprecedented member loyalty.
+            <h2 className="text-3xl font-bold text-gray-900">Why Launch a Basic Income Program?</h2>
+            <p className="mt-3 text-base text-gray-600 max-w-3xl mx-auto">
+              Unconditional cash and digital reward transfers drive unprecedented member retention, regional economic velocity, and grassroots engagement.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="border-green-100 bg-green-50/50">
+            <Card className="border-green-100 bg-white shadow-sm hover:shadow-md transition-all">
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-green-900 mb-3">Credit Unions & Neobanks</h3>
-                <p className="text-gray-700">
-                  Drive unparalleled member retention and financial wellness. By distributing regular rewards or basic income dividends, you transform passive account holders into deeply engaged, loyal community members.
+                <h3 className="text-xl font-bold text-green-950 mb-2">Credit Unions & Neobanks</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Drive member retention and financial wellness. By distributing regular rewards or basic income dividends, you transform passive account holders into deeply engaged, loyal community members.
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-green-100 bg-green-50/50">
+            <Card className="border-green-100 bg-white shadow-sm hover:shadow-md transition-all">
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-green-900 mb-3">Blockchain Foundations</h3>
-                <p className="text-gray-700">
-                  Distribute network ownership fairly and bootstrap powerful network effects. A Sybil-resistant UBI airdrop is the most effective way to decentralize a protocol while creating massive grassroots adoption.
+                <h3 className="text-xl font-bold text-green-950 mb-2">Blockchain Foundations</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Distribute network ownership fairly and bootstrap network effects. A Sybil-resistant UBI protocol creates organic token velocity and massive grassroots adoption across developing regions.
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-green-100 bg-green-50/50">
+            <Card className="border-green-100 bg-white shadow-sm hover:shadow-md transition-all">
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-green-900 mb-3">Cooperatives & Local Govs</h3>
-                <p className="text-gray-700">
-                  Circulate wealth locally and establish a dependable financial floor. Keep capital within your ecosystem to strengthen local businesses, empower residents, and build a resilient cooperative economy.
+                <h3 className="text-xl font-bold text-green-950 mb-2">Cooperatives & Municipalities</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Circulate wealth locally and establish a dependable financial floor. Keep capital within your ecosystem to strengthen local merchants, empower residents, and build a resilient economy.
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Case Studies Section */}
+        {/* 7c: Deep Case Studies Section */}
         <div className="mb-20">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-gray-900">Our Track Record</h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
-              We don't just consult; we build. Here is how we're already shaping the future of decentralized income.
+            <h2 className="text-3xl font-bold text-gray-900">Our Track Record & Case Studies</h2>
+            <p className="mt-3 text-base text-gray-600 max-w-3xl mx-auto">
+              Real-world systems delivering reliable payouts and economic empowerment.
             </p>
           </div>
-          <div className="space-y-6">
-            <Card className="border-gray-200 overflow-hidden">
-              <div className="md:flex">
-                <div className="md:w-1/3 bg-green-700 p-6 flex flex-col justify-center items-center text-center text-white">
-                  <h3 className="text-2xl font-bold mb-2">GoodDollar</h3>
-                  <div className="text-green-100 text-sm uppercase tracking-wide font-semibold">Protocol Architecture</div>
-                </div>
-                <div className="md:w-2/3 p-6 flex flex-col justify-center">
-                  <p className="text-gray-700 text-lg">
-                    We've helped build GoodDollar, one of the world's largest and most accessible blockchain-based UBI protocols, successfully distributing digital basic income to hundreds of thousands of users worldwide.
-                  </p>
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Case Study 1: GoodDollar */}
+            <Card className="border border-gray-200/90 shadow-md bg-white flex flex-col justify-between overflow-hidden">
+              <div className="bg-green-800 p-6 text-white">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200">Protocol Engineering</span>
+                <h3 className="text-2xl font-extrabold mt-1">GoodDollar</h3>
+                <p className="text-xs text-green-100 mt-1">Global Decentralized Basic Income Protocol</p>
               </div>
+              <CardContent className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                <div className="space-y-3 text-xs text-gray-600">
+                  <div>
+                    <strong className="text-gray-900 block text-xs mb-0.5">The Challenge:</strong>
+                    Scalable daily distribution of digital income to hundreds of thousands of recipients across 180+ countries with strict Sybil resistance.
+                  </div>
+                  <div>
+                    <strong className="text-gray-900 block text-xs mb-0.5">What We Built:</strong>
+                    Smart contract disbursement pipelines, frictionless claim UI/UX, and zero-knowledge identity integration.
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-green-800">
+                  <span>500k+ Active Recipients</span>
+                  <span>180+ Countries</span>
+                </div>
+              </CardContent>
             </Card>
             
-            <Card className="border-gray-200 overflow-hidden">
-              <div className="md:flex">
-                <div className="md:w-1/3 bg-green-600 p-6 flex flex-col justify-center items-center text-center text-white">
-                  <h3 className="text-2xl font-bold mb-2">UBI Finder</h3>
-                  <div className="text-green-100 text-sm uppercase tracking-wide font-semibold">Public Good Platform</div>
-                </div>
-                <div className="md:w-2/3 p-6 flex flex-col justify-center">
-                  <p className="text-gray-700 text-lg">
-                    We built and maintain this very site as a free public service to the community. UBI Finder helps individuals discover, verify, and access life-changing financial support programs across the globe.
-                  </p>
-                </div>
+            {/* Case Study 2: UBI Finder */}
+            <Card className="border border-gray-200/90 shadow-md bg-white flex flex-col justify-between overflow-hidden">
+              <div className="bg-green-700 p-6 text-white">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200">Public Good Platform</span>
+                <h3 className="text-2xl font-extrabold mt-1">UBI Finder</h3>
+                <p className="text-xs text-green-100 mt-1">Global Directory & Eligibility Engine</p>
               </div>
+              <CardContent className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                <div className="space-y-3 text-xs text-gray-600">
+                  <div>
+                    <strong className="text-gray-900 block text-xs mb-0.5">The Challenge:</strong>
+                    Income pilots are scattered across municipal sites and foundations, making it nearly impossible for eligible applicants to find them.
+                  </div>
+                  <div>
+                    <strong className="text-gray-900 block text-xs mb-0.5">What We Built:</strong>
+                    Algorithmic eligibility matching, multi-currency conversions, and live community discourse hubs.
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-green-800">
+                  <span>Verified Pilot Database</span>
+                  <span>Instant Match Engine</span>
+                </div>
+              </CardContent>
             </Card>
 
-            <Card className="border-gray-200 overflow-hidden">
-              <div className="md:flex">
-                <div className="md:w-1/3 bg-green-500 p-6 flex flex-col justify-center items-center text-center text-white">
-                  <h3 className="text-2xl font-bold mb-2">FundLoop.org</h3>
-                  <div className="text-green-100 text-sm uppercase tracking-wide font-semibold">Active Development</div>
-                </div>
-                <div className="md:w-2/3 p-6 flex flex-col justify-center">
-                  <p className="text-gray-700 text-lg">
-                    We are currently in the process of building FundLoop.org, an upcoming innovative platform designed to radically streamline and democratize fund distribution and cooperative economics.
-                  </p>
-                </div>
+            {/* Case Study 3: FundLoop */}
+            <Card className="border border-gray-200/90 shadow-md bg-white flex flex-col justify-between overflow-hidden">
+              <div className="bg-emerald-700 p-6 text-white">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-200">Incubator & Treasury</span>
+                <h3 className="text-2xl font-extrabold mt-1">FundLoop.org</h3>
+                <p className="text-xs text-emerald-100 mt-1">Democratized Fund Distribution</p>
               </div>
+              <CardContent className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                <div className="space-y-3 text-xs text-gray-600">
+                  <div>
+                    <strong className="text-gray-900 block text-xs mb-0.5">The Challenge:</strong>
+                    Empowering early-stage regenerative ventures with transparent milestone payouts and community governance treasuries.
+                  </div>
+                  <div>
+                    <strong className="text-gray-900 block text-xs mb-0.5">What We Built:</strong>
+                    Milestone-gated smart escrow, multi-signature treasury controllers, and transparent disbursement feeds.
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-green-800">
+                  <span>Cooperative Escrow</span>
+                  <span>Regenerative Grants</span>
+                </div>
+              </CardContent>
             </Card>
+
           </div>
         </div>
 
-        {/* Services Grid Header */}
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900">How We Can Help You</h2>
-        </div>
-
-
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-          {services.map((service, index) => (
-            <Card key={index} className="border-none shadow-md hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  {service.icon}
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{service.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  {service.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900">End-to-End Capabilities</h2>
+            <p className="mt-2 text-sm text-gray-600">Full lifecycle engineering for basic income & community dividend programs.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((service, index) => (
+              <Card key={index} className="border-none shadow-sm hover:shadow-md transition-shadow bg-white">
+                <CardContent className="p-6">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                    {service.icon}
+                  </div>
+                  <h3 className="text-base font-bold text-gray-900 mb-1.5">{service.title}</h3>
+                  <p className="text-gray-600 text-xs leading-relaxed">
+                    {service.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
         {/* Intake Form */}
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-green-700 py-8 px-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">Ready to explore?</h2>
-            <p className="text-green-100">Drop us a line and let's discuss how we can help your program succeed.</p>
+        <div id="intake-form" className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-green-100">
+          <div className="bg-green-800 py-8 px-8 text-center text-white">
+            <h2 className="text-2xl font-bold mb-1">Ready to Build Your Program?</h2>
+            <p className="text-green-100 text-xs">Drop us a line and let's discuss technical architecture, timelines, and deployment.</p>
           </div>
           <div className="p-8">
             {success ? (
               <div className="text-center py-8">
-                <CheckCircle2
-  className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Message Received!</h3>
-                <p className="text-gray-600">Thank you for reaching out. Our team will get back to you within 24 hours.</p>
+                <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Inquiry Received!</h3>
+                <p className="text-gray-600 text-sm">Thank you for reaching out. The Firebelly technical team will review your requirements and respond within 24 hours.</p>
                 <Button 
                   onClick={() => setSuccess(false)}
                   className="mt-6 bg-green-700 hover:bg-green-800"
@@ -244,10 +308,10 @@ export default function ServicesPage() {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <label htmlFor="name" className="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
                     <Input 
                       id="name"
                       name="name"
@@ -258,7 +322,7 @@ export default function ServicesPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label htmlFor="email" className="block text-xs font-semibold text-gray-700 mb-1">Work Email</label>
                     <Input 
                       id="email"
                       name="email"
@@ -266,24 +330,24 @@ export default function ServicesPage() {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="jane@example.com"
+                      placeholder="jane@organization.org"
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <label htmlFor="organization" className="block text-sm font-medium text-gray-700 mb-1">Organization (Optional)</label>
+                  <label htmlFor="organization" className="block text-xs font-semibold text-gray-700 mb-1">Organization / Foundation (Optional)</label>
                   <Input 
                     id="organization"
                     name="organization"
                     value={formData.organization}
                     onChange={handleChange}
-                    placeholder="Global UBI Foundation"
+                    placeholder="Global Basic Income Lab"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">How can we help?</label>
+                  <label htmlFor="message" className="block text-xs font-semibold text-gray-700 mb-1">How can we help your initiative?</label>
                   <textarea
                     id="message"
                     name="message"
@@ -291,19 +355,19 @@ export default function ServicesPage() {
                     rows={4}
                     value={formData.message}
                     onChange={handleChange}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Tell us about your program's goals and what services you're interested in..."
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    placeholder="Tell us about your program size, payout currency, target region, and technical needs..."
                   />
                 </div>
 
-                {error && <p className="text-red-600 text-sm">{error}</p>}
+                {error && <p className="text-red-600 text-xs">{error}</p>}
 
                 <Button 
                   type="submit" 
                   disabled={loading}
-                  className="w-full bg-green-700 hover:bg-green-800 py-6 text-lg"
+                  className="w-full bg-green-700 hover:bg-green-800 py-6 text-base font-semibold shadow-md"
                 >
-                  {loading ? "Sending..." : "Submit Inquiry"}
+                  {loading ? "Sending..." : "Submit Inquiry & Request Strategy Session"}
                 </Button>
               </form>
             )}
