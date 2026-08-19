@@ -1,11 +1,11 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
+import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 // Country to currency mapping
@@ -67,6 +67,7 @@ function WhyTooltip() {
 }
 
 export default function UserForm({ onSubmit }) {
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     country: "",
     state: "",
@@ -79,6 +80,9 @@ export default function UserForm({ onSubmit }) {
     currency: "USD",
   });
 
+  const [matchingCount, setMatchingCount] = useState(null);
+  const [loadingCount, setLoadingCount] = useState(false);
+
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -88,16 +92,45 @@ export default function UserForm({ onSubmit }) {
   const stateOptions = formData.country === "United States" ? US_STATES : CANADIAN_PROVINCES;
   const isMultiPerson = formData.household_size > 1;
 
+  // 2b: Inline program count preview query
+  useEffect(() => {
+    if (!formData.country) {
+      setMatchingCount(null);
+      return;
+    }
+    const fetchCount = async () => {
+      setLoadingCount(true);
+      try {
+        const { data, error } = await supabase
+          .from('programs')
+          .select('id, available_regions');
+        if (!error && data) {
+          const matching = data.filter(p => {
+            const regions = p.available_regions || [];
+            return regions.length === 0 || regions.includes(formData.country) || regions.includes("Global") || regions.includes("Worldwide");
+          });
+          setMatchingCount(matching.length || data.length);
+        }
+      } catch (err) {
+        console.error("Count fetch error:", err);
+      } finally {
+        setLoadingCount(false);
+      }
+    };
+    fetchCount();
+  }, [formData.country]);
+
+  // Step 1 validation
+  const isStep1Valid = formData.country !== "" && (!needsState || formData.state !== "");
+
+  // Step 2 validation
   const genderSatisfied = isMultiPerson
     ? formData.women_count !== ""
     : formData.gender !== "";
+  const isStep2Valid = formData.income_range !== "" && genderSatisfied;
 
-  const isFormValid =
-    formData.country !== "" &&
-    (!needsState || formData.state !== "") &&
-    formData.income_range !== "" &&
-    genderSatisfied &&
-    email.trim() !== "";
+  // Step 3 validation
+  const isStep3Valid = email.trim() !== "";
 
   const handleChange = (field, value) => {
     setFormData(prev => {
@@ -116,9 +149,8 @@ export default function UserForm({ onSubmit }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    if (!isStep1Valid || !isStep2Valid || !isStep3Valid) return;
 
-    // Save profile data to localStorage so it's available after magic link login
     localStorage.setItem("pendingProfile", JSON.stringify(formData));
 
     setSending(true);
@@ -142,159 +174,261 @@ export default function UserForm({ onSubmit }) {
 
   if (sent) {
     return (
-      <Card className="shadow-lg">
-        <CardContent className="p-8 text-center space-y-3">
-          <div className="text-4xl">📬</div>
-          <h3 className="text-lg font-semibold text-green-900">Thanks!</h3>
-          <p className="text-gray-600 text-sm leading-relaxed">
-            We've sent you an email. Please click the link there to verify your email and access your report.
+      <Card className="shadow-lg border-green-100 bg-white/95">
+        <CardContent className="p-8 text-center space-y-4">
+          <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
+            📬
+          </div>
+          <h3 className="text-2xl font-bold text-green-950">Almost There!</h3>
+          <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
+            We've sent a magic login link to <span className="font-semibold text-green-800">{email}</span>. Please click the link in your inbox to verify your email and instantly access your personalized report.
           </p>
+          <div className="pt-2 text-xs text-gray-400">
+            Did not receive it? Check your spam folder or try again.
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="shadow-lg">
-      <CardContent className="p-6">
+    <Card className="shadow-xl border-green-100 bg-white/95">
+      <CardContent className="p-6 md:p-8">
+        {/* 2a. Multi-step Progress Bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-500 mb-2">
+            <span className={step >= 1 ? "text-green-700 font-bold" : ""}>1. Location</span>
+            <span className={step >= 2 ? "text-green-700 font-bold" : ""}>2. Household</span>
+            <span className={step >= 3 ? "text-green-700 font-bold" : ""}>3. Delivery</span>
+          </div>
+          <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+            <div 
+              className="bg-green-600 h-full transition-all duration-300 rounded-full"
+              style={{ width: `${(step / 3) * 100}%` }}
+            />
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* Country */}
-          <div>
-            <Label htmlFor="country">Country <span className="text-red-500">*</span></Label>
-            <Select value={formData.country} onValueChange={(v) => handleChange("country", v)}>
-              <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
-              <SelectContent>
-                {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* State / Province */}
-          {needsState && (
-            <div>
-              <Label htmlFor="state">State/Province <span className="text-red-500">*</span></Label>
-              <Select value={formData.state} onValueChange={(v) => handleChange("state", v)}>
-                <SelectTrigger><SelectValue placeholder="Select state/province" /></SelectTrigger>
-                <SelectContent>
-                  {stateOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Household Size */}
-          <div>
-            <Label htmlFor="household">Household Size <span className="text-red-500">*</span></Label>
-            <Select
-              value={formData.household_size.toString()}
-              onValueChange={(v) => handleChange("household_size", parseInt(v))}
-            >
-              <SelectTrigger><SelectValue placeholder="Select household size" /></SelectTrigger>
-              <SelectContent>
-                {[1,2,3,4,5,6,7,8].map(n => (
-                  <SelectItem key={n} value={n.toString()}>{n} {n === 1 ? "person" : "people"}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Gender (single) or Women count (multi) */}
-          {!isMultiPerson ? (
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label htmlFor="gender">Gender <span className="text-red-500">*</span></Label>
-                <WhyTooltip />
+          {/* STEP 1: Location */}
+          {step === 1 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              <div>
+                <Label htmlFor="country" className="text-sm font-semibold text-gray-800">
+                  Where do you live? <span className="text-red-500">*</span>
+                </Label>
+                <Select value={formData.country} onValueChange={(v) => handleChange("country", v)}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select your country" /></SelectTrigger>
+                  <SelectContent>
+                    {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={formData.gender} onValueChange={(v) => handleChange("gender", v)}>
-                <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="abstain">Prefer not to disclose</SelectItem>
-                </SelectContent>
-              </Select>
+
+              {needsState && (
+                <div>
+                  <Label htmlFor="state" className="text-sm font-semibold text-gray-800">
+                    State / Province <span className="text-red-500">*</span>
+                  </Label>
+                  <Select value={formData.state} onValueChange={(v) => handleChange("state", v)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select state/province" /></SelectTrigger>
+                    <SelectContent>
+                      {stateOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* 2b. Inline program count preview */}
+              {formData.country && (
+                <div className="p-3.5 bg-green-50/90 border border-green-200 rounded-xl flex items-center gap-2.5 text-xs text-green-900 animate-in fade-in">
+                  <Sparkles className="w-4 h-4 text-green-700 flex-shrink-0" />
+                  <span>
+                    {loadingCount ? (
+                      "Checking available programs..."
+                    ) : matchingCount ? (
+                      <>We found <strong>{matchingCount} income programs</strong> available in {formData.country}.</>
+                    ) : (
+                      <>Programs found in {formData.country}.</>
+                    )}
+                  </span>
+                </div>
+              )}
+
+              <Button
+                type="button"
+                disabled={!isStep1Valid}
+                onClick={() => setStep(2)}
+                className="w-full bg-green-700 hover:bg-green-800 text-white font-medium py-2.5 shadow-md flex items-center justify-center gap-2"
+              >
+                Continue to Step 2
+                <ArrowRight className="w-4 h-4" />
+              </Button>
             </div>
-          ) : (
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label htmlFor="women_count">How many in your household are girls / women? <span className="text-red-500">*</span></Label>
-                <WhyTooltip />
+          )}
+
+          {/* STEP 2: Household & Income */}
+          {step === 2 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              <div>
+                <Label htmlFor="household" className="text-sm font-semibold text-gray-800">
+                  Household Size <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.household_size.toString()}
+                  onValueChange={(v) => handleChange("household_size", parseInt(v))}
+                >
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select household size" /></SelectTrigger>
+                  <SelectContent>
+                    {[1,2,3,4,5,6,7,8].map(n => (
+                      <SelectItem key={n} value={n.toString()}>{n} {n === 1 ? "person" : "people"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={formData.women_count} onValueChange={(v) => handleChange("women_count", v)}>
-                <SelectTrigger><SelectValue placeholder="Select number" /></SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: formData.household_size + 1 }, (_, i) => i).map(n => (
-                    <SelectItem key={n} value={n.toString()}>{n === 0 ? "None" : n}</SelectItem>
-                  ))}
-                  <SelectItem value="abstain">Prefer not to disclose</SelectItem>
-                </SelectContent>
-              </Select>
+
+              {!isMultiPerson ? (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label htmlFor="gender" className="text-sm font-semibold text-gray-800">
+                      Gender <span className="text-red-500">*</span>
+                    </Label>
+                    <WhyTooltip />
+                  </div>
+                  <Select value={formData.gender} onValueChange={(v) => handleChange("gender", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="abstain">Prefer not to disclose</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label htmlFor="women_count" className="text-sm font-semibold text-gray-800">
+                      How many in your household are girls / women? <span className="text-red-500">*</span>
+                    </Label>
+                    <WhyTooltip />
+                  </div>
+                  <Select value={formData.women_count} onValueChange={(v) => handleChange("women_count", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select number" /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: formData.household_size + 1 }, (_, i) => i).map(n => (
+                        <SelectItem key={n} value={n.toString()}>{n === 0 ? "None" : n}</SelectItem>
+                      ))}
+                      <SelectItem value="abstain">Prefer not to disclose</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="income" className="text-sm font-semibold text-gray-800">
+                  Annual Household Income <span className="text-red-500">*</span>
+                </Label>
+                <Select value={formData.income_range} onValueChange={(v) => handleChange("income_range", v)}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select income range" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0-20k">$0 – $20,000</SelectItem>
+                    <SelectItem value="20k-40k">$20,001 – $40,000</SelectItem>
+                    <SelectItem value="40k-60k">$40,001 – $60,000</SelectItem>
+                    <SelectItem value="60k+">$60,001+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  className="w-1/3 border-gray-300 flex items-center justify-center gap-1.5"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!isStep2Valid}
+                  onClick={() => setStep(3)}
+                  className="w-2/3 bg-green-700 hover:bg-green-800 text-white font-medium flex items-center justify-center gap-2"
+                >
+                  Continue to Step 3
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* Annual Income */}
-          <div>
-            <Label htmlFor="income">Annual Household Income <span className="text-red-500">*</span></Label>
-            <Select value={formData.income_range} onValueChange={(v) => handleChange("income_range", v)}>
-              <SelectTrigger><SelectValue placeholder="Select income range" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0-20k">$0 – $20,000</SelectItem>
-                <SelectItem value="20k-40k">$20,001 – $40,000</SelectItem>
-                <SelectItem value="40k-60k">$40,001 – $60,000</SelectItem>
-                <SelectItem value="60k+">$60,001+</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* STEP 3: Delivery & Email */}
+          {step === 3 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              <div className="p-4 bg-gray-50/80 rounded-xl space-y-4 border border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium text-gray-900">Accept Foreign Currency</Label>
+                    <p className="text-xs text-gray-500">Willing to receive payments in non-local currencies</p>
+                  </div>
+                  <Switch
+                    checked={formData.accepts_foreign_currency}
+                    onCheckedChange={(v) => handleChange("accepts_foreign_currency", v)}
+                  />
+                </div>
 
-          {/* Toggles */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Accept Foreign Currency</Label>
-              <p className="text-sm text-gray-500">Willing to receive payments in foreign currencies</p>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200/60">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium text-gray-900">Accept Digital Currency</Label>
+                    <p className="text-xs text-gray-500">Willing to receive digital wallet / crypto payments</p>
+                  </div>
+                  <Switch
+                    checked={formData.accepts_digital_currency}
+                    onCheckedChange={(v) => handleChange("accepts_digital_currency", v)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="email" className="text-sm font-semibold text-gray-800">
+                  Email Address <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-gray-400 mt-1">We'll send your verified matching program report directly here.</p>
+              </div>
+
+              {sendError && (
+                <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">{sendError}</p>
+              )}
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(2)}
+                  className="w-1/3 border-gray-300 flex items-center justify-center gap-1.5"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!isStep3Valid || sending}
+                  className="w-2/3 bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {sending ? "Sending Link..." : "Find Available Programs"}
+                </Button>
+              </div>
             </div>
-            <Switch
-              checked={formData.accepts_foreign_currency}
-              onCheckedChange={(v) => handleChange("accepts_foreign_currency", v)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Accept Digital Currency</Label>
-              <p className="text-sm text-gray-500">Willing to receive digital payments (crypto)</p>
-            </div>
-            <Switch
-              checked={formData.accepts_digital_currency}
-              onCheckedChange={(v) => handleChange("accepts_digital_currency", v)}
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <Label htmlFor="email">Email Address <span className="text-red-500">*</span></Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <p className="text-xs text-gray-400 mt-1">We'll send your personalised program report to this address.</p>
-          </div>
-
-          {sendError && (
-            <p className="text-sm text-red-600">{sendError}</p>
           )}
-
-          <Button
-            type="submit"
-            disabled={!isFormValid || sending}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {sending ? "Sending…" : "Find Available Programs"}
-          </Button>
         </form>
       </CardContent>
     </Card>
