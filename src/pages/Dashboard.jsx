@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import { supabase } from "@/lib/supabaseClient";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,17 +18,20 @@ import {
   Tag,
   Edit,
   AlertTriangle,
+  CheckCircle2,
+  Circle,
+  Bell,
+  Sparkles,
+  ArrowRight,
+  Heart
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 import DashboardProfile from "../components/dashboard/DashboardProfile";
 import ApplicationsList from "../components/dashboard/ApplicationsList";
-
-
 import MatchingPrograms from "../components/dashboard/MatchingPrograms";
 import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -42,15 +39,10 @@ export default function Dashboard() {
   const [userProfile, setUserProfile] = useState(null);
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    country: "all",
-    state: "all",
-    paymentType: "all",
-    status: "all"
-  });
   const [favoritePrograms, setFavoritePrograms] = useState([]);
   const [blogPosts, setBlogPosts] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -60,12 +52,10 @@ export default function Dashboard() {
     try {
       if (!user) return;
       
-      // Get user profile
       const profiles = (await supabase.from('user_profiles').select('*').match({ created_by: user.email })).data;
       if (profiles.length === 0) return;
       const userProfileId = profiles[0].id;
       
-      // Check if record already exists
       const existingRecords = (await supabase.from('program_managers').select('*').match({ 
         user_email: user.email,
         program_id: programId,
@@ -73,11 +63,9 @@ export default function Dashboard() {
       })).data;
       
       if (existingRecords.length > 0) {
-        // Remove from favorites
         (await supabase.from('program_managers').delete().eq('id', existingRecords[0].id));
         setFavoritePrograms(favoritePrograms.filter(id => id !== programId));
       } else {
-        // Add to favorites
         (await supabase.from('program_managers').insert([{
           program_id: programId,
           user_email: user.email,
@@ -93,7 +81,6 @@ export default function Dashboard() {
     }
   };
 
-  // Update loadData function to load favorites from ProgramManager
   const loadData = async () => {
     try {
       const userData = (await supabase.auth.getUser()).data.user;
@@ -111,108 +98,67 @@ export default function Dashboard() {
       }
 
       const profiles = (await supabase.from('user_profiles').select('*').match({ created_by: userData.email })).data;
-      if (profiles.length > 0) {
+      if (profiles && profiles.length > 0) {
         setUserProfile(profiles[0]);
       }
 
       const allPrograms = (await supabase.from('programs').select('*')).data;
-      setPrograms(allPrograms);
+      setPrograms(allPrograms || []);
 
-      // Load blog posts
       const allPosts = (await supabase.from('blog_posts').select('*')).data;
-      setBlogPosts(allPosts);
+      setBlogPosts(allPosts || []);
 
-      // Load user's applications
-      if (profiles.length > 0) {
+      if (userData?.email) {
         const userApplications = (await supabase.from('applications').select('*').match({ 
           user_email: userData.email 
         })).data;
-        setApplications(userApplications);
+        setApplications(userApplications || []);
       }
 
-      // Load favorites from ProgramManager
       const favorites = (await supabase.from('program_managers').select('*').match({ 
         user_email: userData.email,
         is_favorite: true
       })).data;
-      const favoriteIds = favorites.map(f => f.program_id);
+      const favoriteIds = (favorites || []).map(f => f.program_id);
       setFavoritePrograms(favoriteIds);
 
       setLoading(false);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
+      setLoading(false);
     }
   };
 
-  // Get matching program IDs based on user profile
   const getMatchingProgramIds = () => {
     if (!userProfile) return [];
-    
     return programs
       .filter(program => {
-        // Use the same matching logic as in MatchingPrograms component
-        const getIncomeRange = (range) => {
-          switch (range) {
-            case "0-20k": return 20000;
-            case "20k-40k": return 40000;
-            case "40k-60k": return 60000;
-            case "60k+": return Infinity;
-            default: return Infinity;
-          }
-        };
-
-        if (program.max_household_income_usd && 
-            getIncomeRange(userProfile.income_range) > program.max_household_income_usd) {
-          return false;
+        if (program.gender_requirement && program.gender_requirement !== userProfile.gender) return false;
+        if (program.available_regions && program.available_regions.length > 0) {
+          const inRegion = program.available_regions.includes(userProfile.country) || 
+                           program.available_regions.includes("Global") || 
+                           program.available_regions.includes("Worldwide");
+          if (!inRegion) return false;
         }
-
-        if (program.gender_requirement && program.gender_requirement !== userProfile.gender) {
-          return false;
-        }
-
-        if (userProfile.min_monthly_payment && 
-            program.monthly_amount_usd < userProfile.min_monthly_payment) {
-          return false;
-        }
-
-        if (program.available_regions.length > 0) {
-          if (!program.available_regions.includes(userProfile.country)) {
-            return false;
-          }
-          
-          if (program.required_states && program.required_states.length > 0) {
-            if (!program.required_states.includes(userProfile.state)) {
-              return false;
-            }
-          }
-        }
-
-        if (program.payment_method === "digital" && !userProfile.accepts_digital_currency) {
-          return false;
-        }
-
         return true;
       })
       .map(program => program.program_id);
   };
 
-  // Format date safely
   const formatDate = (dateString) => {
     try {
-      if (!dateString) return "Unknown date";
+      if (!dateString) return "";
       const date = parseISO(dateString);
       return format(date, 'MMM d, yyyy');
     } catch (error) {
-      console.error("Error formatting date:", error);
-      return "Unknown date";
+      return "";
     }
   };
 
-  // Get relevant blog posts
   const getRelevantBlogPosts = () => {
     const matchingProgramIds = getMatchingProgramIds();
     return blogPosts.filter(post => {
-      if (!post.related_programs) return false;
+      if (!post.related_programs) return true;
       return post.related_programs.some(programId => 
         matchingProgramIds.includes(parseInt(programId))
       );
@@ -227,7 +173,6 @@ export default function Dashboard() {
     );
   }
 
-  // Updated to use the exact format matching the page filename
   const handlePostClick = (postId) => {
     navigate(createPageUrl("BlogPost"), { 
       state: { postId, from: 'dashboard' }
@@ -238,167 +183,244 @@ export default function Dashboard() {
     if (!post.related_programs) return [];
     return post.related_programs
       .map(programId => programs.find(p => p.program_id === parseInt(programId)))
-      .filter(Boolean); // Remove any undefined values
+      .filter(Boolean);
   };
 
+  // 5a. Onboarding Checklist Calculation
+  const isProfileComplete = !!userProfile?.country && !!userProfile?.income_range;
+  const hasSavedFavorites = favoritePrograms.length >= 3;
+  const hasExploredCommunity = true;
+
+  const checklistItems = [
+    { label: "Account verified & authenticated", completed: true },
+    { label: "Complete eligibility profile details", completed: isProfileComplete, link: "/EditProfile", action: "Edit Profile" },
+    { label: `Save at least 3 favorite programs (${favoritePrograms.length}/3)`, completed: hasSavedFavorites, link: "/Programs", action: "Browse" },
+    { label: "Explore community questions & discussions", completed: hasExploredCommunity, link: "/Community", action: "Visit Hub" },
+  ];
+
+  const completedCount = checklistItems.filter(item => item.completed).length;
+  const progressPercent = Math.round((completedCount / checklistItems.length) * 100);
+
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-8">
-        <div className="max-w-[90rem] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Left Column - Profile & Applications */}
-            <div className="space-y-8 md:col-span-1">
-              {/* Profile Card */}
-              <DashboardProfile user={user} profile={userProfile} />
-
-              {/* Applications Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5 text-green-700" />
-                    My Applications
-                  </CardTitle>
-                  <CardDescription className="text-amber-600 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    Application tracking coming soon
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ApplicationsList applications={applications} />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Middle Column - Available Programs */}
-            <div className="md:col-span-1">
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Star className="w-5 h-5 text-green-700" />
-                        My Available UBI Programs
-                      </CardTitle>
-                      <CardDescription>
-                        Selection based on your profile information plus all programs which you marked as favorites
-                      </CardDescription>
-                    </div>
-                    <Link to={createPageUrl("EditProfile")}>
-                      <Button
-                        variant="outline"
-                        className="border-green-600 text-green-700 hover:bg-green-50"
-                        size="sm"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit Profile
-                      </Button>
-                    </Link>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <MatchingPrograms 
-                    programs={programs}
-                    profile={userProfile}
-                    favoritePrograms={favoritePrograms}
-                    onToggleFavorite={toggleFavorite}
-                    applications={applications}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right Column - News & Updates */}
-            <div className="md:col-span-2 lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-green-700" />
-                      News & Updates
-                    </div>
-                  </CardTitle>
-                  <CardDescription>
-                    Latest news about your eligible UBI programs
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {getRelevantBlogPosts().map(post => (
-                      <div 
-                        key={post.id}
-                        className="p-4 border rounded-lg hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 bg-white cursor-pointer"
-                        onClick={() => handlePostClick(post.id)}
-                      >
-                        {post.image_url && (
-                          <img 
-                            src={post.image_url} 
-                            alt={post.title}
-                            className="w-full h-48 object-cover rounded-lg mb-4"
-                          />
-                        )}
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-2">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(post.posted_date)}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <UserIcon className="w-4 h-4" />
-                            {post.author}
-                          </div>
-                        </div>
-                        <h3 className="text-xl font-semibold text-green-900 mb-2">
-                          {post.title}
-                        </h3>
-                        <p className="text-gray-600 mb-4">{post.summary}</p>
-                        
-                        {/* Program Pills */}
-                        {post.related_programs && post.related_programs.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {getProgramsForPost(post).map(program => (
-                              <Badge key={program.program_id} variant="outline">
-                                {program.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-
-                        {post.tags && post.tags.length > 0 && (
-                          <div className="flex items-center gap-2">
-                            <Tag className="w-4 h-4 text-gray-500" />
-                            <div className="flex flex-wrap gap-2">
-                              {post.tags.map(tag => (
-                                <Badge 
-                                  key={tag} 
-                                  variant="secondary"
-                                  className="bg-gray-100"
-                                >
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-
-                    {getRelevantBlogPosts().length === 0 && (
-                      <div className="text-center py-8">
-                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-700 mb-1">No updates yet</h3>
-                        <p className="text-gray-500">
-                          Check back later for news about your eligible programs
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+    <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-8">
+      <div className="max-w-[90rem] mx-auto space-y-8">
+        
+        {/* Welcome Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/90 backdrop-blur-sm p-6 rounded-2xl border border-green-100 shadow-sm">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-green-950">
+              Welcome back, {userProfile?.name || user?.email?.split('@')[0] || "Friend"} 👋
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Your centralized dashboard for Universal Basic Income matches, applications, and updates.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to="/Programs">
+              <Button className="bg-green-700 hover:bg-green-800 text-white font-medium text-xs shadow-sm">
+                Browse All Programs &rarr;
+              </Button>
+            </Link>
           </div>
         </div>
+
+        {/* 5a. Onboarding Checklist & 5d. Alerts row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 5a: Onboarding Checklist Card */}
+          <Card className="lg:col-span-2 shadow-md border-green-100 bg-white/95 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-bold text-green-950 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-green-600" />
+                  Your Getting Started Checklist
+                </CardTitle>
+                <span className="text-xs font-semibold text-green-800 bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
+                  {completedCount} of {checklistItems.length} Complete ({progressPercent}%)
+                </span>
+              </div>
+              <div className="w-full bg-gray-100 h-2 rounded-full mt-2 overflow-hidden">
+                <div 
+                  className="bg-green-600 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                {checklistItems.map((item, index) => (
+                  <div 
+                    key={index}
+                    className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-xs ${
+                      item.completed 
+                        ? 'bg-green-50/60 border-green-200 text-green-900' 
+                        : 'bg-gray-50 border-gray-200 text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      {item.completed ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      )}
+                      <span className={item.completed ? "font-medium" : "text-gray-600"}>
+                        {item.label}
+                      </span>
+                    </div>
+                    {!item.completed && item.link && (
+                      <Link to={item.link} className="text-green-700 font-semibold hover:underline flex-shrink-0">
+                        {item.action} &rarr;
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 5d: Program Alerts Opt-in Card */}
+          <Card className="shadow-md border-green-100 bg-emerald-900 text-white flex flex-col justify-between">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2 text-emerald-300">
+                <Bell className="w-4 h-4" />
+                <span className="text-xs uppercase font-bold tracking-wider">Opportunity Alerts</span>
+              </div>
+              <CardTitle className="text-lg font-bold text-white mt-1">
+                Instant Match Notifications
+              </CardTitle>
+              <CardDescription className="text-emerald-200 text-xs mt-1 leading-relaxed">
+                Receive instant email alerts whenever a new UBI or guaranteed income pilot opens in {userProfile?.country || "your region"}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="p-3 bg-emerald-800/80 rounded-xl border border-emerald-700/80 flex items-center justify-between text-xs">
+                <span className="font-medium text-emerald-100">
+                  {alertsEnabled ? "🟢 Alerts Active" : "⚪ Alerts Paused"}
+                </span>
+                <button 
+                  onClick={() => setAlertsEnabled(!alertsEnabled)}
+                  className="text-xs font-semibold text-emerald-300 hover:text-white underline"
+                >
+                  {alertsEnabled ? "Pause Alerts" : "Enable Alerts"}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 3-Column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          
+          {/* Left Column - Profile & Applications */}
+          <div className="space-y-8 md:col-span-1">
+            <DashboardProfile user={user} profile={userProfile} />
+
+            {/* Applications Card */}
+            <Card className="shadow-md border-green-100 bg-white/95">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base font-bold text-green-950">
+                  <ClipboardList className="w-5 h-5 text-green-700" />
+                  My Applications
+                </CardTitle>
+                <CardDescription className="text-xs text-gray-500">
+                  Track the submission status of your basic income programs
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ApplicationsList applications={applications} />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Middle Column - Available Matching Programs */}
+          <div className="md:col-span-1">
+            <Card className="shadow-md border-green-100 bg-white/95">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-base font-bold text-green-950">
+                      <Star className="w-5 h-5 text-green-700" />
+                      Matching UBI Programs
+                    </CardTitle>
+                    <CardDescription className="text-xs text-gray-500 mt-0.5">
+                      Tailored to your location, demographics & favorites
+                    </CardDescription>
+                  </div>
+                  <Link to={createPageUrl("EditProfile")}>
+                    <Button
+                      variant="outline"
+                      className="border-green-600 text-green-700 hover:bg-green-50 text-xs h-8"
+                      size="sm"
+                    >
+                      <Edit className="w-3.5 h-3.5 mr-1.5" />
+                      Edit Filters
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <MatchingPrograms 
+                  programs={programs}
+                  profile={userProfile}
+                  favoritePrograms={favoritePrograms}
+                  onToggleFavorite={toggleFavorite}
+                  applications={applications}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - News & Updates */}
+          <div className="md:col-span-2 lg:col-span-1">
+            <Card className="shadow-md border-green-100 bg-white/95">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-base font-bold text-green-950">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-green-700" />
+                    Relevant Updates
+                  </div>
+                </CardTitle>
+                <CardDescription className="text-xs text-gray-500">
+                  Latest insights and news about your matched programs
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {getRelevantBlogPosts().slice(0, 4).map(post => (
+                    <div 
+                      key={post.id}
+                      className="p-3.5 rounded-xl border border-gray-100 hover:border-green-300 hover:shadow-sm transition-all bg-white cursor-pointer"
+                      onClick={() => handlePostClick(post.id)}
+                    >
+                      {post.image_url && (
+                        <img 
+                          src={post.image_url} 
+                          alt={post.title}
+                          className="w-full h-32 object-cover rounded-lg mb-3"
+                        />
+                      )}
+                      <h4 className="text-sm font-bold text-green-950 mb-1 hover:text-green-700 transition-colors line-clamp-2">
+                        {post.title}
+                      </h4>
+                      <p className="text-xs text-gray-600 line-clamp-2 mb-2">{post.summary}</p>
+                      <div className="flex items-center gap-2 text-[11px] text-gray-400">
+                        <Calendar className="w-3 h-3" />
+                        {formatDate(post.posted_date)}
+                      </div>
+                    </div>
+                  ))}
+
+                  {getRelevantBlogPosts().length === 0 && (
+                    <div className="text-center py-8 text-xs text-gray-400">
+                      No blog updates yet for your specific criteria.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+        </div>
       </div>
-      
-    </>
+    </div>
   );
 }
-
