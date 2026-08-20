@@ -12,7 +12,7 @@ const envUrl = import.meta.env.VITE_SUPABASE_URL;
 const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Default production remote project
-const CLOUD_SUPABASE_URL = 'https://shgseabqhytdriadtkir.supabase.co';
+const CLOUD_SUPABASE_URL = 'https://oinubdnkqnifeaaejmjl.supabase.co';
 
 // Prevent public HTTPS deployments (e.g. Vercel) from attempting to connect to 127.0.0.1 / localhost,
 // which triggers the macOS / Chrome "Access other apps and services on this device" Local Network permission dialog.

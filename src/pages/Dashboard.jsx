@@ -86,6 +86,10 @@ export default function Dashboard() {
   const loadData = async () => {
     try {
       const userData = (await supabase.auth.getUser()).data.user;
+      if (!userData) {
+        navigate("/login");
+        return;
+      }
       setUser(userData);
 
       const pendingProfile = localStorage.getItem("pendingProfile");

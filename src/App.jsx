@@ -36,6 +36,8 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 // Add page imports here
 
+import ProtectedRoute from './components/ProtectedRoute';
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, authError, navigateToLogin } = useAuth();
 
@@ -60,36 +62,63 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/Login" element={<Login />} />
       <Route path="/" element={<Home />} />
       <Route path="/Home" element={<Home />} />
-      <Route path="/Dashboard" element={<Dashboard />} />
-      <Route path="/Profile" element={<Profile />} />
-      <Route path="/EditProfile" element={<EditProfile />} />
+      <Route path="/home" element={<Home />} />
       <Route path="/About" element={<About />} />
+      <Route path="/about" element={<About />} />
       <Route path="/Programs" element={<Programs />} />
+      <Route path="/programs" element={<Programs />} />
       <Route path="/Blog" element={<Blog />} />
+      <Route path="/blog" element={<Blog />} />
       <Route path="/BlogPost" element={<BlogPost />} />
-      <Route path="/SubmitProgram" element={<SubmitProgram />} />
-      <Route path="/Submit-Program" element={<SubmitProgramPage />} />
-      <Route path="/Manage-Program" element={<ManageProgramPage />} />
-      <Route path="/My-Programs" element={<MyProgramsPage />} />
+      <Route path="/blogpost" element={<BlogPost />} />
       <Route path="/program-details" element={<ProgramDetailsPage />} />
       <Route path="/Terms" element={<Terms />} />
+      <Route path="/terms" element={<Terms />} />
       <Route path="/Privacy" element={<Privacy />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/Cookie-Policy" element={<CookiePolicy />} />
+      <Route path="/cookie-policy" element={<CookiePolicy />} />
       <Route path="/Disclaimer" element={<Disclaimer />} />
+      <Route path="/disclaimer" element={<Disclaimer />} />
       <Route path="/Accessibility" element={<Accessibility />} />
+      <Route path="/accessibility" element={<Accessibility />} />
       <Route path="/Community" element={<Community />} />
+      <Route path="/community" element={<Community />} />
       <Route path="/My-Report" element={<MyReport />} />
+      <Route path="/my-report" element={<MyReport />} />
       <Route path="/report" element={<MyReport />} />
       <Route path="/claim/gooddollar" element={<GoodDollarClaim />} />
       <Route path="/claim/fundloop" element={<FundLoopClaim />} />
       <Route path="/claim/circles" element={<CirclesClaim />} />
       <Route path="/Services" element={<ServicesPage />} />
+      <Route path="/services" element={<ServicesPage />} />
       <Route path="/Ecosystem" element={<EcosystemPage />} />
-      {/* Add your page Route elements here */}
+      <Route path="/ecosystem" element={<EcosystemPage />} />
+
+      {/* Authenticated-Only Protected Routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/Dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/My-Programs" element={<MyProgramsPage />} />
+        <Route path="/my-programs" element={<MyProgramsPage />} />
+        <Route path="/Profile" element={<Profile />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/EditProfile" element={<EditProfile />} />
+        <Route path="/editprofile" element={<EditProfile />} />
+        <Route path="/Manage-Program" element={<ManageProgramPage />} />
+        <Route path="/manage-program" element={<ManageProgramPage />} />
+        <Route path="/SubmitProgram" element={<SubmitProgramPage />} />
+        <Route path="/submitprogram" element={<SubmitProgramPage />} />
+        <Route path="/Submit-Program" element={<SubmitProgramPage />} />
+        <Route path="/submit-program" element={<SubmitProgramPage />} />
+      </Route>
+
+      {/* 404 Catch-All */}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

@@ -34,7 +34,7 @@ export default function MyProgramsPage() {
       // Get current user data
       const userData = (await supabase.auth.getUser()).data.user;
       if (!userData) {
-        navigate("/"); // Redirect if not logged in
+        navigate("/login"); // Redirect to login if not logged in
         return;
       }
       setUser(userData);
