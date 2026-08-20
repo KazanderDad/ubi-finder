@@ -149,8 +149,16 @@ export default function MatchingPrograms({ programs, profile, onToggleFavorite, 
                           {program.matchScore}% Match
                         </span>
 
-                        {program.distribution_type === "daily_claim_protocol" && (
-                          <Badge className="text-[10px] bg-purple-100 text-purple-800 border-purple-200">Daily Claim</Badge>
+                        {program.involvement_level === "automated_claim" && (
+                          <Badge className="text-[10px] bg-purple-100 text-purple-900 border-purple-300 font-bold">
+                            🟣 Automated Claim
+                          </Badge>
+                        )}
+
+                        {program.involvement_level === "managed_application" && (
+                          <Badge className="text-[10px] bg-emerald-100 text-emerald-900 border-emerald-300 font-bold">
+                            🛡️ Managed App
+                          </Badge>
                         )}
 
                         <Badge className={`text-[10px] ${getStatusColor(program.status, program.application_status)}`}>
@@ -217,13 +225,23 @@ export default function MatchingPrograms({ programs, profile, onToggleFavorite, 
                       variant={hasApplied(program.program_id) ? "secondary" : "default"}
                       className={hasApplied(program.program_id) 
                         ? "bg-gray-100 text-gray-700 text-xs h-7" 
-                        : "bg-green-700 text-white hover:bg-green-800 text-xs h-7"}
+                        : program.involvement_level === 'automated_claim'
+                          ? "bg-purple-800 text-white hover:bg-purple-900 text-xs h-7"
+                          : program.involvement_level === 'managed_application'
+                            ? "bg-emerald-800 text-white hover:bg-emerald-900 text-xs h-7"
+                            : "bg-green-700 text-white hover:bg-green-800 text-xs h-7"}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleProgramClick(program);
                       }}
                     >
-                      {hasApplied(program.program_id) ? "Applied" : "View Details &rarr;"}
+                      {hasApplied(program.program_id) 
+                        ? "Applied" 
+                        : program.involvement_level === 'automated_claim'
+                          ? "⚡ Claim"
+                          : program.involvement_level === 'managed_application'
+                            ? "🛡️ Apply"
+                            : "View Details \u2192"}
                     </Button>
                   </div>
                 </div>

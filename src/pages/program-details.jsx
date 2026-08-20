@@ -27,8 +27,9 @@ import {
   Share2,
   Check
 } from "lucide-react";
-import { createPageUrl } from "@/utils";
 import { Helmet } from "react-helmet-async";
+import ManagedApplicationModal from "@/components/ManagedApplicationModal";
+import { Zap, ShieldCheck, CheckCheck } from "lucide-react";
 
 export default function ProgramDetailsPage() {
   const location = useLocation();
@@ -42,6 +43,12 @@ export default function ProgramDetailsPage() {
   const [userProfile, setUserProfile] = useState(null);
   const [canManage, setCanManage] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Involvement states
+  const [managedApp, setManagedApp] = useState(null);
+  const [selfApp, setSelfApp] = useState(null);
+  const [managedModalOpen, setManagedModalOpen] = useState(false);
+  const [viewProofOpen, setViewProofOpen] = useState(false);
 
   // Auth gate states
   const [authStep, setAuthStep] = useState('email');
@@ -87,8 +94,8 @@ export default function ProgramDetailsPage() {
         .eq('program_id', parseInt(programId))
         .single();
         
-      if (programError || !programData) {
-        console.error("Program not found:", programError);
+      if (programError || !programData || programData.internal_status === 'deleted') {
+        console.error("Program not found or archived:", programError);
         navigate("/Programs");
         return;
       }
@@ -126,12 +133,60 @@ export default function ProgramDetailsPage() {
         if (profiles && profiles.length > 0) {
           setUserProfile(profiles[0]);
         }
+
+        // Check for Managed Application
+        const { data: mApp } = await supabase
+          .from('managed_applications')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .eq('program_id', parseInt(programId))
+          .maybeSingle();
+        setManagedApp(mApp);
+
+        // Check for Self-Reported Application
+        const { data: sApp } = await supabase
+          .from('user_self_applications')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .eq('program_id', parseInt(programId))
+          .maybeSingle();
+        setSelfApp(sApp);
       }
       
       setLoading(false);
     } catch (error) {
       console.error("Error loading program details:", error);
       setLoading(false);
+    }
+  };
+
+  const handleToggleSelfApplied = async () => {
+    if (!user?.id) return;
+    try {
+      if (selfApp?.has_applied) {
+        await supabase
+          .from('user_self_applications')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('program_id', parseInt(programId));
+        setSelfApp(null);
+      } else {
+        const { data, error } = await supabase
+          .from('user_self_applications')
+          .upsert([{
+            user_id: user.id,
+            program_id: parseInt(programId),
+            has_applied: true,
+            applied_date: new Date().toISOString()
+          }])
+          .select()
+          .single();
+        if (!error && data) {
+          setSelfApp(data);
+        }
+      }
+    } catch (e) {
+      console.error("Error toggling self application status:", e);
     }
   };
 
@@ -338,9 +393,9 @@ export default function ProgramDetailsPage() {
                   {/* Payout status */}
                   {program.payout_status ? (
                     <Badge className={
-                      program.payout_status === 'Ongoing' ? 'bg-green-100 text-green-800 border-green-200' :
-                      program.payout_status === 'Planned' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                      program.payout_status === 'Ended'   ? 'bg-gray-100 text-gray-800 border-gray-200' :
+                      program.payout_status.toLowerCase().includes('ongoing') ? 'bg-green-100 text-green-800 border-green-200' :
+                      program.payout_status.toLowerCase().includes('planned') || program.payout_status.toLowerCase().includes('scheduled') ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                      program.payout_status.toLowerCase().includes('ended') || program.payout_status.toLowerCase().includes('completed') ? 'bg-gray-100 text-gray-800 border-gray-200' :
                       'bg-yellow-100 text-yellow-800 border-yellow-200'
                     }>
                       Payouts: {program.payout_status}
@@ -359,9 +414,10 @@ export default function ProgramDetailsPage() {
                   {/* Application status */}
                   {program.application_status && (
                     <Badge className={
-                      program.application_status === 'Accepting applications'             ? 'bg-emerald-100 text-emerald-900 border-emerald-200' :
-                      program.application_status === 'Accepting waitlist'                 ? 'bg-amber-100 text-amber-900 border-amber-200' :
-                      program.application_status === 'No longer accepting applications'   ? 'bg-red-100 text-red-800 border-red-200' :
+                      program.application_status.toLowerCase().includes('accepting') || program.application_status.toLowerCase().includes('automatic') ? 'bg-emerald-100 text-emerald-900 border-emerald-200' :
+                      program.application_status.toLowerCase().includes('waitlist') ? 'bg-amber-100 text-amber-900 border-amber-200' :
+                      program.application_status.toLowerCase().includes('referral') ? 'bg-purple-100 text-purple-900 border-purple-200' :
+                      program.application_status.toLowerCase().includes('no longer') || program.application_status.toLowerCase().includes('closed') ? 'bg-red-100 text-red-800 border-red-200' :
                       'bg-slate-100 text-slate-700'
                     }>
                       {program.application_status}
@@ -375,14 +431,47 @@ export default function ProgramDetailsPage() {
                       ? 'Digital / Crypto Payment' 
                       : 'Standard Bank Payout'}
                   </Badge>
-                  
-                  {!program.verified && (
-                    <Badge className="bg-amber-100 text-amber-800 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3 mr-1" />
-                      Under Review
+
+                  {/* Involvement Level Badge */}
+                  {program.involvement_level === 'automated_claim' ? (
+                    <Badge className="bg-purple-100 text-purple-900 border-purple-300 font-bold flex items-center gap-1">
+                      <Zap className="w-3 h-3 text-purple-700" /> Automated Claim Protocol
+                    </Badge>
+                  ) : program.involvement_level === 'managed_application' ? (
+                    <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 font-bold flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-emerald-700" /> Managed Application Available
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-blue-50 text-blue-900 border-blue-200 font-medium flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3 text-blue-700" /> External Self-Apply
                     </Badge>
                   )}
                 </div>
+
+                {/* Type 2 Managed Application Active Status Banner */}
+                {managedApp && (
+                  <div className="p-4 bg-emerald-50/90 border border-emerald-300 rounded-2xl space-y-2 animate-in fade-in">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-5 h-5 text-emerald-700" />
+                        <div>
+                          <span className="font-bold text-emerald-950 text-sm block">Managed Application: {managedApp.status?.toUpperCase()}</span>
+                          <span className="text-xs text-emerald-800">Reference: <code className="font-mono font-bold bg-white px-1.5 py-0.5 rounded border border-emerald-200">{managedApp.reference_code}</code></span>
+                        </div>
+                      </div>
+                      <Badge className="bg-emerald-200 text-emerald-900 font-bold self-start sm:self-auto text-xs">
+                        {managedApp.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-emerald-800 leading-relaxed">
+                      {managedApp.status_message}
+                    </p>
+                    <div className="text-[11px] text-emerald-700 pt-1 border-t border-emerald-200 flex justify-between">
+                      <span>Authorized & Submitted on: {new Date(managedApp.created_at).toLocaleString()}</span>
+                      <span className="font-semibold">Electronic Consent Verified</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Program description */}
                 <div>
@@ -395,21 +484,65 @@ export default function ProgramDetailsPage() {
 
                   {/* Payment details */}
                   <div>
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-green-950">Disbursement & Terms</h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                      <h3 className="text-lg font-semibold text-green-950">Disbursement & Application</h3>
                       
-                      {(program.apply_url || program.website) && (
-                        <div className={!user ? "blur-md select-none pointer-events-none opacity-50" : ""}>
+                      {/* Action buttons based on Involvement Level */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {program.involvement_level === 'automated_claim' && (
                           <Button 
-                            onClick={() => window.open(program.apply_url || program.website, '_blank')}
-                            variant="outline"
-                            className="border-green-700 text-green-700 hover:bg-green-50 shadow-sm"
+                            onClick={() => navigate(program.custom_claim_path || '/claim/gooddollar')}
+                            className="bg-purple-800 hover:bg-purple-900 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
                           >
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            {program.apply_url ? 'Apply / Learn More' : 'Visit Program Website'}
+                            <Zap className="w-3.5 h-3.5" />
+                            Open Claim Terminal &rarr;
                           </Button>
-                        </div>
-                      )}
+                        )}
+
+                        {program.involvement_level === 'managed_application' && (
+                          managedApp ? (
+                            <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 font-bold text-xs px-3 py-1">
+                              🛡️ Ref #{managedApp.reference_code} ({managedApp.status})
+                            </Badge>
+                          ) : (
+                            <Button 
+                              onClick={() => {
+                                if (!user) navigate('/login');
+                                else setManagedModalOpen(true);
+                              }}
+                              className="bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              Apply via UBI Finder
+                            </Button>
+                          )
+                        )}
+
+                        {(!program.involvement_level || program.involvement_level === 'external_self_apply') && (
+                          <div className="flex items-center gap-2">
+                            {user && (
+                              <Button
+                                variant={selfApp?.has_applied ? "secondary" : "outline"}
+                                size="sm"
+                                onClick={handleToggleSelfApplied}
+                                className={selfApp?.has_applied ? "bg-green-100 text-green-800 border-green-300 text-xs font-semibold" : "text-xs border-gray-300 text-gray-700"}
+                              >
+                                {selfApp?.has_applied ? `✅ Applied on ${new Date(selfApp.applied_date).toLocaleDateString()}` : "Mark as: I applied"}
+                              </Button>
+                            )}
+                            {(program.apply_url || program.website) && (
+                              <Button 
+                                onClick={() => window.open(program.apply_url || program.website, '_blank')}
+                                variant="outline"
+                                className="border-green-700 text-green-700 hover:bg-green-50 shadow-sm text-xs font-semibold"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                                Official Portal ↗
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="bg-green-50/80 p-5 rounded-2xl border border-green-200/80 space-y-4">
@@ -561,10 +694,10 @@ export default function ProgramDetailsPage() {
                         <div className="p-3.5 bg-gray-50/80 rounded-xl border border-gray-200/80 flex items-start gap-3">
                           <Info className="w-5 h-5 text-green-700 mt-0.5 flex-shrink-0" />
                           <div className="flex-1">
-                            <p className="font-semibold text-gray-900 text-sm">Additional Criteria</p>
-                            <p className="text-xs text-gray-600 mt-0.5">
+                            <p className="font-semibold text-gray-900 text-sm">Eligibility Criteria & Requirements</p>
+                            <div className="text-xs text-gray-700 mt-1 whitespace-pre-line leading-relaxed">
                               <span className={!user ? "blur-sm select-none opacity-50 block" : ""}>{program.eligibility}</span>
-                            </p>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -763,14 +896,36 @@ export default function ProgramDetailsPage() {
             </div>
           </div>
           <Button
-            onClick={() => window.open(program.apply_url || program.website, '_blank')}
+            onClick={() => {
+              if (program.involvement_level === 'automated_claim') {
+                navigate(program.custom_claim_path || '/claim/gooddollar');
+              } else if (program.involvement_level === 'managed_application') {
+                if (!user) navigate('/login');
+                else setManagedModalOpen(true);
+              } else {
+                window.open(program.apply_url || program.website, '_blank');
+              }
+            }}
             className="bg-green-700 hover:bg-green-800 text-white font-semibold text-xs px-4 py-2.5 shadow-md flex-1 max-w-[200px]"
           >
-            <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-            {program.apply_url ? "Apply Now" : "Official Site"}
+            {program.involvement_level === 'automated_claim' ? "Claim Terminal" :
+             program.involvement_level === 'managed_application' ? (managedApp ? "Managed" : "Apply Managed") :
+             "Official Portal ↗"}
           </Button>
         </div>
       )}
+
+      {/* Managed Application Intake & Consent Modal */}
+      <ManagedApplicationModal
+        isOpen={managedModalOpen}
+        onClose={() => setManagedModalOpen(false)}
+        program={program}
+        user={user}
+        userProfile={userProfile}
+        onSuccess={(newApp) => {
+          setManagedApp(newApp);
+        }}
+      />
     </div>
   );
 }

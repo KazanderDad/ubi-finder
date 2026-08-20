@@ -23,7 +23,8 @@ import {
   ChevronDown, 
   ChevronUp, 
   Info,
-  Clock
+  Clock,
+  Zap
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -372,17 +373,17 @@ export default function MyReport() {
                             {prog.matchScore}% Match
                           </span>
 
-                          {/* Distribution Model Badge */}
-                          {prog.distribution_type === "daily_claim_protocol" ? (
-                            <Badge className="bg-purple-100 text-purple-800 border-purple-200">🟣 Daily Claim Web3</Badge>
-                          ) : prog.distribution_type === "lottery_raffle" ? (
-                            <Badge className="bg-amber-100 text-amber-800 border-amber-200">🎁 Lottery Raffle</Badge>
+                          {/* Involvement Level Badge */}
+                          {prog.involvement_level === "automated_claim" ? (
+                            <Badge className="bg-purple-100 text-purple-900 border-purple-300 font-bold">🟣 Automated Claim Protocol</Badge>
+                          ) : prog.involvement_level === "managed_application" ? (
+                            <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 font-bold">🛡️ Managed Application</Badge>
                           ) : (
-                            <Badge className="bg-green-100 text-green-800 border-green-200">🟢 Guaranteed Recurring</Badge>
+                            <Badge className="bg-blue-50 text-blue-900 border-blue-200">🌐 External Self-Apply</Badge>
                           )}
 
                           {/* Application Status Badge */}
-                          <Badge className="bg-blue-50 text-blue-800 border-blue-200">
+                          <Badge className="bg-gray-100 text-gray-800 border-gray-200">
                             {prog.application_status || prog.status}
                           </Badge>
                         </div>
@@ -461,25 +462,45 @@ export default function MyReport() {
                     </div>
 
                     {/* Action Bottom Bar */}
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100 flex-wrap gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate('/program-details', { state: { programId: prog.program_id } })}
                         className="text-xs text-gray-700 hover:text-green-800"
                       >
-                        View Full Details
+                        View Full Details &rarr;
                       </Button>
 
-                      {(prog.apply_url || prog.website) && (
+                      {prog.involvement_level === "automated_claim" ? (
                         <Button
                           size="sm"
-                          onClick={() => window.open(prog.apply_url || prog.website, "_blank")}
-                          className="bg-green-700 hover:bg-green-800 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                          onClick={() => navigate(prog.custom_claim_path || '/claim/gooddollar')}
+                          className="bg-purple-800 hover:bg-purple-900 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
                         >
-                          <span>Apply / Claim Payout</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>Open Claim Terminal</span>
                         </Button>
+                      ) : prog.involvement_level === "managed_application" ? (
+                        <Button
+                          size="sm"
+                          onClick={() => navigate('/program-details', { state: { programId: prog.program_id } })}
+                          className="bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Apply via UBI Finder</span>
+                        </Button>
+                      ) : (
+                        (prog.apply_url || prog.website) && (
+                          <Button
+                            size="sm"
+                            onClick={() => window.open(prog.apply_url || prog.website, "_blank")}
+                            className="bg-green-700 hover:bg-green-800 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                          >
+                            <span>Official Portal</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Button>
+                        )
                       )}
                     </div>
 

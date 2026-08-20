@@ -17,7 +17,9 @@ import {
   Smartphone,
   Gift,
   CheckCircle2,
-  MapPin
+  MapPin,
+  Zap,
+  ShieldCheck
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -110,6 +112,33 @@ export default function ProgramList({ programs, onToggleFavorite, favoriteProgra
     }
   };
   
+  const getInvolvementBadge = (level) => {
+    switch (level) {
+      case 'automated_claim':
+        return (
+          <Badge className="bg-purple-100 text-purple-900 border-purple-300 font-bold flex items-center gap-1">
+            <Zap className="w-3 h-3 text-purple-700" />
+            Automated Claim Protocol
+          </Badge>
+        );
+      case 'managed_application':
+        return (
+          <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 font-bold flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3 text-emerald-700" />
+            Managed Application
+          </Badge>
+        );
+      case 'external_self_apply':
+      default:
+        return (
+          <Badge className="bg-blue-50 text-blue-900 border-blue-200 font-medium flex items-center gap-1">
+            <ExternalLink className="w-3 h-3 text-blue-700" />
+            External Self-Apply
+          </Badge>
+        );
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-5">
       {programs.map(program => {
@@ -183,17 +212,34 @@ export default function ProgramList({ programs, onToggleFavorite, favoriteProgra
                   
                   {/* Badges / Meta row */}
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* Project Involvement Level Badge */}
+                    {getInvolvementBadge(program.involvement_level)}
+
                     {/* Capability 4: Distribution Class Badge */}
                     {getDistributionBadge(program.distribution_type)}
 
                     {/* Capability 4: Payout Rail Badge */}
                     {getRailBadge(program.payout_rail)}
 
+                    {/* Payout Status Badge */}
+                    {program.payout_status && (
+                      <Badge className={
+                        program.payout_status.toLowerCase().includes('ongoing') ? 'bg-green-100 text-green-800 border-green-200' :
+                        program.payout_status.toLowerCase().includes('planned') || program.payout_status.toLowerCase().includes('scheduled') ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                        program.payout_status.toLowerCase().includes('ended') || program.payout_status.toLowerCase().includes('completed') ? 'bg-gray-100 text-gray-800 border-gray-200' :
+                        'bg-yellow-100 text-yellow-800 border-yellow-200'
+                      }>
+                        Payouts: {program.payout_status}
+                      </Badge>
+                    )}
+
                     {/* Application Status Badge */}
                     {program.application_status ? (
                       <Badge className={
-                        program.application_status === 'Accepting applications' || program.application_status === 'Open' ? 'bg-emerald-100 text-emerald-900 border-emerald-200' :
-                        program.application_status === 'Accepting waitlist' || program.application_status === 'Waitlist' ? 'bg-amber-100 text-amber-900 border-amber-200' :
+                        program.application_status.toLowerCase().includes('accepting') || program.application_status.toLowerCase().includes('open') || program.application_status.toLowerCase().includes('automatic') ? 'bg-emerald-100 text-emerald-900 border-emerald-200' :
+                        program.application_status.toLowerCase().includes('waitlist') ? 'bg-amber-100 text-amber-900 border-amber-200' :
+                        program.application_status.toLowerCase().includes('referral') ? 'bg-purple-100 text-purple-900 border-purple-200' :
+                        program.application_status.toLowerCase().includes('no longer') || program.application_status.toLowerCase().includes('closed') ? 'bg-red-100 text-red-800 border-red-200' :
                         'bg-gray-100 text-gray-700 border-gray-200'
                       }>
                         {program.application_status}
@@ -259,9 +305,17 @@ export default function ProgramList({ programs, onToggleFavorite, favoriteProgra
                   </span>
                   <Button 
                     size="sm" 
-                    className="mt-3 w-full bg-green-700 hover:bg-green-800 text-white text-xs font-semibold shadow-sm"
+                    className={`mt-3 w-full text-white text-xs font-semibold shadow-sm ${
+                      program.involvement_level === 'automated_claim'
+                        ? 'bg-purple-800 hover:bg-purple-900'
+                        : program.involvement_level === 'managed_application'
+                          ? 'bg-emerald-800 hover:bg-emerald-900'
+                          : 'bg-green-700 hover:bg-green-800'
+                    }`}
                   >
-                    View Details &rarr;
+                    {program.involvement_level === 'automated_claim' ? "⚡ Claim Terminal" :
+                     program.involvement_level === 'managed_application' ? "🛡️ Apply Managed" :
+                     "View Details \u2192"}
                   </Button>
                 </div>
 

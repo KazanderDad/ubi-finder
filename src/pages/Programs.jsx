@@ -46,6 +46,7 @@ export default function Programs() {
     distributionType: "all",
     payoutRail: "all",
     fundingSource: "all",
+    involvementLevel: "all",
     status: "all",
     includeUnverified: false
   });
@@ -101,15 +102,17 @@ export default function Programs() {
 
       const { data: programsData, error } = await supabase
         .from('programs')
-        .select('*');
+        .select('*')
+        .neq('internal_status', 'deleted');
         
       if (error) throw error;
       
-      setPrograms(programsData || []);
+      const activePrograms = (programsData || []).filter(p => p.internal_status !== 'deleted');
+      setPrograms(activePrograms);
 
-      if (programsData) {
-        setAvailableCountries(['all', ...[...new Set(programsData.flatMap(p => p.available_regions || []))].sort()]);
-        setAvailableStatuses(['all', ...[...new Set(programsData.map(p => p.status))].sort()]);
+      if (activePrograms.length > 0) {
+        setAvailableCountries(['all', ...[...new Set(activePrograms.flatMap(p => p.available_regions || []))].sort()]);
+        setAvailableStatuses(['all', ...[...new Set(activePrograms.map(p => p.status))].sort()]);
       }
       
       setLoading(false);
@@ -136,6 +139,7 @@ export default function Programs() {
       distributionType: "all",
       payoutRail: "all",
       fundingSource: "all",
+      involvementLevel: "all",
       status: "all",
       includeUnverified: false
     });
@@ -154,6 +158,10 @@ export default function Programs() {
   };
 
   const filteredPrograms = programs.filter(program => {
+    if (program.internal_status === 'deleted') {
+      return false;
+    }
+
     if (!filters.includeUnverified && !program.verified) {
       return false;
     }
@@ -185,6 +193,11 @@ export default function Programs() {
     }
 
     if (filters.fundingSource !== "all" && program.funding_source !== filters.fundingSource) {
+      return false;
+    }
+
+    // Involvement Level Filter
+    if (filters.involvementLevel !== "all" && (program.involvement_level || 'external_self_apply') !== filters.involvementLevel) {
       return false;
     }
     
@@ -291,6 +304,54 @@ export default function Programs() {
               </Link>
             </div>
           </div>
+
+          {/* Quick Filter Involvement Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setFilters(prev => ({ ...prev, involvementLevel: 'all' }))}
+              className={`px-3 py-1.5 rounded-full font-semibold border transition-all whitespace-nowrap ${
+                filters.involvementLevel === 'all'
+                  ? 'bg-green-800 text-white border-green-800 shadow-sm'
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              All Projects ({programs.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilters(prev => ({ ...prev, involvementLevel: 'managed_application' }))}
+              className={`px-3 py-1.5 rounded-full font-semibold border transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                filters.involvementLevel === 'managed_application'
+                  ? 'bg-emerald-800 text-white border-emerald-800 shadow-sm'
+                  : 'bg-emerald-50/70 text-emerald-900 border-emerald-200 hover:bg-emerald-100'
+              }`}
+            >
+              🛡️ Managed Applications
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilters(prev => ({ ...prev, involvementLevel: 'automated_claim' }))}
+              className={`px-3 py-1.5 rounded-full font-semibold border transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                filters.involvementLevel === 'automated_claim'
+                  ? 'bg-purple-800 text-white border-purple-800 shadow-sm'
+                  : 'bg-purple-50/70 text-purple-900 border-purple-200 hover:bg-purple-100'
+              }`}
+            >
+              🟣 Automated Claim Protocols
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilters(prev => ({ ...prev, involvementLevel: 'external_self_apply' }))}
+              className={`px-3 py-1.5 rounded-full font-semibold border transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                filters.involvementLevel === 'external_self_apply'
+                  ? 'bg-blue-800 text-white border-blue-800 shadow-sm'
+                  : 'bg-blue-50/70 text-blue-900 border-blue-200 hover:bg-blue-100'
+              }`}
+            >
+              🌐 External Self-Apply
+            </button>
+          </div>
             
           {/* Search & Filter Collapsibles */}
           <div className="space-y-3">
@@ -344,6 +405,25 @@ export default function Programs() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
                       
+                      {/* Involvement Level */}
+                      <div>
+                        <Label className="text-green-900 font-semibold mb-1 block">Involvement Level</Label>
+                        <Select
+                          value={filters.involvementLevel}
+                          onValueChange={(value) => setFilters({ ...filters, involvementLevel: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Involvement level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Types</SelectItem>
+                            <SelectItem value="managed_application">🛡️ Managed Applications</SelectItem>
+                            <SelectItem value="automated_claim">🟣 Automated Claim Protocols</SelectItem>
+                            <SelectItem value="external_self_apply">🌐 External Self-Apply</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       {/* Country */}
                       <div>
                         <Label className="text-green-900 font-semibold mb-1 block">Country</Label>
