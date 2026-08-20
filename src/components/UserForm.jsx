@@ -187,7 +187,7 @@ export default function UserForm({ onSubmit }) {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/Programs`,
+          emailRedirectTo: `${window.location.origin}/My-Report`,
         },
       });
       if (error) throw error;

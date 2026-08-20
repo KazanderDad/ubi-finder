@@ -78,7 +78,7 @@ export default function Login() {
           const { error } = await supabase.auth.signInWithOtp({ 
             email: email.trim(),
             options: {
-              emailRedirectTo: `${window.location.origin}/Programs`,
+              emailRedirectTo: `${window.location.origin}/My-Report`,
               data: {
                 full_name: displayName.trim() || undefined,
                 display_name: displayName.trim() || undefined
@@ -95,7 +95,7 @@ export default function Login() {
 
           setMessage({ 
             type: 'success', 
-            text: 'Magic link sent! Please check your inbox and click the verification link to complete your account setup and access your programs.' 
+            text: 'Magic link sent! Please check your inbox and click the verification link to access your personalized UBI report.' 
           });
         } else {
           // Signup with Password + Email Confirmation
@@ -103,7 +103,7 @@ export default function Login() {
             email: email.trim(), 
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}/Programs`,
+              emailRedirectTo: `${window.location.origin}/My-Report`,
               data: {
                 full_name: displayName.trim() || undefined,
                 display_name: displayName.trim() || undefined
