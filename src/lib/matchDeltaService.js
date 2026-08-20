@@ -154,7 +154,9 @@ export async function syncMatchSnapshotAndDetectDeltas(user, profile, allProgram
   // Always update localStorage
   try {
     localStorage.setItem(SNAPSHOT_LOCAL_KEY, JSON.stringify(snapshotPayload));
-  } catch (e) {}
+  } catch (e) {
+    console.warn("Could not save snapshot to localStorage:", e);
+  }
 
   // If user is authenticated, save snapshot and notifications to Supabase
   if (user?.id) {

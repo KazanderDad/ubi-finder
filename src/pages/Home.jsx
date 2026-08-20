@@ -33,9 +33,10 @@ export default function Home() {
         const { data, error } = await supabase
           .from('programs')
           .select('*')
+          .neq('internal_status', 'deleted')
           .limit(4);
         if (!error && data) {
-          setFeaturedPrograms(data);
+          setFeaturedPrograms(data.filter(p => p.internal_status !== 'deleted'));
         }
       } catch (err) {
         console.error("Error loading featured programs:", err);

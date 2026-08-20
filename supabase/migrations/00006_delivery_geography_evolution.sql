@@ -122,8 +122,8 @@ INSERT INTO public.programs (
   distribution_type, payout_rail, funding_source, state_province, municipalities,
   latitude, longitude, website, apply_url, verified
 )
-SELECT 
-  (SELECT COALESCE(MAX(program_id), 0) + 1 FROM public.programs),
+VALUES (
+  38,
   'New Brunswick Youth Basic Income Pilot',
   'Government of New Brunswick & Social Labs',
   'A regional basic income initiative delivering monthly financial floors to young adults transitioning into the workforce in Moncton and Saint John.',
@@ -146,6 +146,5 @@ SELECT
   'https://www2.gnb.ca',
   'https://www2.gnb.ca/apply',
   true
-WHERE NOT EXISTS (
-  SELECT 1 FROM public.programs WHERE name ILIKE '%New Brunswick%'
-);
+)
+ON CONFLICT (program_id) DO NOTHING;

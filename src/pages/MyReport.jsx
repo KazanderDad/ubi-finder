@@ -74,7 +74,9 @@ export default function MyReport() {
         if (pending) {
           try {
             userProfile = JSON.parse(pending);
-          } catch (e) {}
+          } catch (e) {
+            console.warn("Could not parse pending profile:", e);
+          }
         }
       }
 
