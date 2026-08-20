@@ -212,6 +212,20 @@ export default function ProgramList({ programs, onToggleFavorite, favoriteProgra
                   
                   {/* Badges / Meta row */}
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* Intelligent Match Score if profile is active */}
+                    {program.matchScore !== undefined && program.matchScore > 0 && (
+                      <Badge className={
+                        program.matchScore >= 85 
+                          ? 'bg-emerald-600 text-white font-bold flex items-center gap-1 shadow-xs' 
+                          : program.matchScore >= 65 
+                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold flex items-center gap-1'
+                            : 'bg-slate-100 text-slate-800 border-slate-200 font-medium flex items-center gap-1'
+                      }>
+                        <Sparkles className="w-3 h-3 text-white" />
+                        {program.matchScore}% Match {program.matchScore >= 85 ? '• Best Fit' : ''}
+                      </Badge>
+                    )}
+
                     {/* Project Involvement Level Badge */}
                     {getInvolvementBadge(program.involvement_level)}
 

@@ -15,7 +15,10 @@ import {
   Gift, 
   CheckCircle2, 
   Layers,
-  Sparkles
+  Sparkles,
+  Lock,
+  FileText,
+  UserCheck
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import PageHeader from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Helmet } from "react-helmet-async";
+import { evaluateEligibility } from "@/lib/matchingEngine";
 
 export default function Programs() {
   const [programs, setPrograms] = useState([]);
@@ -51,15 +55,9 @@ export default function Programs() {
     includeUnverified: false
   });
   const [favoritePrograms, setFavoritePrograms] = useState([]);
-  const [showInfoBox, setShowInfoBox] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
-  const [profileId, setProfileId] = useState(null);
   const [availableCountries, setAvailableCountries] = useState(['all']);
-  const [availableStatuses, setAvailableStatuses] = useState(['all']);
-  const [sortConfig, setSortConfig] = useState({
-    field: 'name',
-    direction: 'asc'
-  });
+  const [sortField, setSortField] = useState('best_fit'); // 'best_fit' | 'name' | 'amount'
   const [showSearch, setShowSearch] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [user, setUser] = useState(null);
@@ -79,6 +77,8 @@ export default function Programs() {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user;
       
+      let effectiveProfile = null;
+
       if (currentUser) {
         const { data: profile } = await supabase.from('users').select('*').eq('id', currentUser.id).single();
         setUser({
@@ -94,9 +94,24 @@ export default function Programs() {
           .eq('created_by_id', currentUser.id);
           
         if (profiles && profiles.length > 0) {
-          setUserProfile(profiles[0]);
-          setProfileId(profiles[0].id);
-          setShowInfoBox(!profiles[0].dismissed_program_info);
+          effectiveProfile = profiles[0];
+          setUserProfile(effectiveProfile);
+        }
+      }
+
+      // Check localStorage for pendingProfile if no profile from DB
+      if (!effectiveProfile) {
+        const pending = localStorage.getItem("pendingProfile");
+        if (pending) {
+          try {
+            const parsed = JSON.parse(pending);
+            if (parsed && (parsed.country || parsed.income_range || parsed.state || parsed.municipality)) {
+              effectiveProfile = parsed;
+              setUserProfile(effectiveProfile);
+            }
+          } catch (e) {
+            console.warn("Could not parse pending profile:", e);
+          }
         }
       }
 
@@ -112,7 +127,6 @@ export default function Programs() {
 
       if (activePrograms.length > 0) {
         setAvailableCountries(['all', ...[...new Set(activePrograms.flatMap(p => p.available_regions || []))].sort()]);
-        setAvailableStatuses(['all', ...[...new Set(activePrograms.map(p => p.status))].sort()]);
       }
       
       setLoading(false);
@@ -144,20 +158,32 @@ export default function Programs() {
       includeUnverified: false
     });
     setSearchTerm("");
-    setSortConfig({
-      field: 'name',
-      direction: 'asc'
-    });
+    setSortField(hasCompletedProfile ? 'best_fit' : 'name');
   };
 
-  const handleSort = (field) => {
-    setSortConfig({
-      field,
-      direction: sortConfig.field === field && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-    });
-  };
+  // Determine user authorization & profile completion states
+  const isAuthorized = !!user;
+  const hasCompletedProfile = !!(userProfile && (userProfile.country || userProfile.income_range || userProfile.state || userProfile.municipality));
 
-  const filteredPrograms = programs.filter(program => {
+  // 1. Evaluate & Attach Match Scores to Programs
+  const scoredPrograms = programs.map(program => {
+    if (hasCompletedProfile) {
+      const matchResult = evaluateEligibility(program, userProfile);
+      return {
+        ...program,
+        matchScore: matchResult.score,
+        matchResult
+      };
+    }
+    return {
+      ...program,
+      matchScore: undefined,
+      matchResult: null
+    };
+  });
+
+  // 2. Filter Programs
+  const filteredPrograms = scoredPrograms.filter(program => {
     if (program.internal_status === 'deleted') {
       return false;
     }
@@ -204,6 +230,30 @@ export default function Programs() {
     return true;
   });
 
+  // 3. Sort Programs (Default to Best Fit when profile data exists)
+  const sortedPrograms = [...filteredPrograms].sort((a, b) => {
+    if (sortField === 'best_fit' && hasCompletedProfile) {
+      const scoreA = a.matchScore ?? 0;
+      const scoreB = b.matchScore ?? 0;
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA; // Highest score first
+      }
+      // Secondary sort: Monthly Amount USD descending
+      const amountA = Number(a.monthly_amount_usd || 0);
+      const amountB = Number(b.monthly_amount_usd || 0);
+      return amountB - amountA;
+    }
+
+    if (sortField === 'amount') {
+      const amountA = Number(a.monthly_amount_usd || 0);
+      const amountB = Number(b.monthly_amount_usd || 0);
+      return amountB - amountA;
+    }
+
+    // Default alphabetical by name
+    return a.name.localeCompare(b.name);
+  });
+
   return (
     <>
       <Helmet>
@@ -222,7 +272,7 @@ export default function Programs() {
 
           {/* Top Controls: Quick Filter Pills, View Switcher & Submit Action */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Quick Filter Pills (Capability 4) */}
+            {/* Quick Filter Pills */}
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setFilters(prev => ({ ...prev, distributionType: "all" }))}
@@ -352,8 +402,86 @@ export default function Programs() {
               🌐 External Self-Apply
             </button>
           </div>
+
+          {/* ========================================================================= */}
+          {/* USER STATUS / PERSONALIZATION CALLOUT BANNERS */}
+          {/* ========================================================================= */}
+          
+          {/* Condition 1: Non-Authorized Users (Prompt to Log In) */}
+          {!isAuthorized && (
+            <Card className="border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 shadow-sm overflow-hidden animate-in fade-in duration-200">
+              <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 text-center sm:text-left">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-emerald-800 shadow-inner">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-emerald-950">
+                      Please log in to get a personalized view of these UBI programs.
+                    </h4>
+                    <p className="text-xs text-emerald-700 mt-0.5">
+                      Sign in or create an account to unlock tailored eligibility matching, best-fit ranking, and advanced filter facets.
+                    </p>
+                  </div>
+                </div>
+                <Link to="/login" className="flex-shrink-0">
+                  <Button className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs h-9 shadow-sm px-4">
+                    Log In / Sign Up &rarr;
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Condition 2: Authenticated Users Without a Completed Profile (Prompt to Fill Out Form) */}
+          {isAuthorized && !hasCompletedProfile && (
+            <Card className="border-amber-200 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 shadow-sm overflow-hidden animate-in fade-in duration-200">
+              <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 text-center sm:text-left">
+                  <div className="w-10 h-10 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center flex-shrink-0 text-amber-800 shadow-inner">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-950">
+                      Fill out our form for a personalized view
+                    </h4>
+                    <p className="text-xs text-amber-800 mt-0.5">
+                      Tell us your location, household size, and income to automatically sort programs based on best fit.
+                    </p>
+                  </div>
+                </div>
+                <Link to="/EditProfile" className="flex-shrink-0">
+                  <Button className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs h-9 shadow-sm px-4">
+                    Fill Out Eligibility Form &rarr;
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Condition 3: Form Data Exists (Active Personalized View & Best Fit Indicator) */}
+          {hasCompletedProfile && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-50/90 border border-emerald-200 rounded-xl px-4 py-3 text-xs text-emerald-900 shadow-sm animate-in fade-in duration-200">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-bold text-emerald-950">Personalized View Active: </span>
+                  <span>
+                    Sorted based on best fit for your profile in {userProfile.municipality ? `${userProfile.municipality}, ` : ''}{userProfile.state ? `${userProfile.state}, ` : ''}{userProfile.country || 'your location'}.
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
+                <Link to="/My-Report" className="text-emerald-800 hover:text-emerald-950 font-bold underline whitespace-nowrap">
+                  View Full Report &rarr;
+                </Link>
+              </div>
+            </div>
+          )}
             
-          {/* Search & Filter Collapsibles */}
+          {/* Search Keyword Box (Always Available) */}
           <div className="space-y-3">
             <Card className="shadow-sm border-gray-200">
               <CardHeader className="py-3">
@@ -385,147 +513,150 @@ export default function Programs() {
               )}
             </Card>
 
-            <Card className="shadow-sm border-gray-200">
-              <CardHeader className="py-3">
-                <div 
-                  className="flex justify-between items-center cursor-pointer"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  <CardTitle className="flex items-center gap-2 text-sm text-green-900 font-bold">
-                    <Filter className="w-4 h-4 text-green-700" />
-                    Advanced Facet Filters
-                  </CardTitle>
-                  <Button variant="ghost" size="sm" className="text-xs">
-                    {showFilters ? "Hide" : "Show Filters"}
-                  </Button>
-                </div>
-              </CardHeader>
-              {showFilters && (
-                <CardContent className="pt-0">
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
-                      
-                      {/* Involvement Level */}
-                      <div>
-                        <Label className="text-green-900 font-semibold mb-1 block">Involvement Level</Label>
-                        <Select
-                          value={filters.involvementLevel}
-                          onValueChange={(value) => setFilters({ ...filters, involvementLevel: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Involvement level" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Types</SelectItem>
-                            <SelectItem value="managed_application">🛡️ Managed Applications</SelectItem>
-                            <SelectItem value="automated_claim">🟣 Automated Claim Protocols</SelectItem>
-                            <SelectItem value="external_self_apply">🌐 External Self-Apply</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Country */}
-                      <div>
-                        <Label className="text-green-900 font-semibold mb-1 block">Country</Label>
-                        <Select
-                          value={filters.country}
-                          onValueChange={(value) => setFilters({ ...filters, country: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select country" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Countries</SelectItem>
-                            {availableCountries.map(country => (
-                              <SelectItem key={country} value={country}>
-                                {country === "all" ? "All Countries" : 
-                                  country.charAt(0).toUpperCase() + country.slice(1)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Capability 4: Distribution Model */}
-                      <div>
-                        <Label className="text-green-900 font-semibold mb-1 block">Distribution Model</Label>
-                        <Select
-                          value={filters.distributionType}
-                          onValueChange={(value) => setFilters({ ...filters, distributionType: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Distribution model" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Models</SelectItem>
-                            <SelectItem value="guaranteed_recurrent">Guaranteed Monthly</SelectItem>
-                            <SelectItem value="daily_claim_protocol">Daily Claim Protocol</SelectItem>
-                            <SelectItem value="lottery_raffle">Lottery / Raffle</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Capability 4: Payout Rail */}
-                      <div>
-                        <Label className="text-green-900 font-semibold mb-1 block">Payout Delivery Rail</Label>
-                        <Select
-                          value={filters.payoutRail}
-                          onValueChange={(value) => setFilters({ ...filters, payoutRail: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Delivery rail" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Delivery Rails</SelectItem>
-                            <SelectItem value="direct_deposit">Bank Direct Deposit / ACH</SelectItem>
-                            <SelectItem value="prepaid_card">Prepaid Visa / Mastercard</SelectItem>
-                            <SelectItem value="crypto_wallet">Crypto / Smart Contract</SelectItem>
-                            <SelectItem value="mobile_money">Mobile Money (M-Pesa)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Capability 4: Funding Source */}
-                      <div>
-                        <Label className="text-green-900 font-semibold mb-1 block">Funding Source</Label>
-                        <Select
-                          value={filters.fundingSource}
-                          onValueChange={(value) => setFilters({ ...filters, fundingSource: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Funding source" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Funding Sources</SelectItem>
-                            <SelectItem value="municipal_government">Municipal / City Government</SelectItem>
-                            <SelectItem value="state_federal">State / Federal Budget</SelectItem>
-                            <SelectItem value="philanthropic_grant">Philanthropic Grant</SelectItem>
-                            <SelectItem value="protocol_yield">Protocol Treasury / Yield</SelectItem>
-                            <SelectItem value="community_crowdfund">Community Crowdfunded</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                    </div>
-
-                    <Separator />
-
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="include-unverified"
-                        checked={filters.includeUnverified}
-                        onCheckedChange={(checked) => 
-                          setFilters(prev => ({ ...prev, includeUnverified: checked }))
-                        }
-                      />
-                      <Label htmlFor="include-unverified" className="text-xs text-gray-700 cursor-pointer">
-                        Include unverified / community-submitted programs
-                      </Label>
-                    </div>
+            {/* Advanced Facet Filters (ONLY shown for authorized users) */}
+            {isAuthorized && (
+              <Card className="shadow-sm border-gray-200">
+                <CardHeader className="py-3">
+                  <div 
+                    className="flex justify-between items-center cursor-pointer"
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
+                    <CardTitle className="flex items-center gap-2 text-sm text-green-900 font-bold">
+                      <Filter className="w-4 h-4 text-green-700" />
+                      Advanced Facet Filters
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" className="text-xs">
+                      {showFilters ? "Hide" : "Show Filters"}
+                    </Button>
                   </div>
-                </CardContent>
-              )}
-            </Card>
+                </CardHeader>
+                {showFilters && (
+                  <CardContent className="pt-0">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
+                        
+                        {/* Involvement Level */}
+                        <div>
+                          <Label className="text-green-900 font-semibold mb-1 block">Involvement Level</Label>
+                          <Select
+                            value={filters.involvementLevel}
+                            onValueChange={(value) => setFilters({ ...filters, involvementLevel: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Involvement level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Types</SelectItem>
+                              <SelectItem value="managed_application">🛡️ Managed Applications</SelectItem>
+                              <SelectItem value="automated_claim">🟣 Automated Claim Protocols</SelectItem>
+                              <SelectItem value="external_self_apply">🌐 External Self-Apply</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Country */}
+                        <div>
+                          <Label className="text-green-900 font-semibold mb-1 block">Country</Label>
+                          <Select
+                            value={filters.country}
+                            onValueChange={(value) => setFilters({ ...filters, country: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Countries</SelectItem>
+                              {availableCountries.map(country => (
+                                <SelectItem key={country} value={country}>
+                                  {country === "all" ? "All Countries" : 
+                                    country.charAt(0).toUpperCase() + country.slice(1)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Capability 4: Distribution Model */}
+                        <div>
+                          <Label className="text-green-900 font-semibold mb-1 block">Distribution Model</Label>
+                          <Select
+                            value={filters.distributionType}
+                            onValueChange={(value) => setFilters({ ...filters, distributionType: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Distribution model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Models</SelectItem>
+                              <SelectItem value="guaranteed_recurrent">Guaranteed Monthly</SelectItem>
+                              <SelectItem value="daily_claim_protocol">Daily Claim Protocol</SelectItem>
+                              <SelectItem value="lottery_raffle">Lottery / Raffle</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Capability 4: Payout Rail */}
+                        <div>
+                          <Label className="text-green-900 font-semibold mb-1 block">Payout Delivery Rail</Label>
+                          <Select
+                            value={filters.payoutRail}
+                            onValueChange={(value) => setFilters({ ...filters, payoutRail: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Delivery rail" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Delivery Rails</SelectItem>
+                              <SelectItem value="direct_deposit">Bank Direct Deposit / ACH</SelectItem>
+                              <SelectItem value="prepaid_card">Prepaid Visa / Mastercard</SelectItem>
+                              <SelectItem value="crypto_wallet">Crypto / Smart Contract</SelectItem>
+                              <SelectItem value="mobile_money">Mobile Money (M-Pesa)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Capability 4: Funding Source */}
+                        <div>
+                          <Label className="text-green-900 font-semibold mb-1 block">Funding Source</Label>
+                          <Select
+                            value={filters.fundingSource}
+                            onValueChange={(value) => setFilters({ ...filters, fundingSource: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Funding source" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Funding Sources</SelectItem>
+                              <SelectItem value="municipal_government">Municipal / City Government</SelectItem>
+                              <SelectItem value="state_federal">State / Federal Budget</SelectItem>
+                              <SelectItem value="philanthropic_grant">Philanthropic Grant</SelectItem>
+                              <SelectItem value="protocol_yield">Protocol Treasury / Yield</SelectItem>
+                              <SelectItem value="community_crowdfund">Community Crowdfunded</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="include-unverified"
+                          checked={filters.includeUnverified}
+                          onCheckedChange={(checked) => 
+                            setFilters(prev => ({ ...prev, includeUnverified: checked }))
+                          }
+                        />
+                        <Label htmlFor="include-unverified" className="text-xs text-gray-700 cursor-pointer">
+                          Include unverified / community-submitted programs
+                        </Label>
+                      </div>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            )}
           </div>
 
           {/* Main Content Area: Map View vs List View */}
@@ -538,33 +669,59 @@ export default function Programs() {
                     Interactive Program Explorer
                   </CardTitle>
                   <CardDescription className="text-sm text-gray-500 mt-1">
-                    Showing <span className="font-semibold text-green-800">{filteredPrograms.length}</span> mapped initiatives across the globe. Click any marker for instant payout details.
+                    Showing <span className="font-semibold text-green-800">{sortedPrograms.length}</span> mapped initiatives across the globe. Click any marker for instant payout details.
                   </CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="p-0 sm:p-6 sm:pt-0">
-                <ProgramsMap programs={filteredPrograms} />
+                <ProgramsMap programs={sortedPrograms} />
               </CardContent>
             </Card>
           ) : (
             <Card className="shadow-lg border-green-100 bg-white/95">
-              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
                 <div>
                   <CardTitle className="text-2xl text-green-950 font-bold">Available Programs</CardTitle>
                   <CardDescription className="text-sm text-gray-500 mt-1">
-                    Showing <span className="font-semibold text-green-800">{filteredPrograms.length}</span> of {programs.length} verified programs
+                    Showing <span className="font-semibold text-green-800">{sortedPrograms.length}</span> of {programs.length} verified programs
+                    {hasCompletedProfile && (
+                      <span className="text-emerald-700 font-medium ml-1">
+                        • Ranked by Best Fit
+                      </span>
+                    )}
                   </CardDescription>
                 </div>
-                {(searchTerm || filters.country !== "all" || filters.distributionType !== "all" || filters.payoutRail !== "all" || filters.fundingSource !== "all" || filters.includeUnverified) && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={clearFilters}
-                    className="text-xs text-green-700 hover:text-green-800 hover:bg-green-50 self-start sm:self-auto"
-                  >
-                    Clear All Filters
-                  </Button>
-                )}
+
+                {/* Sort selector & Clear button */}
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="font-semibold">Sort:</span>
+                    <Select value={sortField} onValueChange={setSortField}>
+                      <SelectTrigger className="h-8 text-xs w-40 bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hasCompletedProfile && (
+                          <SelectItem value="best_fit">✨ Best Fit Score</SelectItem>
+                        )}
+                        <SelectItem value="name">Alphabetical (A-Z)</SelectItem>
+                        <SelectItem value="amount">Highest Monthly Amount</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {(searchTerm || filters.country !== "all" || filters.distributionType !== "all" || filters.payoutRail !== "all" || filters.fundingSource !== "all" || filters.includeUnverified) && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={clearFilters}
+                      className="text-xs text-green-700 hover:text-green-800 hover:bg-green-50 h-8"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -588,7 +745,7 @@ export default function Programs() {
                   </div>
                 ) : (
                   <ProgramList 
-                    programs={filteredPrograms}
+                    programs={sortedPrograms}
                     filters={filters}
                     favoritePrograms={favoritePrograms}
                     onToggleFavorite={toggleFavorite}
