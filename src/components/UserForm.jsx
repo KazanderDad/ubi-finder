@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2, MapPin, Building, CreditCard, Coins, Smartphone, UserCheck } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2, MapPin, Building, CreditCard, Coins, Smartphone, UserCheck, Check } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -84,20 +84,47 @@ function WhyTooltip({ text = WHY_GENDER }) {
 
 export default function UserForm({ onSubmit, onComplete, initialData, isMandatoryModal = false }) {
   const { user, isAuthenticated } = useAuth();
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    name: initialData?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.user_metadata?.display_name || "",
-    country: initialData?.country || "",
-    state: initialData?.state || initialData?.state_province || "",
-    municipality: initialData?.municipality || "",
-    accepts_digital_currency: initialData?.accepts_digital_currency !== undefined ? initialData.accepts_digital_currency : true,
-    household_size: initialData?.household_size || 1,
-    income_range: initialData?.income_range || "",
-    accepts_foreign_currency: initialData?.accepts_foreign_currency !== undefined ? initialData.accepts_foreign_currency : true,
-    gender: initialData?.gender || "",
-    women_count: initialData?.women_count !== undefined ? String(initialData.women_count) : "",
-    currency: initialData?.currency || "USD",
-  });
+  
+  // Read any saved draft from localStorage or initialData
+  const getInitialDraft = () => {
+    let saved = {};
+    try {
+      const local = localStorage.getItem("pendingProfile");
+      if (local) saved = JSON.parse(local);
+    } catch (e) {
+      console.warn("Could not load local draft:", e);
+    }
+
+    const merged = { ...saved, ...initialData };
+    return {
+      name: merged.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.user_metadata?.display_name || "",
+      country: merged.country || "",
+      state: merged.state || merged.state_province || "",
+      municipality: merged.municipality || "",
+      accepts_digital_currency: merged.accepts_digital_currency !== undefined ? merged.accepts_digital_currency : true,
+      household_size: merged.household_size || 1,
+      income_range: merged.income_range || "",
+      accepts_foreign_currency: merged.accepts_foreign_currency !== undefined ? merged.accepts_foreign_currency : true,
+      gender: merged.gender || "",
+      women_count: merged.women_count !== undefined ? String(merged.women_count) : "",
+      currency: merged.currency || (merged.country ? getCurrencyForCountry(merged.country) : "USD"),
+    };
+  };
+
+  const getInitialStep = () => {
+    try {
+      const savedStep = localStorage.getItem("pendingProfileStep");
+      if (savedStep && ["1", "2", "3"].includes(savedStep)) {
+        return parseInt(savedStep, 10);
+      }
+    } catch (e) {
+      console.warn("Could not parse saved step:", e);
+    }
+    return 1;
+  };
+
+  const [step, setStep] = useState(getInitialStep);
+  const [formData, setFormData] = useState(getInitialDraft);
 
   const [matchingCount, setMatchingCount] = useState(null);
   const [loadingCount, setLoadingCount] = useState(false);
@@ -106,15 +133,33 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     if (user?.email && !email) {
       setEmail(user.email);
     }
     if (user?.user_metadata?.full_name && !formData.name) {
-      setFormData(prev => ({ ...prev, name: user.user_metadata.full_name }));
+      setFormData(prev => {
+        const updated = { ...prev, name: user.user_metadata.full_name };
+        localStorage.setItem("pendingProfile", JSON.stringify(updated));
+        return updated;
+      });
     }
   }, [user]);
+
+  // Sync draft if initialData changes
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        ...initialData,
+        name: initialData.name || prev.name,
+        country: initialData.country || prev.country,
+        state: initialData.state || initialData.state_province || prev.state,
+      }));
+    }
+  }, [initialData]);
 
   const needsState = ["United States", "Canada"].includes(formData.country);
   const stateOptions = formData.country === "United States" ? US_STATES : CANADIAN_PROVINCES;
@@ -171,6 +216,7 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
   const isNameValid = formData.name.trim().length > 0;
   const isStep3Valid = isNameValid && (isAuthenticated || isEmailValid);
 
+  // Field change with instant persistence
   const handleChange = (field, value) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
@@ -186,8 +232,61 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
         newData.gender = "";
         newData.women_count = "";
       }
+      
+      // Persist to local storage immediately
+      try {
+        localStorage.setItem("pendingProfile", JSON.stringify(newData));
+      } catch (e) {
+        console.warn("Could not save profile change:", e);
+      }
+
       return newData;
     });
+  };
+
+  // Step navigation with stage persistence
+  const handleAdvanceStep = async (nextStep) => {
+    try {
+      localStorage.setItem("pendingProfile", JSON.stringify(formData));
+      localStorage.setItem("pendingProfileStep", String(nextStep));
+    } catch (e) {
+      console.warn("Could not save step advance:", e);
+    }
+
+    // If authenticated, also persist partial draft to Supabase in the background
+    if (isAuthenticated && user?.id && formData.country) {
+      try {
+        const partialPayload = {
+          name: formData.name?.trim() || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Member',
+          country: formData.country,
+          state: formData.state || null,
+          municipality: formData.municipality || null,
+          household_size: Number(formData.household_size) >= 1 ? Number(formData.household_size) : 1,
+          income_range: formData.income_range || '0-20k',
+          gender: formData.gender || 'abstain',
+          currency: formData.currency || 'USD',
+          accepts_digital_currency: formData.accepts_digital_currency !== undefined ? Boolean(formData.accepts_digital_currency) : true,
+          accepts_foreign_currency: formData.accepts_foreign_currency !== undefined ? Boolean(formData.accepts_foreign_currency) : true,
+          created_by_id: user.id
+        };
+
+        const { data: existing } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('created_by_id', user.id)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          await supabase.from('user_profiles').update(partialPayload).eq('id', existing[0].id);
+        } else {
+          await supabase.from('user_profiles').insert([partialPayload]);
+        }
+      } catch (err) {
+        console.warn("Background draft save warning:", err);
+      }
+    }
+
+    setStep(nextStep);
   };
 
   const handleSubmit = async (e) => {
@@ -197,44 +296,59 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
     setSending(true);
     setSendError("");
 
-    const profilePayload = {
-      name: formData.name.trim(),
+    const dbPayload = {
+      name: formData.name.trim() || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
       country: formData.country,
       state: formData.state || null,
       municipality: formData.municipality || null,
       household_size: Number(formData.household_size) >= 1 ? Number(formData.household_size) : 1,
-      income_range: formData.income_range,
+      income_range: formData.income_range || '0-20k',
       gender: formData.gender || "abstain",
-      women_count: formData.women_count ? Number(formData.women_count) : null,
       currency: formData.currency || "USD",
       accepts_digital_currency: Boolean(formData.accepts_digital_currency),
       accepts_foreign_currency: Boolean(formData.accepts_foreign_currency),
+      created_by_id: user?.id || null
     };
 
     try {
       if (isAuthenticated && user?.id) {
-        // Authenticated direct upsert
-        const fullRecord = {
-          ...profilePayload,
-          created_by_id: user.id,
-          email: user.email,
-        };
+        // Authenticated direct update/insert
+        const { data: existing } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('created_by_id', user.id)
+          .limit(1);
 
-        const { data, error } = await supabase
-          .from("user_profiles")
-          .upsert([fullRecord])
-          .select();
-
-        if (error) throw error;
+        let savedRecord;
+        if (existing && existing.length > 0) {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .update(dbPayload)
+            .eq('id', existing[0].id)
+            .select();
+          if (error) throw error;
+          savedRecord = data?.[0];
+        } else {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .insert([dbPayload])
+            .select();
+          if (error) throw error;
+          savedRecord = data?.[0];
+        }
 
         localStorage.removeItem("pendingProfile");
-        if (onComplete) onComplete(data?.[0] || fullRecord);
-        if (onSubmit) onSubmit(data?.[0] || fullRecord);
+        localStorage.removeItem("pendingProfileStep");
+        setSaveSuccess(true);
+
+        if (onComplete) onComplete(savedRecord || dbPayload);
+        if (onSubmit) onSubmit(savedRecord || dbPayload);
       } else {
         // Unauthenticated visitor: Store pendingProfile and send OTP signup link
         const unauthRecord = {
-          ...profilePayload,
+          ...dbPayload,
           email: email.trim(),
+          women_count: formData.women_count ? Number(formData.women_count) : null,
         };
 
         localStorage.setItem("pendingProfile", JSON.stringify(unauthRecord));
@@ -289,7 +403,7 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
           <div className="flex items-center justify-between text-xs font-semibold text-gray-500 mb-2">
             <span className={step >= 1 ? "text-green-700 font-bold" : ""}>1. Location</span>
             <span className={step >= 2 ? "text-green-700 font-bold" : ""}>2. Household & Income</span>
-            <span className={step >= 3 ? "text-green-700 font-bold" : ""}>3. Identity & Preferences</span>
+            <span className={step >= 3 ? "text-green-700 font-bold" : ""}>3. Identity & Delivery</span>
           </div>
           <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
             <div 
@@ -371,8 +485,8 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
               <Button
                 type="button"
                 disabled={!isStep1Valid}
-                onClick={() => setStep(2)}
-                className="w-full bg-green-700 hover:bg-green-800 text-white font-medium py-2.5 shadow-md flex items-center justify-center gap-2"
+                onClick={() => handleAdvanceStep(2)}
+                className="w-full bg-green-700 hover:bg-green-800 text-white font-medium py-2.5 shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
                 Continue to Step 2
                 <ArrowRight className="w-4 h-4" />
@@ -462,8 +576,8 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setStep(1)}
-                  className="w-1/3 border-gray-300 flex items-center justify-center gap-1.5"
+                  onClick={() => handleAdvanceStep(1)}
+                  className="w-1/3 border-gray-300 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
@@ -471,8 +585,8 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
                 <Button
                   type="button"
                   disabled={!isStep2Valid}
-                  onClick={() => setStep(3)}
-                  className="w-2/3 bg-green-700 hover:bg-green-800 text-white font-medium flex items-center justify-center gap-2"
+                  onClick={() => handleAdvanceStep(3)}
+                  className="w-2/3 bg-green-700 hover:bg-green-800 text-white font-medium flex items-center justify-center gap-2 cursor-pointer"
                 >
                   Continue to Step 3
                   <ArrowRight className="w-4 h-4" />
@@ -568,12 +682,19 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
                 <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">{sendError}</p>
               )}
 
+              {saveSuccess && (
+                <p className="text-xs text-emerald-700 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 flex items-center gap-1.5 font-medium">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  Profile saved successfully! Generating report...
+                </p>
+              )}
+
               <div className="flex items-center gap-3 pt-2">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setStep(2)}
-                  className="w-1/3 border-gray-300 flex items-center justify-center gap-1.5"
+                  onClick={() => handleAdvanceStep(2)}
+                  className="w-1/3 border-gray-300 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
@@ -581,7 +702,7 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
                 <Button
                   type="submit"
                   disabled={!isStep3Valid || sending}
-                  className="w-2/3 bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-2/3 bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {sending 
                     ? (isAuthenticated ? "Saving Profile..." : "Sending Link...") 

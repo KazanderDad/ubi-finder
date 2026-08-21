@@ -70,14 +70,13 @@ export default function MyReport() {
         }
       }
 
-      if (!userProfile) {
-        const pending = localStorage.getItem("pendingProfile");
-        if (pending) {
-          try {
-            userProfile = JSON.parse(pending);
-          } catch (e) {
-            console.warn("Could not parse pending profile:", e);
-          }
+      const pending = localStorage.getItem("pendingProfile");
+      if (pending) {
+        try {
+          const parsedPending = JSON.parse(pending);
+          userProfile = { ...(userProfile || {}), ...parsedPending };
+        } catch (e) {
+          console.warn("Could not parse pending profile:", e);
         }
       }
 

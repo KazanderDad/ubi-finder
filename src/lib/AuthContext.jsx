@@ -57,12 +57,23 @@ export const AuthProvider = ({ children }) => {
                 gender: data.gender || 'abstain',
                 currency: data.currency || 'USD',
                 accepts_digital_currency: data.accepts_digital_currency !== undefined ? Boolean(data.accepts_digital_currency) : true,
-                accepts_foreign_currency: data.accepts_foreign_currency !== undefined ? Boolean(data.accepts_foreign_currency) : true,
-                created_by_id: user.id,
-                email: user.email
+                created_by_id: user.id
               };
-              await supabase.from('user_profiles').upsert([cleanProfile]);
+              
+              const { data: existing } = await supabase
+                .from('user_profiles')
+                .select('id')
+                .eq('created_by_id', user.id)
+                .limit(1);
+
+              if (existing && existing.length > 0) {
+                await supabase.from('user_profiles').update(cleanProfile).eq('id', existing[0].id);
+              } else {
+                await supabase.from('user_profiles').insert([cleanProfile]);
+              }
+
               localStorage.removeItem("pendingProfile");
+              localStorage.removeItem("pendingProfileStep");
             }
           } catch (e) {
             console.error("Error saving pending profile:", e);
