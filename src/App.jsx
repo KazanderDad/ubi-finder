@@ -34,6 +34,7 @@ import ServicesPage from './pages/Services';
 import EcosystemPage from './pages/Ecosystem';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import PrototypeDisclaimer from './components/PrototypeDisclaimer';
 // Add page imports here
 
 import ProtectedRoute from './components/ProtectedRoute';
@@ -139,6 +140,7 @@ function App() {
             </div>
             <Footer />
           </div>
+          <PrototypeDisclaimer />
         </Router>
         <Toaster />
       </QueryClientProvider>
