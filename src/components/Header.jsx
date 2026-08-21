@@ -405,12 +405,6 @@ export default function Header() {
               >
                 Submit a Project &rarr;
               </Link>
-              <Link 
-                to={user ? "/Programs" : "/login?view=signup"}
-                className="inline-flex items-center gap-1 bg-yellow-400 hover:bg-yellow-300 text-green-950 font-bold px-2.5 py-1 rounded-lg shadow-sm transition-all text-xs whitespace-nowrap"
-              >
-                Try Matching Engine &rarr;
-              </Link>
             </div>
           </div>
 
