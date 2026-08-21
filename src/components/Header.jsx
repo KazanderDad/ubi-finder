@@ -29,6 +29,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import UserForm from "@/components/UserForm";
+import InauguralProjectsModal from "@/components/InauguralProjectsModal";
 import { getUserNotifications, markNotificationsAsRead } from "@/lib/matchDeltaService";
 
 export default function Header() {
@@ -41,6 +42,7 @@ export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const [eligibilityModalOpen, setEligibilityModalOpen] = useState(false);
+  const [inauguralModalOpen, setInauguralModalOpen] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -151,6 +153,15 @@ export default function Header() {
           </Link>
         );
       })}
+
+      {/* Inaugural Projects CTA button in Desktop Nav */}
+      <button
+        onClick={() => setInauguralModalOpen(true)}
+        className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-emerald-950 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300/80 transition-all shadow-xs transform hover:scale-[1.02] cursor-pointer"
+      >
+        <Sparkles className="w-3.5 h-3.5 text-emerald-700 animate-pulse" />
+        <span>Looking for Inaugural Projects</span>
+      </button>
 
       {/* 9a. Authenticated User Dropdown Menu & Notifications */}
       {user ? (
@@ -324,6 +335,23 @@ export default function Header() {
           );
         })}
 
+        {/* Inaugural Batch Button inside Mobile Drawer */}
+        <button
+          onClick={() => {
+            setMobileMenuOpen(false);
+            setInauguralModalOpen(true);
+          }}
+          className="w-full text-left p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-950 flex items-center justify-between shadow-xs mb-1 cursor-pointer"
+        >
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-emerald-700" />
+            Looking for Inaugural Projects (Epoch 1)
+          </span>
+          <span className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded-full">
+            Apply
+          </span>
+        </button>
+
         {user ? (
           <>
             <div className="pt-3 pb-1 border-t border-gray-100">
@@ -373,10 +401,24 @@ export default function Header() {
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md transition-all duration-300 ease-in-out ${
+      className={`fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md transition-all duration-300 ease-in-out ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${isScrolled ? 'shadow-sm border-b border-gray-200' : 'border-b border-transparent'}`}
     >
+      {/* Top Announcement Bar for Inaugural Projects */}
+      <div className="bg-gradient-to-r from-emerald-900 via-green-900 to-teal-950 text-white text-[11px] sm:text-xs py-1.5 px-4 text-center font-medium flex items-center justify-center gap-2 shadow-inner border-b border-emerald-800/50">
+        <span className="hidden sm:inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">
+          Epoch 1 Batch
+        </span>
+        <span>🚀 <strong>Now Onboarding:</strong> Join our Inaugural Pilot Batch for guaranteed income projects.</span>
+        <button 
+          onClick={() => setInauguralModalOpen(true)}
+          className="underline font-bold text-yellow-300 hover:text-white transition-colors cursor-pointer inline-flex items-center gap-0.5 ml-1"
+        >
+          Learn More &rarr;
+        </button>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -426,6 +468,12 @@ export default function Header() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Inaugural Projects (Epoch 1) Modal */}
+      <InauguralProjectsModal 
+        open={inauguralModalOpen} 
+        onOpenChange={setInauguralModalOpen} 
+      />
     </header>
   );
 }
