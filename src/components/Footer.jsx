@@ -36,7 +36,7 @@ export default function Footer() {
               <li><Link to={createPageUrl("Community")}>Community Forum</Link></li>
               <li><Link to={createPageUrl("About")}>About Us</Link></li>
               <li><Link to="/Ecosystem">Ecosystem</Link></li>
-              <li><a href="mailto:support@ubifinder.org">Contact Support</a></li>
+              <li><a href="mailto:hello@ubifinder.org">Contact Support</a></li>
             </ul>
           </div>
           
