@@ -36,8 +36,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, Save, Plus, X, LockKeyhole, Sparkles, Rocket } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { ChevronLeft, Save, Plus, X, LockKeyhole } from "lucide-react";
+import { toast } from "@/components/ui/use-toast"
 
 const COUNTRIES = [
   "United States",
@@ -330,30 +330,6 @@ export default function SubmitProgramPage() {
             <ChevronLeft className="w-5 h-5 mr-1" />
             Back to Programs
           </Button>
-        </div>
-
-        {/* Inaugural Partner Cohort (Epoch 1) Banner */}
-        <div className="bg-gradient-to-r from-emerald-800 via-green-850 to-teal-900 text-white rounded-2xl p-6 mb-6 shadow-xl border border-emerald-700/60 relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-emerald-200 text-xs font-bold uppercase tracking-wider border border-white/20">
-                <Rocket className="w-3.5 h-3.5 text-yellow-300 animate-bounce" />
-                Inaugural Pilot Cohort • Epoch 1
-              </div>
-              <h2 className="text-2xl font-extrabold text-white tracking-tight">
-                Join as a Founding Inaugural Partner
-              </h2>
-              <p className="text-emerald-100 text-xs sm:text-sm max-w-xl leading-relaxed">
-                All programs registered during this inaugural window receive <strong>Inaugural Partner status</strong>—including permanent Epoch 1 badge recognition, featured map and leaderboard placement, dedicated distribution rail guidance, co-marketing spotlights, and inclusion in our quarterly basic income research report.
-              </p>
-            </div>
-            <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2.5 rounded-xl text-center shadow-inner self-stretch sm:self-auto">
-              <span className="text-[10px] uppercase tracking-wider text-emerald-200 block font-semibold">Cohort Status</span>
-              <span className="text-xs font-extrabold text-yellow-300 flex items-center justify-center gap-1 mt-0.5">
-                🟢 Open for Epoch 1
-              </span>
-            </div>
-          </div>
         </div>
 
         <Card className="shadow-lg">
