@@ -11,6 +11,10 @@ export async function syncMatchSnapshotAndDetectDeltas(user, profile, allProgram
 
   // 1. Generate current live match report
   const currentReport = generateUserMatchReport(profile, allPrograms);
+  if (currentReport.incompleteProfile) {
+    return { currentReport, deltas: [] };
+  }
+
   const currentProgramIds = currentReport.rankedMatches.map(p => p.program_id);
   const currentScoresMap = {};
   const currentStatusMap = {};

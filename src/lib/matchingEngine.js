@@ -24,6 +24,20 @@ export function getIncomeUpperLimit(range) {
 }
 
 /**
+ * Check whether a profile has all necessary information to evaluate eligibility
+ */
+export function isProfileComplete(profile) {
+  if (!profile) return false;
+  const hasCountry = Boolean(profile.country && String(profile.country).trim());
+  const hasHousehold = Number(profile.household_size) >= 1;
+  const hasIncome = Boolean(profile.income_range);
+  const hasGender = Boolean(profile.gender || profile.women_count !== undefined);
+  const needsState = ["United States", "Canada"].includes(profile.country);
+  const hasState = !needsState || Boolean(profile.state || profile.state_province);
+  return hasCountry && hasHousehold && hasIncome && hasGender && hasState;
+}
+
+/**
  * Evaluate precision eligibility and compute a 0-100% weighted fit score
  */
 export function evaluateEligibility(program, profile) {
@@ -31,25 +45,16 @@ export function evaluateEligibility(program, profile) {
     return { eligible: false, reasons: ["Program is inactive or deleted"], score: 0, tier: null };
   }
 
-  // If user profile is not yet provided, give a neutral high score
-  if (!profile) {
-    const isProtocol = program.distribution_type === "daily_claim_protocol";
-    const isLottery = program.distribution_type === "lottery_raffle";
-    const isWaitlist = program.status === "upcoming" || program.application_status === "Accepting waitlist";
-    
-    let tier = TIERS.TIER_1_GUARANTEED;
-    if (isWaitlist) tier = TIERS.TIER_4_WAITLIST;
-    else if (isProtocol) tier = TIERS.TIER_2_DAILY_CLAIM;
-    else if (isLottery) tier = TIERS.TIER_3_LOTTERY;
-
+  // If user profile is not complete, do not falsely qualify them
+  if (!isProfileComplete(profile)) {
     return {
-      eligible: true,
-      reasons: ["General exploration mode (No profile filter applied)"],
-      score: 80,
-      fitBreakdown: { geographic: 20, economic: 20, value: 20, rail: 10, status: 10 },
-      tier,
+      eligible: false,
+      reasons: ["Profile incomplete. Please fill out your profile details to evaluate eligibility."],
+      score: 0,
+      fitBreakdown: { geographic: 0, economic: 0, value: 0, rail: 0, status: 0 },
+      tier: null,
       diagnostics: [
-        { label: "Global Availability", passed: true, text: "Open to general discovery" }
+        { label: "Profile Required", passed: false, text: "Complete your profile to view eligibility" }
       ]
     };
   }
@@ -201,6 +206,30 @@ export function evaluateEligibility(program, profile) {
  * Generate a complete, ranked custom match report
  */
 export function generateUserMatchReport(profile, allPrograms = []) {
+  if (!isProfileComplete(profile)) {
+    return {
+      incompleteProfile: true,
+      rankedMatches: [],
+      demotedOrIneligible: (allPrograms || []).filter(p => p.internal_status !== 'deleted').map(p => ({
+        ...p,
+        matchScore: 0,
+        isEligible: false,
+        disqualifiers: ["Profile incomplete. Fill out the form to evaluate eligibility."],
+        diagnostics: [{ label: "Profile Required", passed: false, text: "Complete your profile to see eligibility" }]
+      })),
+      tierSummary: {
+        [TIERS.TIER_1_GUARANTEED]: [],
+        [TIERS.TIER_2_DAILY_CLAIM]: [],
+        [TIERS.TIER_3_LOTTERY]: [],
+        [TIERS.TIER_4_WAITLIST]: [],
+      },
+      totalPotentialMonthlyUsd: 0,
+      averageScore: 0,
+      totalEligibleCount: 0,
+      generatedAt: new Date().toISOString()
+    };
+  }
+
   const rankedMatches = [];
   const demotedOrIneligible = [];
 

@@ -31,8 +31,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { generateUserMatchReport, TIERS } from "@/lib/matchingEngine";
+import { generateUserMatchReport, TIERS, isProfileComplete } from "@/lib/matchingEngine";
 import { syncMatchSnapshotAndDetectDeltas } from "@/lib/matchDeltaService";
+import UserForm from "@/components/UserForm";
 
 export default function MyReport() {
   const { user, isAuthenticated } = useAuth();
@@ -137,6 +138,41 @@ export default function MyReport() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-green-50 to-white">
         <div className="w-12 h-12 border-4 border-green-200 border-t-green-700 rounded-full animate-spin mb-4"></div>
         <p className="text-sm font-semibold text-green-950">Calculating your personalized UBI matches & ranking...</p>
+      </div>
+    );
+  }
+
+  // Force users to complete the form before seeing the personalized report
+  if (!isProfileComplete(profile)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-8 md:py-12">
+        <Helmet>
+          <title>Complete Your Profile | UBI Finder</title>
+          <meta name="description" content="Complete your profile to generate your customized Universal Basic Income qualification report." />
+        </Helmet>
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 border border-emerald-200 rounded-full text-xs font-bold text-emerald-800 shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+              1 Quick Step to Unlock Your Report
+            </div>
+            <h1 className="text-3xl font-extrabold text-green-950 tracking-tight">
+              Complete Your Profile
+            </h1>
+            <p className="text-sm text-gray-600 max-w-lg mx-auto leading-relaxed">
+              To calculate your true qualification matches and prevent incorrect eligibility results, please complete your household and location details below.
+            </p>
+          </div>
+
+          <UserForm 
+            onComplete={(savedProfile) => {
+              setProfile(savedProfile);
+              loadReportData();
+            }}
+            initialData={profile}
+            isMandatoryModal={true}
+          />
+        </div>
       </div>
     );
   }

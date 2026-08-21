@@ -36,7 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import PageHeader from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Helmet } from "react-helmet-async";
-import { evaluateEligibility } from "@/lib/matchingEngine";
+import { evaluateEligibility, isProfileComplete } from "@/lib/matchingEngine";
 
 export default function Programs() {
   const [programs, setPrograms] = useState([]);
@@ -163,7 +163,7 @@ export default function Programs() {
 
   // Determine user authorization & profile completion states
   const isAuthorized = !!user;
-  const hasCompletedProfile = !!(userProfile && (userProfile.country || userProfile.income_range || userProfile.state || userProfile.municipality));
+  const hasCompletedProfile = isProfileComplete(userProfile);
 
   // 1. Evaluate & Attach Match Scores to Programs
   const scoredPrograms = programs.map(program => {

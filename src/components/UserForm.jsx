@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2, MapPin, Building, CreditCard, Coins, Smartphone } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2, MapPin, Building, CreditCard, Coins, Smartphone, UserCheck } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/lib/AuthContext";
 
 // Country to currency mapping
 const COUNTRY_CURRENCY = {
@@ -81,35 +82,46 @@ function WhyTooltip({ text = WHY_GENDER }) {
   );
 }
 
-export default function UserForm({ onSubmit }) {
+export default function UserForm({ onSubmit, onComplete, initialData, isMandatoryModal = false }) {
+  const { user, isAuthenticated } = useAuth();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    country: "",
-    state: "",
-    municipality: "",
-    accepts_digital_currency: true,
-    household_size: 1,
-    income_range: "",
-    accepts_foreign_currency: true,
-    gender: "",
-    women_count: "",
-    currency: "USD",
+    name: initialData?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.user_metadata?.display_name || "",
+    country: initialData?.country || "",
+    state: initialData?.state || initialData?.state_province || "",
+    municipality: initialData?.municipality || "",
+    accepts_digital_currency: initialData?.accepts_digital_currency !== undefined ? initialData.accepts_digital_currency : true,
+    household_size: initialData?.household_size || 1,
+    income_range: initialData?.income_range || "",
+    accepts_foreign_currency: initialData?.accepts_foreign_currency !== undefined ? initialData.accepts_foreign_currency : true,
+    gender: initialData?.gender || "",
+    women_count: initialData?.women_count !== undefined ? String(initialData.women_count) : "",
+    currency: initialData?.currency || "USD",
   });
 
   const [matchingCount, setMatchingCount] = useState(null);
   const [loadingCount, setLoadingCount] = useState(false);
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(user?.email || "");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [sendError, setSendError] = useState("");
+
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+    if (user?.user_metadata?.full_name && !formData.name) {
+      setFormData(prev => ({ ...prev, name: user.user_metadata.full_name }));
+    }
+  }, [user]);
 
   const needsState = ["United States", "Canada"].includes(formData.country);
   const stateOptions = formData.country === "United States" ? US_STATES : CANADIAN_PROVINCES;
   const municipalOptions = MUNICIPAL_PILOTS[formData.state] || null;
   const isMultiPerson = formData.household_size > 1;
 
-  // 2b: Inline program count preview query
+  // Inline program count preview query
   useEffect(() => {
     if (!formData.country) {
       setMatchingCount(null);
@@ -120,7 +132,8 @@ export default function UserForm({ onSubmit }) {
       try {
         const { data, error } = await supabase
           .from('programs')
-          .select('id, available_regions, required_states, municipalities');
+          .select('id, available_regions, required_states, municipalities')
+          .neq('internal_status', 'deleted');
         if (!error && data) {
           const matching = data.filter(p => {
             const regions = p.available_regions || [];
@@ -154,7 +167,9 @@ export default function UserForm({ onSubmit }) {
   const isStep2Valid = formData.income_range !== "" && genderSatisfied;
 
   // Step 3 validation
-  const isStep3Valid = email.trim() !== "";
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user?.email || email);
+  const isNameValid = formData.name.trim().length > 0;
+  const isStep3Valid = isNameValid && (isAuthenticated || isEmailValid);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
@@ -179,22 +194,69 @@ export default function UserForm({ onSubmit }) {
     e.preventDefault();
     if (!isStep1Valid || !isStep2Valid || !isStep3Valid) return;
 
-    localStorage.setItem("pendingProfile", JSON.stringify(formData));
-
     setSending(true);
     setSendError("");
+
+    const profilePayload = {
+      name: formData.name.trim(),
+      country: formData.country,
+      state: formData.state || null,
+      municipality: formData.municipality || null,
+      household_size: Number(formData.household_size) >= 1 ? Number(formData.household_size) : 1,
+      income_range: formData.income_range,
+      gender: formData.gender || "abstain",
+      women_count: formData.women_count ? Number(formData.women_count) : null,
+      currency: formData.currency || "USD",
+      accepts_digital_currency: Boolean(formData.accepts_digital_currency),
+      accepts_foreign_currency: Boolean(formData.accepts_foreign_currency),
+    };
+
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/My-Report`,
-        },
-      });
-      if (error) throw error;
-      setSent(true);
-      if (onSubmit) onSubmit({ ...formData, email: email.trim() });
+      if (isAuthenticated && user?.id) {
+        // Authenticated direct upsert
+        const fullRecord = {
+          ...profilePayload,
+          created_by_id: user.id,
+          email: user.email,
+        };
+
+        const { data, error } = await supabase
+          .from("user_profiles")
+          .upsert([fullRecord])
+          .select();
+
+        if (error) throw error;
+
+        localStorage.removeItem("pendingProfile");
+        if (onComplete) onComplete(data?.[0] || fullRecord);
+        if (onSubmit) onSubmit(data?.[0] || fullRecord);
+      } else {
+        // Unauthenticated visitor: Store pendingProfile and send OTP signup link
+        const unauthRecord = {
+          ...profilePayload,
+          email: email.trim(),
+        };
+
+        localStorage.setItem("pendingProfile", JSON.stringify(unauthRecord));
+
+        const { error } = await supabase.auth.signInWithOtp({
+          email: email.trim(),
+          options: {
+            emailRedirectTo: `${window.location.origin}/My-Report`,
+            data: {
+              full_name: formData.name.trim(),
+              display_name: formData.name.trim()
+            }
+          },
+        });
+
+        if (error) throw error;
+        setSent(true);
+        if (onSubmit) onSubmit(unauthRecord);
+      }
     } catch (err) {
-      setSendError(err.message || "Something went wrong. Please try again.");
+      console.error("Profile submission error:", err);
+      setSendError(err.message || "Failed to submit form. Please try again.");
     } finally {
       setSending(false);
     }
@@ -207,12 +269,12 @@ export default function UserForm({ onSubmit }) {
           <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner border border-green-200">
             📬
           </div>
-          <h3 className="text-2xl font-bold text-green-950">Thank You!</h3>
+          <h3 className="text-2xl font-bold text-green-950">Verification Email Sent!</h3>
           <p className="text-gray-700 text-sm max-w-md mx-auto leading-relaxed">
-            We've sent a verification email to <span className="font-semibold text-green-800">{email}</span>. Please check your inbox for the link. Once you click it, this site will unlock for you and you can find your personalized listing of available programs.
+            Thank you, <span className="font-bold text-green-950">{formData.name}</span>! We've sent a magic link to <span className="font-semibold text-green-800">{email}</span>. Click the link in your email to access your complete personalized UBI report.
           </p>
           <div className="pt-2 text-xs text-gray-400">
-            Didn't receive the email? Check your spam/junk folder or try again in a few moments.
+            Didn't receive the email? Check your spam folder or re-enter your address.
           </div>
         </CardContent>
       </Card>
@@ -222,12 +284,12 @@ export default function UserForm({ onSubmit }) {
   return (
     <Card className="shadow-xl border-green-100 bg-white/95">
       <CardContent className="p-6 md:p-8">
-        {/* 2a. Multi-step Progress Bar */}
+        {/* Multi-step Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between text-xs font-semibold text-gray-500 mb-2">
-            <span className={step >= 1 ? "text-green-700 font-bold" : ""}>1. Location & Region</span>
+            <span className={step >= 1 ? "text-green-700 font-bold" : ""}>1. Location</span>
             <span className={step >= 2 ? "text-green-700 font-bold" : ""}>2. Household & Income</span>
-            <span className={step >= 3 ? "text-green-700 font-bold" : ""}>3. Delivery Rails</span>
+            <span className={step >= 3 ? "text-green-700 font-bold" : ""}>3. Identity & Preferences</span>
           </div>
           <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
             <div 
@@ -267,7 +329,7 @@ export default function UserForm({ onSubmit }) {
                 </div>
               )}
 
-              {/* Capability 1: Conditional Municipal Pilot Sub-Question */}
+              {/* Conditional Municipal Pilot Sub-Question */}
               {municipalOptions && (
                 <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2 animate-in fade-in duration-300">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
@@ -290,7 +352,7 @@ export default function UserForm({ onSubmit }) {
                 </div>
               )}
 
-              {/* 2b. Inline program count preview */}
+              {/* Inline program count preview */}
               {formData.country && (
                 <div className="p-3.5 bg-green-50/90 border border-green-200 rounded-xl flex items-center gap-2.5 text-xs text-green-900 animate-in fade-in">
                   <Sparkles className="w-4 h-4 text-green-700 flex-shrink-0" />
@@ -419,12 +481,12 @@ export default function UserForm({ onSubmit }) {
             </div>
           )}
 
-          {/* STEP 3: Delivery Rails & Email */}
+          {/* STEP 3: Delivery Rails, Name & Email */}
           {step === 3 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div className="p-4 bg-gray-50/80 rounded-xl space-y-4 border border-gray-100">
                 <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                  Delivery Preferences (Capability 4)
+                  Delivery Preferences
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -450,20 +512,56 @@ export default function UserForm({ onSubmit }) {
                 </div>
               </div>
 
+              {/* Full Name */}
+              <div>
+                <Label htmlFor="full-name" className="text-sm font-semibold text-gray-800">
+                  Full Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="full-name"
+                  type="text"
+                  placeholder="e.g. Alex Morgan"
+                  value={formData.name}
+                  onChange={(e) => handleChange("name", e.target.value)}
+                  required
+                  className="mt-1.5"
+                />
+              </div>
+
+              {/* Email Address */}
               <div>
                 <Label htmlFor="email" className="text-sm font-semibold text-gray-800">
                   Email Address <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="mt-1.5"
-                />
-                <p className="text-xs text-gray-400 mt-1">We'll send your verified matching program report directly here.</p>
+                {isAuthenticated && user?.email ? (
+                  <div className="mt-1.5">
+                    <Input
+                      id="email"
+                      type="email"
+                      value={user.email}
+                      disabled
+                      className="bg-gray-100 text-gray-600 font-medium cursor-not-allowed"
+                    />
+                    <p className="text-xs text-emerald-700 mt-1 font-medium flex items-center gap-1">
+                      <UserCheck className="w-3.5 h-3.5" />
+                      Logged in as {user.email}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-1.5">
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      We'll save your preferences and email your direct verification access link.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {sendError && (
@@ -485,7 +583,9 @@ export default function UserForm({ onSubmit }) {
                   disabled={!isStep3Valid || sending}
                   className="w-2/3 bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {sending ? "Sending Link..." : "Find Available Programs"}
+                  {sending 
+                    ? (isAuthenticated ? "Saving Profile..." : "Sending Link...") 
+                    : (isAuthenticated ? "Save & View Personalized Report" : "Find Available Programs")}
                 </Button>
               </div>
             </div>

@@ -50,10 +50,8 @@ export default function Home() {
 
   const handleFormSubmit = async (data) => {
     setFormData(data);
-    localStorage.setItem("pendingProfile", JSON.stringify(data));
     if (isAuthenticated && user) {
-      await supabase.from('user_profiles').upsert([{ ...data, created_by_id: user.id }]);
-      navigate("/Dashboard");
+      navigate("/My-Report");
     }
   };
 

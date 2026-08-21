@@ -46,10 +46,24 @@ export const AuthProvider = ({ children }) => {
         if (pendingProfile) {
           try {
             const data = JSON.parse(pendingProfile);
-            await supabase.from('user_profiles').upsert([
-              { ...data, created_by_id: user.id, email: user.email }
-            ]);
-            localStorage.removeItem("pendingProfile");
+            if (data && data.country) {
+              const cleanProfile = {
+                name: data.name || user.user_metadata?.full_name || user.user_metadata?.display_name || user.email?.split('@')[0] || 'Member',
+                country: data.country,
+                state: data.state || null,
+                municipality: data.municipality || null,
+                household_size: Number(data.household_size) >= 1 ? Number(data.household_size) : 1,
+                income_range: data.income_range || '0-20k',
+                gender: data.gender || 'abstain',
+                currency: data.currency || 'USD',
+                accepts_digital_currency: data.accepts_digital_currency !== undefined ? Boolean(data.accepts_digital_currency) : true,
+                accepts_foreign_currency: data.accepts_foreign_currency !== undefined ? Boolean(data.accepts_foreign_currency) : true,
+                created_by_id: user.id,
+                email: user.email
+              };
+              await supabase.from('user_profiles').upsert([cleanProfile]);
+              localStorage.removeItem("pendingProfile");
+            }
           } catch (e) {
             console.error("Error saving pending profile:", e);
           }
