@@ -43,10 +43,10 @@ export default function PrototypeDisclaimer() {
           <p className="text-slate-300 leading-relaxed">
             Thanks for helping us test this prototype site. Please report any errors to{" "}
             <a 
-              href="mailto:hello@ubifinder.org" 
+              href="mailto:support@firebelly.xyz" 
               className="text-emerald-400 hover:text-emerald-300 underline font-semibold transition-colors inline-flex items-center gap-0.5"
             >
-              hello@ubifinder.org
+              support@firebelly.xyz
             </a>
             .
           </p>
