@@ -130,14 +130,14 @@ export default function Header() {
   ];
 
   const renderDesktopNav = () => (
-    <nav className="hidden md:flex items-center space-x-6">
+    <nav className="hidden md:flex items-center space-x-1 lg:space-x-1.5">
       {navLinks.map((link) => {
         const isActive = link.path === '/' 
           ? (location.pathname === '/' || location.pathname === '/Home')
           : location.pathname.toLowerCase() === link.path.toLowerCase();
         const activeClass = isActive 
-          ? 'text-green-800 font-bold' 
-          : 'text-gray-600 hover:text-green-700 font-medium';
+          ? 'bg-green-100/90 text-green-900 font-bold border border-green-200/80 shadow-xs' 
+          : 'text-gray-600 hover:text-green-800 hover:bg-gray-100/80 font-medium border border-transparent';
 
         if (link.path === '/Programs' && !user) {
           return (
@@ -145,7 +145,7 @@ export default function Header() {
               key={link.name} 
               href={link.path}
               onClick={handleProgramsClick}
-              className={`text-sm transition-colors cursor-pointer flex items-center gap-1 ${activeClass}`}
+              className={`text-sm px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${activeClass}`}
             >
               {link.name}
             </a>
@@ -155,7 +155,7 @@ export default function Header() {
           <Link 
             key={link.name} 
             to={link.path}
-            className={`text-sm transition-colors flex items-center gap-1.5 ${activeClass}`}
+            className={`text-sm px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${activeClass}`}
           >
             {link.name}
           </Link>
@@ -301,12 +301,14 @@ export default function Header() {
 
   const renderMobileNav = () => (
     <div className={`md:hidden absolute top-full left-0 w-full bg-white shadow-xl border-t border-gray-100 transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100 visible h-auto' : 'opacity-0 invisible h-0 overflow-hidden'}`}>
-      <div className="flex flex-col p-4 space-y-3 text-sm">
+      <div className="flex flex-col p-4 space-y-2 text-sm">
         {navLinks.map((link) => {
           const isActive = link.path === '/' 
             ? (location.pathname === '/' || location.pathname === '/Home')
             : location.pathname.toLowerCase() === link.path.toLowerCase();
-          const activeClass = isActive ? 'text-green-700 font-bold' : 'text-gray-800 hover:text-green-700';
+          const activeClass = isActive 
+            ? 'bg-green-100/90 text-green-900 font-bold border border-green-200/80' 
+            : 'text-gray-800 hover:text-green-800 hover:bg-gray-50 border border-transparent';
 
           if (link.path === '/Programs' && !user) {
             return (
@@ -314,7 +316,7 @@ export default function Header() {
                 key={link.name} 
                 href={link.path}
                 onClick={handleProgramsClick}
-                className={`py-2 border-b border-gray-50 cursor-pointer block ${activeClass}`}
+                className={`py-2 px-3 rounded-lg cursor-pointer block transition-colors ${activeClass}`}
               >
                 {link.name}
               </a>
@@ -324,7 +326,7 @@ export default function Header() {
             <Link 
               key={link.name} 
               to={link.path}
-              className={`py-2 border-b border-gray-50 flex items-center justify-between ${activeClass}`}
+              className={`py-2 px-3 rounded-lg flex items-center justify-between transition-colors ${activeClass}`}
             >
               <span>{link.name}</span>
             </Link>
