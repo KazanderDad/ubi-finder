@@ -220,11 +220,11 @@ export default function Header() {
               <button className="flex items-center gap-2 p-1.5 rounded-full hover:bg-gray-100 transition-colors focus:outline-none">
                 <Avatar className="h-8 w-8 border border-green-300">
                   <AvatarFallback className="bg-green-700 text-white font-bold text-xs">
-                    {user.email ? user.email.slice(0, 2).toUpperCase() : "U"}
+                    {(user.user_metadata?.full_name || user.user_metadata?.display_name || user.email || "U").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs font-semibold text-gray-700 max-w-[120px] truncate hidden lg:inline">
-                  {user.email?.split('@')[0]}
+                  {user.user_metadata?.full_name || user.user_metadata?.display_name || user.user_metadata?.name || user.email?.split('@')[0]}
                 </span>
                 <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
               </button>

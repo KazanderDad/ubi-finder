@@ -54,9 +54,11 @@ export default function Dashboard() {
     try {
       if (!user) return;
       
-      const profiles = (await supabase.from('user_profiles').select('*').match({ created_by: user.email })).data;
-      if (profiles.length === 0) return;
-      const userProfileId = profiles[0].id;
+      let userProfileId = user?.user_metadata?.profile_id || localStorage.getItem("user_profile_id");
+      if (!userProfileId) {
+        const { data: profs } = await supabase.from('user_profiles').select('id').eq('created_by_id', user.id).limit(1);
+        if (profs && profs.length > 0) userProfileId = profs[0].id;
+      }
       
       const existingRecords = (await supabase.from('program_managers').select('*').match({ 
         user_email: user.email,
@@ -64,14 +66,14 @@ export default function Dashboard() {
         is_favorite: true
       })).data;
       
-      if (existingRecords.length > 0) {
+      if (existingRecords && existingRecords.length > 0) {
         (await supabase.from('program_managers').delete().eq('id', existingRecords[0].id));
         setFavoritePrograms(favoritePrograms.filter(id => id !== programId));
       } else {
         (await supabase.from('program_managers').insert([{
           program_id: programId,
           user_email: user.email,
-          user_profile_id: userProfileId,
+          user_profile_id: userProfileId || null,
           role: "viewer",
           is_favorite: true,
           added_date: new Date().toISOString()
@@ -96,7 +98,13 @@ export default function Dashboard() {
       if (pendingProfile) {
         try {
           const data = JSON.parse(pendingProfile);
-          (await supabase.from('user_profiles').insert([data]).select().single()).data;
+          const { data: savedProf } = await supabase.from('user_profiles').insert([{
+            ...data,
+            name: data.name || userData?.user_metadata?.full_name || userData?.user_metadata?.display_name || 'Member'
+          }]).select().single();
+          if (savedProf) {
+            localStorage.setItem("user_profile_id", savedProf.id);
+          }
           localStorage.removeItem("pendingProfile");
         } catch (e) {
           console.error("Error creating pending profile", e);
@@ -104,13 +112,42 @@ export default function Dashboard() {
       }
 
       let currentProf = null;
-      const profiles = (await supabase.from('user_profiles').select('*').match({ created_by: userData.email })).data;
-      if (profiles && profiles.length > 0) {
-        currentProf = profiles[0];
+      const profileId = userData?.user_metadata?.profile_id || localStorage.getItem("user_profile_id");
+      if (profileId) {
+        const { data: prof } = await supabase.from('user_profiles').select('*').eq('id', profileId).maybeSingle();
+        if (prof) currentProf = prof;
+      }
+
+      if (!currentProf && userData?.id) {
+        const { data: profs } = await supabase.from('user_profiles').select('*').eq('created_by_id', userData.id).order('created_date', { ascending: false }).limit(1);
+        if (profs && profs.length > 0) currentProf = profs[0];
+      }
+
+      if (!currentProf) {
+        const pending = localStorage.getItem("pendingProfile");
+        if (pending) {
+          try {
+            currentProf = JSON.parse(pending);
+          } catch (e) {
+            console.error("Error parsing pendingProfile", e);
+          }
+        }
+      }
+
+      // If still null, generate a base profile holding metadata name
+      if (!currentProf && (userData?.user_metadata?.full_name || userData?.user_metadata?.display_name)) {
+        currentProf = {
+          name: userData.user_metadata.full_name || userData.user_metadata.display_name,
+          country: "",
+          household_size: 1
+        };
+      }
+
+      if (currentProf) {
         setUserProfile(currentProf);
       }
 
-      const allPrograms = (await supabase.from('programs').select('*').neq('internal_status', 'deleted')).data;
+      const allPrograms = (await supabase.from('programs').select('*')).data;
       const activePrograms = (allPrograms || []).filter(p => p.internal_status !== 'deleted');
       setPrograms(activePrograms);
 
@@ -227,7 +264,7 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/90 backdrop-blur-sm p-6 rounded-2xl border border-green-100 shadow-sm">
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-green-950">
-              Welcome back, {userProfile?.name || user?.email?.split('@')[0] || "Friend"} 👋
+              Welcome back, {userProfile?.name || user?.user_metadata?.full_name || user?.user_metadata?.display_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Friend"} 👋
             </h1>
             <p className="text-sm text-gray-600 mt-1">
               Your centralized dashboard for Universal Basic Income matches, applications, and updates.
