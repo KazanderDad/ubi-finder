@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Users, PlusCircle, Info, Sparkles, Globe, DollarSign, ExternalLink } from "lucide-react";
 import UserForm from "../components/UserForm";
+import SupportWidget from "../components/SupportWidget";
 
 import { Helmet } from "react-helmet-async";
 
@@ -289,6 +290,13 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </section>
+
+        {/* Support This Project Section */}
+        <section className="container mx-auto px-4 py-16">
+          <div className="max-w-5xl mx-auto">
+            <SupportWidget />
           </div>
         </section>
       </div>
