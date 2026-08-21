@@ -448,7 +448,7 @@ export default function SubmitProgram() {
                       <SelectItem value={null}>No specific requirement</SelectItem>
                       <SelectItem value="female">Female only</SelectItem>
                       <SelectItem value="male">Male only</SelectItem>
-                      <SelectItem value="other">Other specific requirement</SelectItem>
+                      <SelectItem value="other">other gender-related requirement (please describe below)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

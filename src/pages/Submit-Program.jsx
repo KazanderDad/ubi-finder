@@ -37,19 +37,27 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Save, Plus, X, LockKeyhole } from "lucide-react";
-import { toast } from "@/components/ui/use-toast"
-
 const COUNTRIES = [
+  "Global",
+  "Worldwide",
   "United States",
   "Canada",
   "United Kingdom",
+  "Australia",
+  "New Zealand",
   "Germany",
   "France",
   "Spain",
   "Italy",
-  "Australia",
+  "Ireland",
+  "Sweden",
+  "Netherlands",
+  "Switzerland",
   "Japan",
+  "South Korea",
   "Brazil",
+  "Mexico",
+  "Colombia",
   "South Africa",
   "Kenya",
   "India"
@@ -229,15 +237,22 @@ export default function SubmitProgramPage() {
     }));
   };
 
-  const addRegion = () => {
-    if (selectedCountry && !regions.includes(selectedCountry)) {
-      const newRegions = [...regions, selectedCountry];
+  const handleSelectRegion = (country) => {
+    if (!country) return;
+    if (!regions.includes(country)) {
+      const newRegions = [...regions, country];
       setRegions(newRegions);
       setFormData(prev => ({
         ...prev,
         available_regions: newRegions
       }));
-      setSelectedCountry("");
+    }
+    setSelectedCountry("");
+  };
+
+  const addRegion = () => {
+    if (selectedCountry) {
+      handleSelectRegion(selectedCountry);
     }
   };
 
@@ -250,15 +265,22 @@ export default function SubmitProgramPage() {
     }));
   };
   
-  const addState = () => {
-    if (selectedState && !requiredStates.includes(selectedState)) {
-      const newStates = [...requiredStates, selectedState];
+  const handleSelectState = (state) => {
+    if (!state) return;
+    if (!requiredStates.includes(state)) {
+      const newStates = [...requiredStates, state];
       setRequiredStates(newStates);
       setFormData(prev => ({
         ...prev,
         required_states: newStates
       }));
-      setSelectedState("");
+    }
+    setSelectedState("");
+  };
+
+  const addState = () => {
+    if (selectedState) {
+      handleSelectState(selectedState);
     }
   };
 
@@ -533,50 +555,53 @@ export default function SubmitProgramPage() {
                         <SelectItem value={null}>Not applicable</SelectItem>
                         <SelectItem value="female">Female only</SelectItem>
                         <SelectItem value="male">Male only</SelectItem>
-                        <SelectItem value="other">Other requirement</SelectItem>
+                        <SelectItem value="other">other gender-related requirement (please describe below)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
-                    <Label>Available Regions</Label>
+                    <Label>Available Regions (select one or multiple countries)</Label>
                     <div className="flex gap-2 mb-2">
                       <Select
                         value={selectedCountry}
-                        onValueChange={setSelectedCountry}
+                        onValueChange={handleSelectRegion}
                       >
                         <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Select country" />
+                          <SelectValue placeholder="Add country / region..." />
                         </SelectTrigger>
                         <SelectContent>
                           {COUNTRIES.map(country => (
                             <SelectItem key={country} value={country}>
-                              {country}
+                              {regions.includes(country) ? `✓ ${country}` : country}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button type="button" onClick={addRegion}>
-                        <Plus className="w-4 h-4" />
+                      <Button type="button" onClick={addRegion} className="cursor-pointer">
+                        <Plus className="w-4 h-4 mr-1" /> Add
                       </Button>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {regions.map(region => (
-                        <div
-                          key={region}
-                          className="bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center gap-2"
-                        >
-                          {region}
-                          <button
-                            type="button"
-                            onClick={() => removeRegion(region)}
-                            className="hover:text-green-900"
+                    {regions.length > 0 && (
+                      <div className="flex flex-wrap gap-2 p-2.5 bg-gray-50/80 rounded-xl border border-gray-100">
+                        {regions.map(region => (
+                          <div
+                            key={region}
+                            className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs"
                           >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                            <span>{region}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeRegion(region)}
+                              className="hover:text-red-700 rounded-full hover:bg-green-200/60 p-0.5 transition-colors cursor-pointer"
+                              title={`Remove ${region}`}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {showStatesSelector && (
@@ -585,40 +610,43 @@ export default function SubmitProgramPage() {
                       <div className="flex gap-2 mb-2">
                         <Select
                           value={selectedState}
-                          onValueChange={setSelectedState}
+                          onValueChange={handleSelectState}
                         >
                           <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Select state/province" />
+                            <SelectValue placeholder="Add state / province..." />
                           </SelectTrigger>
                           <SelectContent>
                             {getStateOptions().map(state => (
                               <SelectItem key={state} value={state}>
-                                {state}
+                                {requiredStates.includes(state) ? `✓ ${state}` : state}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <Button type="button" onClick={addState}>
-                          <Plus className="w-4 h-4" />
+                        <Button type="button" onClick={addState} className="cursor-pointer">
+                          <Plus className="w-4 h-4 mr-1" /> Add
                         </Button>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {requiredStates.map(state => (
-                          <div
-                            key={state}
-                            className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2"
-                          >
-                            {state}
-                            <button
-                              type="button"
-                              onClick={() => removeState(state)}
-                              className="hover:text-blue-900"
+                      {requiredStates.length > 0 && (
+                        <div className="flex flex-wrap gap-2 p-2.5 bg-gray-50/80 rounded-xl border border-gray-100">
+                          {requiredStates.map(state => (
+                            <div
+                              key={state}
+                              className="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs"
                             >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                              <span>{state}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeState(state)}
+                                className="hover:text-red-700 rounded-full hover:bg-blue-200/60 p-0.5 transition-colors cursor-pointer"
+                                title={`Remove ${state}`}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
