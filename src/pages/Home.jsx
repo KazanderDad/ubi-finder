@@ -6,7 +6,23 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Users, PlusCircle, Info, Sparkles, Globe, DollarSign, ExternalLink } from "lucide-react";
+import { 
+  ArrowRight, 
+  Users, 
+  PlusCircle, 
+  Info, 
+  Sparkles, 
+  Globe, 
+  DollarSign, 
+  ExternalLink,
+  TrendingUp,
+  Coins,
+  Banknote,
+  Repeat,
+  Building2,
+  UserCheck,
+  CheckCircle2
+} from "lucide-react";
 import UserForm from "../components/UserForm";
 import SupportWidget from "../components/SupportWidget";
 
@@ -96,7 +112,6 @@ export default function Home() {
                   </Button>
                 </div>
                 
-                {/* 1b. Split Hero Messaging for Builders / Managers */}
                 <div className="mt-5 text-sm text-green-800/90 flex items-center justify-center md:justify-start gap-2">
                   <span>Launching or managing a UBI program?</span>
                   <Link to="/Services" className="font-semibold text-green-700 hover:text-green-900 underline flex items-center gap-1">
@@ -136,6 +151,197 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Section: What is the Fund Loop */}
+        <section className="container mx-auto px-4 py-16">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 border border-emerald-200 rounded-full text-xs font-bold text-emerald-800 mb-3">
+                <Repeat className="w-3.5 h-3.5 text-emerald-700 animate-spin-slow" />
+                The Virtuous Cycle
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-green-950 tracking-tight">
+                What is the Fund Loop?
+              </h2>
+              <p className="text-gray-600 text-sm md:text-base mt-2 leading-relaxed">
+                A continuous, self-reinforcing economic loop where everyday participation powers sustainable basic income distributions.
+              </p>
+            </div>
+
+            {/* Cyclical Flow Layout */}
+            <div className="relative bg-white/85 backdrop-blur-md rounded-3xl p-8 md:p-12 shadow-xl border border-green-100 overflow-hidden">
+              {/* Background ambient gradient glow */}
+              <div className="absolute -top-24 -left-24 w-72 h-72 bg-emerald-200/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-yellow-200/30 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
+                {/* Node 1 */}
+                <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-emerald-50/70 border border-emerald-100 shadow-xs hover:shadow-md transition-shadow">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md mb-4">
+                    <Users className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-base font-bold text-emerald-950 mb-1.5">
+                    People Participate
+                  </h3>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Community members discover, use, and engage with network applications and community pilots.
+                  </p>
+                </div>
+
+                {/* Node 2 */}
+                <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-blue-50/70 border border-blue-100 shadow-xs hover:shadow-md transition-shadow">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md mb-4">
+                    <TrendingUp className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-base font-bold text-blue-950 mb-1.5">
+                    Projects Grow Revenue
+                  </h3>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Participating initiatives experience increased organic activity, protocol yield, and grant support.
+                  </p>
+                </div>
+
+                {/* Node 3 */}
+                <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-amber-50/70 border border-amber-100 shadow-xs hover:shadow-md transition-shadow">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-600 text-white flex items-center justify-center shadow-md mb-4">
+                    <Coins className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-base font-bold text-amber-950 mb-1.5">
+                    Incentivize Through Fundloop
+                  </h3>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Projects allocate revenue, treasury yield, and philanthropy directly into the recurring distribution pool.
+                  </p>
+                </div>
+
+                {/* Node 4 */}
+                <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-green-50/70 border border-green-200 shadow-xs hover:shadow-md transition-shadow">
+                  <div className="w-14 h-14 rounded-2xl bg-green-700 text-white flex items-center justify-center shadow-md mb-4">
+                    <Banknote className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-base font-bold text-green-950 mb-1.5">
+                    People Get Paid
+                  </h3>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Disbursements and daily claims flow directly to participants, increasing engagement and restarting the loop.
+                  </p>
+                </div>
+              </div>
+
+              {/* Loop Bottom Cycle Indicator */}
+              <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-800">
+                <Repeat className="w-4 h-4 text-emerald-600" />
+                <span>Continuous Virtuous Cycle: Growth &rarr; Distribution &rarr; Empowerment</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section: Choose Your Path (Disassociated from the Loop) */}
+        <section className="container mx-auto px-4 py-12">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center max-w-xl mx-auto mb-10">
+              <span className="text-xs font-bold uppercase tracking-wider text-green-700">Get Started</span>
+              <h2 className="text-3xl font-extrabold text-green-950 mt-1">
+                Choose Your Path
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Select your primary goal to access tailored tools and verified opportunities.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* Path 1: For Individuals */}
+              <Card className="border-2 border-emerald-200 bg-white/95 shadow-lg hover:shadow-xl transition-all duration-200 flex flex-col justify-between overflow-hidden">
+                <div className="h-2 bg-emerald-600 w-full" />
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-700 flex-shrink-0">
+                      <UserCheck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-green-950">I Want to Receive Income</h3>
+                      <p className="text-xs text-emerald-800 font-medium">For individuals, recipients, and households</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Check your eligibility across verified universal basic income initiatives, guaranteed cash pilots, and daily Web3 claim protocols.
+                  </p>
+
+                  <ul className="space-y-2 text-xs text-gray-700">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      Free personalized qualification report
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      Filter by country, region, and payout method
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      Direct links to official application portals
+                    </li>
+                  </ul>
+
+                  <Button 
+                    className="w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-3 shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    onClick={() => {
+                      document.getElementById('user-form')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    Find My Available Programs
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Path 2: For Builders & Organizations */}
+              <Card className="border-2 border-blue-200 bg-white/95 shadow-lg hover:shadow-xl transition-all duration-200 flex flex-col justify-between overflow-hidden">
+                <div className="h-2 bg-blue-600 w-full" />
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-700 flex-shrink-0">
+                      <Building2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">I Run a Project or Company</h3>
+                      <p className="text-xs text-blue-800 font-medium">For pilot creators, DAOs, and foundations</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    List your initiative in our verified directory, reach qualified community members, and tap into dedicated pilot support and distribution rails.
+                  </p>
+
+                  <ul className="space-y-2 text-xs text-gray-700">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      Featured directory placement & verified badge
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      Managed intake and qualification pipelines
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      Inaugural batch pilot co-marketing
+                    </li>
+                  </ul>
+
+                  <Link to={isAuthenticated ? "/Submit-Program" : "/login?view=signup&redirectTo=/Submit-Program"} className="block">
+                    <Button 
+                      variant="outline"
+                      className="w-full border-blue-600 text-blue-700 hover:bg-blue-50 font-semibold py-3 shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      Submit a Program &rarr;
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
         {/* Form Section */}
         <section id="user-form" className="container mx-auto px-4 py-16 bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-green-100 max-w-3xl">
           <div>
@@ -156,7 +362,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 1c. Live Featured Programs Strip (Replaces decorative image) */}
+        {/* Live Featured Programs Strip */}
         <section className="container mx-auto px-4 my-20">
           <div className="max-w-5xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">

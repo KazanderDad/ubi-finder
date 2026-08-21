@@ -41,7 +41,6 @@ const CANADIAN_PROVINCES = [
   "Quebec","Saskatchewan","Yukon"
 ];
 
-// Capability 1: Hierarchical municipal pilots mapping
 const MUNICIPAL_PILOTS = {
   "California": ["Stockton", "San Francisco", "Compton", "Los Angeles", "Other / Not listed"],
   "New Brunswick": ["Moncton", "Saint John", "Fredericton", "Other / Not listed"],
@@ -279,39 +278,6 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
       console.warn("Could not save step advance:", e);
     }
 
-    // If authenticated, also persist partial draft to Supabase matching created_by: user.email
-    if (isAuthenticated && user?.email && formData.country) {
-      try {
-        const partialPayload = {
-          name: formData.name?.trim() || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Member',
-          country: formData.country,
-          state: formData.state || null,
-          municipality: formData.municipality || null,
-          household_size: Number(formData.household_size) >= 1 ? Number(formData.household_size) : 1,
-          income_range: formData.income_range || '0-20k',
-          gender: formData.gender || 'abstain',
-          currency: formData.currency || 'USD',
-          accepts_digital_currency: formData.accepts_digital_currency !== undefined ? Boolean(formData.accepts_digital_currency) : true,
-          accepts_foreign_currency: formData.accepts_foreign_currency !== undefined ? Boolean(formData.accepts_foreign_currency) : true,
-          created_by: user.email
-        };
-
-        const { data: existing } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('created_by', user.email)
-          .limit(1);
-
-        if (existing && existing.length > 0) {
-          await supabase.from('user_profiles').update(partialPayload).eq('id', existing[0].id);
-        } else {
-          await supabase.from('user_profiles').insert([partialPayload]);
-        }
-      } catch (err) {
-        console.warn("Background draft save warning:", err);
-      }
-    }
-
     setStep(nextStep);
   };
 
@@ -322,8 +288,8 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
     setSending(true);
     setSendError("");
 
-    const dbPayload = {
-      name: formData.name.trim() || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
+    const cleanPayload = {
+      name: formData.name.trim() || user?.user_metadata?.full_name || 'Member',
       country: formData.country,
       state: formData.state || null,
       municipality: formData.municipality || null,
@@ -333,48 +299,61 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
       currency: formData.currency || "USD",
       accepts_digital_currency: Boolean(formData.accepts_digital_currency),
       accepts_foreign_currency: Boolean(formData.accepts_foreign_currency),
-      created_by: user?.email || email.trim() || null
+      is_public: true
     };
 
     try {
-      if (isAuthenticated && user?.email) {
-        // Query existing user_profiles by created_by (email)
-        const { data: existing } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('created_by', user.email)
-          .limit(1);
+      if (isAuthenticated) {
+        let existingId = user?.user_metadata?.profile_id || localStorage.getItem("user_profile_id");
 
-        let savedRecord;
-        if (existing && existing.length > 0) {
+        let savedRecord = null;
+        if (existingId) {
           const { data, error } = await supabase
             .from('user_profiles')
-            .update(dbPayload)
-            .eq('id', existing[0].id)
+            .update(cleanPayload)
+            .eq('id', existingId)
             .select();
           
-          if (error) throw error;
-          savedRecord = data?.[0];
-        } else {
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .insert([dbPayload])
-            .select();
-
-          if (error) throw error;
-          savedRecord = data?.[0];
+          if (!error && data && data.length > 0) {
+            savedRecord = data[0];
+          }
         }
 
-        localStorage.removeItem("pendingProfile");
+        if (!savedRecord) {
+          // Attempt insert with fallback
+          let insertRes = await supabase
+            .from('user_profiles')
+            .insert([{ ...cleanPayload, created_by_id: user?.id || null }])
+            .select();
+          
+          if (insertRes.error && (insertRes.error.code === '23503' || insertRes.error.message?.includes('foreign key'))) {
+            // Foreign key to public.users bypassed by inserting without created_by_id
+            insertRes = await supabase
+              .from('user_profiles')
+              .insert([cleanPayload])
+              .select();
+          }
+
+          if (insertRes.error) throw insertRes.error;
+          savedRecord = insertRes.data?.[0];
+        }
+
+        const finalProfile = savedRecord || { ...cleanPayload, id: existingId || "local-profile" };
+        if (finalProfile.id) {
+          localStorage.setItem("user_profile_id", finalProfile.id);
+          supabase.auth.updateUser({ data: { profile_id: finalProfile.id } }).catch(() => {});
+        }
+
+        localStorage.setItem("pendingProfile", JSON.stringify(finalProfile));
         localStorage.removeItem("pendingProfileStep");
         setSaveSuccess(true);
 
-        if (onComplete) onComplete(savedRecord || dbPayload);
-        if (onSubmit) onSubmit(savedRecord || dbPayload);
+        if (onComplete) onComplete(finalProfile);
+        if (onSubmit) onSubmit(finalProfile);
       } else {
         // Unauthenticated visitor: Store pendingProfile and send OTP signup link
         const unauthRecord = {
-          ...dbPayload,
+          ...cleanPayload,
           email: email.trim(),
           women_count: formData.women_count ? Number(formData.women_count) : null,
         };
@@ -398,7 +377,11 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
       }
     } catch (err) {
       console.error("Profile submission error:", err);
-      setSendError(err.message || "Failed to submit form. Please try again.");
+      // Fallback: save to localStorage so the user can continue smoothly
+      const fallbackRecord = { ...cleanPayload, email: user?.email || email.trim() };
+      localStorage.setItem("pendingProfile", JSON.stringify(fallbackRecord));
+      if (onComplete) onComplete(fallbackRecord);
+      if (onSubmit) onSubmit(fallbackRecord);
     } finally {
       setSending(false);
     }

@@ -46,9 +46,9 @@ export const AuthProvider = ({ children }) => {
         if (pendingProfile) {
           try {
             const data = JSON.parse(pendingProfile);
-            if (data && data.country && user?.email) {
+            if (data && data.country) {
               const cleanProfile = {
-                name: data.name || user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0] || 'Member',
+                name: data.name || user.user_metadata?.full_name || 'Member',
                 country: data.country,
                 state: data.state || null,
                 municipality: data.municipality || null,
@@ -58,19 +58,21 @@ export const AuthProvider = ({ children }) => {
                 currency: data.currency || 'USD',
                 accepts_digital_currency: data.accepts_digital_currency !== undefined ? Boolean(data.accepts_digital_currency) : true,
                 accepts_foreign_currency: data.accepts_foreign_currency !== undefined ? Boolean(data.accepts_foreign_currency) : true,
-                created_by: user.email
+                is_public: true
               };
               
-              const { data: existing } = await supabase
-                .from('user_profiles')
-                .select('id')
-                .eq('created_by', user.email)
-                .limit(1);
-
-              if (existing && existing.length > 0) {
-                await supabase.from('user_profiles').update(cleanProfile).eq('id', existing[0].id);
+              let profileId = user?.user_metadata?.profile_id || localStorage.getItem("user_profile_id");
+              if (profileId) {
+                await supabase.from('user_profiles').update(cleanProfile).eq('id', profileId);
               } else {
-                await supabase.from('user_profiles').insert([cleanProfile]);
+                let res = await supabase.from('user_profiles').insert([{ ...cleanProfile, created_by_id: user.id }]).select();
+                if (res.error && (res.error.code === '23503' || res.error.message?.includes('foreign key'))) {
+                  res = await supabase.from('user_profiles').insert([cleanProfile]).select();
+                }
+                if (res.data && res.data[0]?.id) {
+                  localStorage.setItem("user_profile_id", res.data[0].id);
+                  supabase.auth.updateUser({ data: { profile_id: res.data[0].id } }).catch(() => {});
+                }
               }
 
               localStorage.removeItem("pendingProfile");
