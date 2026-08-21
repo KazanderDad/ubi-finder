@@ -117,23 +117,29 @@ export default function Header() {
   };
 
   const navLinks = [
-    { name: "Programs", path: "/Programs" },
-    ...(user ? [{ name: "My Report", path: "/My-Report", badge: "Personalized" }] : []),
+    ...(user 
+      ? [{ name: "Dashboard", path: "/Dashboard" }] 
+      : [{ name: "Home", path: "/" }]
+    ),
+    { name: "UBI Programs", path: "/Programs" },
+    ...(user ? [{ name: "My Report", path: "/My-Report" }] : []),
     { name: "Community", path: "/Community" },
     { name: "Blog", path: "/Blog" },
-    { name: "For Builders", path: "/Services", badge: "New" },
+    { name: "For Builders", path: "/Services" },
     { name: "About", path: "/About" }
   ];
 
   const renderDesktopNav = () => (
     <nav className="hidden md:flex items-center space-x-6">
       {navLinks.map((link) => {
-        const isActive = location.pathname.toLowerCase() === link.path.toLowerCase();
+        const isActive = link.path === '/' 
+          ? (location.pathname === '/' || location.pathname === '/Home')
+          : location.pathname.toLowerCase() === link.path.toLowerCase();
         const activeClass = isActive 
           ? 'text-green-800 font-bold' 
           : 'text-gray-600 hover:text-green-700 font-medium';
 
-        if (link.name === 'Programs' && !user) {
+        if (link.path === '/Programs' && !user) {
           return (
             <a 
               key={link.name} 
@@ -152,11 +158,6 @@ export default function Header() {
             className={`text-sm transition-colors flex items-center gap-1.5 ${activeClass}`}
           >
             {link.name}
-            {link.badge && (
-              <span className="text-[10px] uppercase font-bold text-green-800 bg-green-100 px-1.5 py-0.2 rounded-full">
-                {link.badge}
-              </span>
-            )}
           </Link>
         );
       })}
@@ -302,10 +303,12 @@ export default function Header() {
     <div className={`md:hidden absolute top-full left-0 w-full bg-white shadow-xl border-t border-gray-100 transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100 visible h-auto' : 'opacity-0 invisible h-0 overflow-hidden'}`}>
       <div className="flex flex-col p-4 space-y-3 text-sm">
         {navLinks.map((link) => {
-          const isActive = location.pathname.toLowerCase() === link.path.toLowerCase();
+          const isActive = link.path === '/' 
+            ? (location.pathname === '/' || location.pathname === '/Home')
+            : location.pathname.toLowerCase() === link.path.toLowerCase();
           const activeClass = isActive ? 'text-green-700 font-bold' : 'text-gray-800 hover:text-green-700';
 
-          if (link.name === 'Programs' && !user) {
+          if (link.path === '/Programs' && !user) {
             return (
               <a 
                 key={link.name} 
@@ -324,11 +327,6 @@ export default function Header() {
               className={`py-2 border-b border-gray-50 flex items-center justify-between ${activeClass}`}
             >
               <span>{link.name}</span>
-              {link.badge && (
-                <span className="text-[10px] uppercase font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded-full">
-                  {link.badge}
-                </span>
-              )}
             </Link>
           );
         })}
