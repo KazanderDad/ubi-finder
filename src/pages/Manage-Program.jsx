@@ -74,6 +74,8 @@ const CANADIAN_PROVINCES = [
   "Quebec", "Saskatchewan", "Yukon"
 ];
 
+const STANDARD_CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "BTC", "ETH"];
+
 export default function ManageProgramPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -86,6 +88,7 @@ export default function ManageProgramPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loginAlertOpen, setLoginAlertOpen] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [isOtherCurrency, setIsOtherCurrency] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -481,8 +484,16 @@ export default function ManageProgramPage() {
                 <div>
                   <Label>Currency</Label>
                   <Select
-                    value={formData.currency}
-                    onValueChange={(value) => handleChange("currency", value)}
+                    value={STANDARD_CURRENCIES.includes(formData.currency) ? formData.currency : (isOtherCurrency || formData.currency ? "OTHER" : "USD")}
+                    onValueChange={(value) => {
+                      if (value === "OTHER") {
+                        setIsOtherCurrency(true);
+                        handleChange("currency", "");
+                      } else {
+                        setIsOtherCurrency(false);
+                        handleChange("currency", value);
+                      }
+                    }}
                     required
                   >
                     <SelectTrigger>
@@ -497,8 +508,25 @@ export default function ManageProgramPage() {
                       <SelectItem value="JPY">JPY - Japanese Yen</SelectItem>
                       <SelectItem value="BTC">BTC - Bitcoin</SelectItem>
                       <SelectItem value="ETH">ETH - Ethereum</SelectItem>
+                      <SelectItem value="OTHER">Other (Specify custom currency)</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  {(isOtherCurrency || (formData.currency && !STANDARD_CURRENCIES.includes(formData.currency))) && (
+                    <div className="mt-2 animate-in fade-in duration-150">
+                      <Input
+                        type="text"
+                        placeholder="Enter currency code or symbol (e.g. SEK, NZD, G$, SOL)"
+                        value={formData.currency === "OTHER" ? "" : formData.currency}
+                        onChange={(e) => handleChange("currency", e.target.value.toUpperCase())}
+                        required
+                        className="bg-gray-50/90 font-medium"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Please specify the 3-letter currency code or token symbol.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>

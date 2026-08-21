@@ -160,12 +160,15 @@ const getCurrencyForCountry = (country) => {
   return COUNTRY_CURRENCY[country] || "USD";
 };
 
+const STANDARD_PROFILE_CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"];
+
 export default function EditProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [user, setUser] = useState(null);
   const [profileId, setProfileId] = useState(null);
+  const [isOtherCurrency, setIsOtherCurrency] = useState(false);
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
@@ -802,10 +805,18 @@ export default function EditProfile() {
               <div>
                 <Label htmlFor="currency">Currency</Label>
                 <Select
-                  value={formData.currency}
-                  onValueChange={(value) => handleChange("currency", value)}
+                  value={STANDARD_PROFILE_CURRENCIES.includes(formData.currency) ? formData.currency : (isOtherCurrency || formData.currency ? "OTHER" : "USD")}
+                  onValueChange={(value) => {
+                    if (value === "OTHER") {
+                      setIsOtherCurrency(true);
+                      handleChange("currency", "");
+                    } else {
+                      setIsOtherCurrency(false);
+                      handleChange("currency", value);
+                    }
+                  }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="currency">
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -815,8 +826,22 @@ export default function EditProfile() {
                     <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
                     <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
                     <SelectItem value="JPY">JPY - Japanese Yen</SelectItem>
+                    <SelectItem value="OTHER">Other (Specify custom currency)</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {(isOtherCurrency || (formData.currency && !STANDARD_PROFILE_CURRENCIES.includes(formData.currency))) && (
+                  <div className="mt-2 animate-in fade-in duration-150">
+                    <Input
+                      type="text"
+                      placeholder="Enter currency code or symbol (e.g. SEK, NZD, G$)"
+                      value={formData.currency === "OTHER" ? "" : formData.currency}
+                      onChange={(e) => handleChange("currency", e.target.value.toUpperCase())}
+                      required
+                      className="bg-gray-50/90 font-medium"
+                    />
+                  </div>
+                )}
                 <p className="text-sm text-gray-500 mt-1">
                   Automatically set based on your country, but can be changed
                 </p>
