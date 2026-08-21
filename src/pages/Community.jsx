@@ -38,6 +38,7 @@ export default function CommunityPage() {
   const [newProgramId, setNewProgramId] = useState("none");
   const [submitting, setSubmitting] = useState(false);
   const [postSuccess, setPostSuccess] = useState(false);
+  const [postError, setPostError] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -67,32 +68,43 @@ export default function CommunityPage() {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) return;
 
+    if (!user?.id) {
+      setPostError("You must be logged in to create a discussion.");
+      return;
+    }
+
     setSubmitting(true);
+    setPostError("");
+
     try {
-      const authorName = userProfile?.name || user?.email?.split('@')[0] || "Community Member";
+      const authorName = userProfile?.name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || "Community Member";
       const tags = [newCategory];
       if (newProgramId !== "none") {
-        const found = programsList.find(p => p.program_id === parseInt(newProgramId));
+        const found = programsList.find(p => p.program_id === parseInt(newProgramId, 10));
         if (found) tags.push(found.name);
       }
 
+      const postPayload = {
+        title: newTitle.trim(),
+        content: newContent.trim(),
+        category: newCategory,
+        author_id: user.id,
+        author_name: authorName,
+        tags: tags,
+        likes: 0,
+        replies: 0
+      };
+
       const { data, error } = await supabase
         .from('community_discussions')
-        .insert([{
-          title: newTitle.trim(),
-          content: newContent.trim(),
-          category: newCategory,
-          author_name: authorName,
-          author_email: user?.email,
-          tags: tags,
-          replies: 0,
-          created_at: new Date().toISOString()
-        }])
+        .insert([postPayload])
         .select()
         .single();
 
-      if (!error && data) {
-        setDiscussions([data, ...discussions]);
+      if (error) throw error;
+
+      if (data) {
+        setDiscussions(prev => [data, ...prev]);
         setNewTitle("");
         setNewContent("");
         setNewProgramId("none");
@@ -102,6 +114,7 @@ export default function CommunityPage() {
       }
     } catch (err) {
       console.error("Error creating discussion:", err);
+      setPostError(err.message || "Failed to publish post. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -263,6 +276,12 @@ export default function CommunityPage() {
                           </Select>
                         </div>
                       </div>
+
+                      {postError && (
+                        <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">
+                          {postError}
+                        </p>
+                      )}
 
                       <div className="flex justify-end gap-2 pt-2">
                         <Button 

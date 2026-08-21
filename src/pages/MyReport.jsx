@@ -62,7 +62,7 @@ export default function MyReport() {
           .from("user_profiles")
           .select("*")
           .eq("created_by_id", user.id)
-          .order("created_at", { ascending: false })
+          .order("created_date", { ascending: false })
           .limit(1);
 
         if (profiles && profiles.length > 0) {
