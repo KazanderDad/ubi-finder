@@ -256,7 +256,7 @@ export default function SupportWidget() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleCopy("donations@ubi-finder.org", "etransfer")}
+                  onClick={() => handleCopy("donations@ubifinder.org", "etransfer")}
                   className="h-7 text-[11px] px-2 text-green-700 hover:bg-green-100"
                 >
                   {copiedField === "etransfer" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -264,7 +264,7 @@ export default function SupportWidget() {
                 </Button>
               </div>
               <p className="text-gray-600">
-                Send your contribution to: <code className="bg-white px-1.5 py-0.5 rounded border border-gray-300 font-mono font-semibold text-green-900">donations@ubi-finder.org</code>
+                Send your contribution to: <code className="bg-white px-1.5 py-0.5 rounded border border-gray-300 font-mono font-semibold text-green-900">donations@ubifinder.org</code>
               </p>
             </div>
 
