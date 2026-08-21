@@ -165,24 +165,49 @@ export function evaluateEligibility(program, profile) {
     });
   }
 
-  // 5. Monthly Value & Application Status Weighting (Up to 15 points)
-  let statusScore = 5;
-  if (program.status === "active_open" || program.application_status === "Accepting applications") {
-    statusScore = 15;
+  // 5. Monthly Value & Application Status Evaluation (Up to 15 points)
+  const isClosed = 
+    program.status === "closed" || 
+    program.status === "active_closed" || 
+    (program.application_status && program.application_status.toLowerCase().includes("no longer accepting"));
+
+  if (isClosed) {
+    disqualifiers.push("Program is no longer accepting new applications");
+    diagnostics.push({ 
+      label: "Application Status", 
+      passed: false, 
+      text: "Applications are currently closed" 
+    });
+    fitBreakdown.status = 0;
+  } else if (program.status === "active_open" || program.application_status === "Accepting applications") {
+    fitBreakdown.status = 15;
+    score += 15;
+    diagnostics.push({ 
+      label: "Application Status", 
+      passed: true, 
+      text: "Actively accepting applications" 
+    });
   } else if (program.status === "upcoming" || program.application_status === "Accepting waitlist") {
-    statusScore = 8;
-  } else if (program.status === "active_closed" || program.application_status === "No longer accepting applications") {
-    statusScore = 2;
+    fitBreakdown.status = 8;
+    score += 8;
+    diagnostics.push({ 
+      label: "Application Status", 
+      passed: true, 
+      text: "Accepting waitlist entries" 
+    });
+  } else {
+    fitBreakdown.status = 5;
+    score += 5;
   }
-  fitBreakdown.status = statusScore;
-  score += statusScore;
 
   // Final score clamping
   const finalScore = Math.min(100, Math.max(10, score));
 
   // Determine Tier
   let tier = TIERS.TIER_1_GUARANTEED;
-  if (program.status === "upcoming" || program.application_status === "Accepting waitlist") {
+  if (isClosed) {
+    tier = null;
+  } else if (program.status === "upcoming" || program.application_status === "Accepting waitlist") {
     tier = TIERS.TIER_4_WAITLIST;
   } else if (program.distribution_type === "daily_claim_protocol") {
     tier = TIERS.TIER_2_DAILY_CLAIM;
@@ -195,7 +220,7 @@ export function evaluateEligibility(program, profile) {
   return {
     eligible: isEligible,
     reasons: disqualifiers,
-    score: isEligible ? finalScore : Math.min(35, finalScore),
+    score: isEligible ? finalScore : Math.min(25, finalScore),
     fitBreakdown,
     tier,
     diagnostics
