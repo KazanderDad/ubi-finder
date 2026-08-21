@@ -82,18 +82,28 @@ export default function Home() {
                   We help you discover opportunities available in your region.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
-                  <Button 
-                    size="lg"
-                    className="bg-green-700 hover:bg-green-800 w-full sm:w-auto shadow-md cursor-pointer"
-                    onClick={() => {
-                      document.getElementById('user-form')?.scrollIntoView({ 
-                        behavior: 'smooth' 
-                      });
-                    }}
-                  >
-                    Find Programs
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
+                  {isAuthenticated ? (
+                    <Link to="/My-Report" className="w-full sm:w-auto">
+                      <Button 
+                        size="lg"
+                        className="bg-green-700 hover:bg-green-800 w-full sm:w-auto shadow-md cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        Fill Out Eligibility Form &rarr;
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button 
+                      size="lg"
+                      className="bg-green-700 hover:bg-green-800 w-full sm:w-auto shadow-md cursor-pointer"
+                      onClick={() => {
+                        document.getElementById('user-form')?.scrollIntoView({ 
+                          behavior: 'smooth' 
+                        });
+                      }}
+                    >
+                      Fill Out Eligibility Form &rarr;
+                    </Button>
+                  )}
                 </div>
                 
                 <div className="mt-5 text-sm text-green-800/90 flex items-center justify-center md:justify-start gap-2">

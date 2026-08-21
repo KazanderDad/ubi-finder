@@ -211,7 +211,7 @@ export default function Dashboard() {
 
   const checklistItems = [
     { label: "Account verified & authenticated", completed: true },
-    { label: "Complete eligibility profile details", completed: isProfileComplete, link: "/EditProfile", action: "Edit Profile" },
+    { label: "Complete eligibility profile details", completed: isProfileComplete, link: "/My-Report", action: "Edit Profile" },
     { label: `Save at least 3 favorite programs (${favoritePrograms.length}/3)`, completed: hasSavedFavorites, link: "/Programs", action: "Browse" },
     { label: "Explore community questions & discussions", completed: hasExploredCommunity, link: "/Community", action: "Visit Hub" },
   ];
@@ -391,14 +391,14 @@ export default function Dashboard() {
                       Tailored to your location, demographics & favorites
                     </CardDescription>
                   </div>
-                  <Link to={createPageUrl("EditProfile")}>
+                  <Link to="/My-Report">
                     <Button
                       variant="outline"
                       className="border-green-600 text-green-700 hover:bg-green-50 text-xs h-8"
                       size="sm"
                     >
                       <Edit className="w-3.5 h-3.5 mr-1.5" />
-                      Edit Filters
+                      Edit Profile &rarr;
                     </Button>
                   </Link>
                 </div>

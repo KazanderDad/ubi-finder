@@ -469,7 +469,7 @@ export default function Programs() {
                     </p>
                   </div>
                 </div>
-                <Link to="/EditProfile" className="flex-shrink-0">
+                <Link to="/My-Report" className="flex-shrink-0">
                   <Button className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs h-9 shadow-sm px-4">
                     Fill Out Eligibility Form &rarr;
                   </Button>

@@ -27,14 +27,14 @@ export default function DashboardProfile({ user, profile, showEditButton = true 
                 View Profile
               </Button>
             </Link>
-            <Link to={createPageUrl("EditProfile")}>
+            <Link to="/My-Report">
               <Button
                 variant="outline"
                 className="border-green-600 text-green-700 hover:bg-green-50"
                 size="sm"
               >
                 <Edit className="w-4 h-4 mr-2" />
-                Edit Profile
+                Edit Profile &rarr;
               </Button>
             </Link>
           </div>

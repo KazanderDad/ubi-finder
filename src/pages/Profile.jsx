@@ -91,12 +91,12 @@ export default function Profile() {
               <ChevronLeft className="w-5 h-5 mr-1" />
               Back to Dashboard
             </Button>
-            <Link to={createPageUrl("EditProfile")}>
+            <Link to="/My-Report">
               <Button
                 className="bg-green-700 hover:bg-green-800"
               >
                 <Edit className="w-4 h-4 mr-2" />
-                Edit Profile
+                Edit Profile &rarr;
               </Button>
             </Link>
           </div>

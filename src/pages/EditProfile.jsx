@@ -245,7 +245,7 @@ export default function EditProfile() {
       setLoading(false);
     } catch (error) {
       console.error("Error loading user data:", error);
-      navigate(createPageUrl("Home"));
+      navigate("/My-Report");
     }
   };
 
@@ -321,7 +321,7 @@ export default function EditProfile() {
         variant: "success",
       });
       
-      navigate(createPageUrl("Profile"));
+      navigate("/My-Report");
     } catch (error) {
       console.error("Error saving profile:", error);
       toast({
@@ -605,11 +605,11 @@ export default function EditProfile() {
         <div className="flex justify-between items-center mb-6">
           <Button 
             variant="ghost" 
-            className="text-green-700"
-            onClick={() => navigate(createPageUrl("Profile"))}
+            className="text-green-700 hover:bg-green-50" 
+            onClick={() => navigate("/My-Report")}
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Back to Profile
+            Back to My Report
           </Button>
         </div>
         
