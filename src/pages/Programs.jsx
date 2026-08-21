@@ -346,7 +346,7 @@ export default function Programs() {
                 </button>
               </div>
 
-              <Link to="/Submit-Program">
+              <Link to={user ? "/Submit-Program" : "/login?view=signup&redirectTo=/Submit-Program"}>
                 <Button className="bg-green-700 hover:bg-green-800 text-xs shadow-sm h-9">
                   <Plus className="w-4 h-4 mr-1" />
                   Submit Program

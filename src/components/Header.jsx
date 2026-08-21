@@ -400,7 +400,7 @@ export default function Header() {
             
             <div className="inline-flex items-center gap-2 mt-1 sm:mt-0">
               <Link 
-                to="/Submit-Program"
+                to={user ? "/Submit-Program" : "/login?view=signup&redirectTo=/Submit-Program"}
                 className="inline-flex items-center gap-1 bg-white/15 hover:bg-white/25 text-white font-semibold px-2.5 py-1 rounded-lg border border-white/20 transition-all text-xs whitespace-nowrap shadow-xs"
               >
                 Submit a Project &rarr;

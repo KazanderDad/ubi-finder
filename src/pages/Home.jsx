@@ -269,7 +269,7 @@ export default function Home() {
               <p className="text-green-800/80 mb-4 text-sm">
                 Help others by adding a program to our growing database.
               </p>
-              <Link to={createPageUrl("Submit-Program")}>
+              <Link to={isAuthenticated ? "/Submit-Program" : "/login?view=signup&redirectTo=/Submit-Program"}>
                 <Button variant="outline" className="w-full border-green-600 text-green-700 hover:bg-green-50">
                   Add Program
                 </Button>

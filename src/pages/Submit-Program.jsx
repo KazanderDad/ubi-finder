@@ -127,11 +127,9 @@ export default function SubmitProgramPage() {
 
   const handleLogin = async () => {
     try {
-      navigate("/login");
-      // The page will reload after login
+      navigate("/login?view=signup&redirectTo=/Submit-Program");
     } catch (error) {
       console.error("Login failed:", error);
-      // Redirect to programs page if login fails
       navigate("/Programs");
     }
   };
@@ -293,24 +291,33 @@ export default function SubmitProgramPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-12">
         <div className="max-w-md mx-auto text-center">
-          <Card>
+          <Card className="shadow-lg border-emerald-100">
             <CardHeader>
-              <CardTitle>Authentication Required</CardTitle>
+              <CardTitle className="text-xl text-emerald-950 font-bold">Account Required</CardTitle>
               <CardDescription>
-                Please log in to submit a new UBI program
+                Please sign up or log in to submit a new UBI program
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-6">
-                To ensure the quality and accuracy of our database, we require users to log in before submitting new programs.
+            <CardContent className="space-y-4">
+              <p className="text-gray-600 text-sm">
+                To ensure the quality and accuracy of our database, we require contributors to create a free account before submitting new programs.
               </p>
               <Button 
                 onClick={handleLogin}
-                className="bg-green-700 hover:bg-green-800"
+                className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-5"
               >
                 <LockKeyhole className="w-4 h-4 mr-2" />
-                Log In to Continue
+                Sign Up to Submit a Program
               </Button>
+              <div className="pt-2 text-xs text-gray-500">
+                Already have an account?{" "}
+                <button
+                  onClick={() => navigate("/login?redirectTo=/Submit-Program")}
+                  className="text-emerald-700 font-bold hover:underline cursor-pointer"
+                >
+                  Sign in here
+                </button>
+              </div>
             </CardContent>
           </Card>
         </div>

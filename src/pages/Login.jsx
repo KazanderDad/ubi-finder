@@ -32,6 +32,9 @@ export default function Login() {
     setMessage(null);
   }, [viewParam]);
 
+  const redirectParam = searchParams.get('redirectTo') || searchParams.get('returnTo');
+  const defaultRedirect = redirectParam || '/Dashboard';
+
   if (isLoadingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -41,7 +44,7 @@ export default function Login() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/Dashboard" replace />;
+    return <Navigate to={defaultRedirect} replace />;
   }
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -71,6 +74,9 @@ export default function Login() {
     setLoading(true);
     setMessage(null);
 
+    const signupTarget = redirectParam || '/My-Report';
+    const signinTarget = redirectParam || '/Programs';
+
     try {
       if (view === 'sign_up') {
         if (isPasswordEmpty) {
@@ -78,7 +84,7 @@ export default function Login() {
           const { error } = await supabase.auth.signInWithOtp({ 
             email: email.trim(),
             options: {
-              emailRedirectTo: `${window.location.origin}/My-Report`,
+              emailRedirectTo: `${window.location.origin}${signupTarget.startsWith('/') ? signupTarget : `/${signupTarget}`}`,
               data: {
                 full_name: displayName.trim() || undefined,
                 display_name: displayName.trim() || undefined
@@ -95,7 +101,7 @@ export default function Login() {
 
           setMessage({ 
             type: 'success', 
-            text: 'Magic link sent! Please check your inbox and click the verification link to access your personalized UBI report.' 
+            text: 'Magic link sent! Please check your inbox and click the verification link to activate your account.' 
           });
         } else {
           // Signup with Password + Email Confirmation
@@ -103,7 +109,7 @@ export default function Login() {
             email: email.trim(), 
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}/My-Report`,
+              emailRedirectTo: `${window.location.origin}${signupTarget.startsWith('/') ? signupTarget : `/${signupTarget}`}`,
               data: {
                 full_name: displayName.trim() || undefined,
                 display_name: displayName.trim() || undefined
@@ -133,7 +139,7 @@ export default function Login() {
           const { error } = await supabase.auth.signInWithOtp({ 
             email: email.trim(),
             options: {
-              emailRedirectTo: `${window.location.origin}/Programs`
+              emailRedirectTo: `${window.location.origin}${signinTarget.startsWith('/') ? signinTarget : `/${signinTarget}`}`
             }
           });
           if (error) throw error;
