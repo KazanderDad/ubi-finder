@@ -42,6 +42,18 @@ export const AuthProvider = ({ children }) => {
         setUser(user);
         setIsAuthenticated(true);
 
+        // Ensure public.users row exists to satisfy foreign key constraint
+        try {
+          await supabase.from('users').upsert({
+            id: user.id,
+            email: user.email || `${user.id}@ubifinder.org`,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Member',
+            role: 'user'
+          }, { onConflict: 'id' });
+        } catch (uErr) {
+          console.warn("AuthContext public.users upsert notice:", uErr);
+        }
+
         const pendingProfile = localStorage.getItem("pendingProfile");
         if (pendingProfile) {
           try {
@@ -57,6 +69,7 @@ export const AuthProvider = ({ children }) => {
                 gender: data.gender || 'abstain',
                 currency: data.currency || 'USD',
                 accepts_digital_currency: data.accepts_digital_currency !== undefined ? Boolean(data.accepts_digital_currency) : true,
+                accepts_foreign_currency: data.accepts_foreign_currency !== undefined ? Boolean(data.accepts_foreign_currency) : true,
                 created_by_id: user.id
               };
               

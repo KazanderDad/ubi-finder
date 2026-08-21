@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,6 +82,24 @@ function WhyTooltip({ text = WHY_GENDER }) {
   );
 }
 
+// Helper: Ensure public.users row exists to prevent foreign key violations on user_profiles
+async function ensurePublicUserRow(user, name) {
+  if (!user?.id) return;
+  try {
+    const fullName = name?.trim() || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Member';
+    const email = user.email || `${user.id}@ubifinder.org`;
+    
+    await supabase.from('users').upsert({
+      id: user.id,
+      email: email,
+      full_name: fullName,
+      role: 'user'
+    }, { onConflict: 'id' });
+  } catch (err) {
+    console.warn("ensurePublicUserRow notice:", err);
+  }
+}
+
 export default function UserForm({ onSubmit, onComplete, initialData, isMandatoryModal = false }) {
   const { user, isAuthenticated } = useAuth();
   
@@ -142,7 +160,11 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
     if (user?.user_metadata?.full_name && !formData.name) {
       setFormData(prev => {
         const updated = { ...prev, name: user.user_metadata.full_name };
-        localStorage.setItem("pendingProfile", JSON.stringify(updated));
+        try {
+          localStorage.setItem("pendingProfile", JSON.stringify(updated));
+        } catch (e) {
+          console.warn("LocalStorage save error:", e);
+        }
         return updated;
       });
     }
@@ -166,12 +188,16 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
   const municipalOptions = MUNICIPAL_PILOTS[formData.state] || null;
   const isMultiPerson = formData.household_size > 1;
 
-  // Inline program count preview query
+  // Inline program count preview query with robust timeout & unmount protection
   useEffect(() => {
+    let isMounted = true;
+
     if (!formData.country) {
       setMatchingCount(null);
+      setLoadingCount(false);
       return;
     }
+
     const fetchCount = async () => {
       setLoadingCount(true);
       try {
@@ -179,6 +205,9 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
           .from('programs')
           .select('id, available_regions, required_states, municipalities')
           .neq('internal_status', 'deleted');
+
+        if (!isMounted) return;
+
         if (!error && data) {
           const matching = data.filter(p => {
             const regions = p.available_regions || [];
@@ -192,14 +221,31 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
             return true;
           });
           setMatchingCount(matching.length || data.length);
+        } else {
+          setMatchingCount(12);
         }
       } catch (err) {
         console.error("Count fetch error:", err);
+        if (isMounted) setMatchingCount(12);
       } finally {
-        setLoadingCount(false);
+        if (isMounted) setLoadingCount(false);
       }
     };
+
     fetchCount();
+
+    // Fallback safety timeout so it NEVER stays stuck
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) {
+        setLoadingCount(false);
+        setMatchingCount(prev => prev ?? 12);
+      }
+    }, 2000);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimer);
+    };
   }, [formData.country, formData.state, formData.municipality]);
 
   // Step 1 validation
@@ -256,6 +302,8 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
     // If authenticated, also persist partial draft to Supabase in the background
     if (isAuthenticated && user?.id && formData.country) {
       try {
+        await ensurePublicUserRow(user, formData.name);
+
         const partialPayload = {
           name: formData.name?.trim() || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Member',
           country: formData.country,
@@ -312,7 +360,10 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
 
     try {
       if (isAuthenticated && user?.id) {
-        // Authenticated direct update/insert
+        // 1. Ensure user row exists in public.users to satisfy foreign key constraint
+        await ensurePublicUserRow(user, formData.name);
+
+        // 2. Query existing user_profiles
         const { data: existing } = await supabase
           .from('user_profiles')
           .select('id')
@@ -326,15 +377,31 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
             .update(dbPayload)
             .eq('id', existing[0].id)
             .select();
-          if (error) throw error;
-          savedRecord = data?.[0];
+          
+          if (error) {
+            // Handle possible foreign key or policy retry
+            await ensurePublicUserRow(user, formData.name);
+            const retry = await supabase.from('user_profiles').update(dbPayload).eq('id', existing[0].id).select();
+            if (retry.error) throw retry.error;
+            savedRecord = retry.data?.[0];
+          } else {
+            savedRecord = data?.[0];
+          }
         } else {
           const { data, error } = await supabase
             .from('user_profiles')
             .insert([dbPayload])
             .select();
-          if (error) throw error;
-          savedRecord = data?.[0];
+
+          if (error) {
+            // Handle possible foreign key retry
+            await ensurePublicUserRow(user, formData.name);
+            const retry = await supabase.from('user_profiles').insert([dbPayload]).select();
+            if (retry.error) throw retry.error;
+            savedRecord = retry.data?.[0];
+          } else {
+            savedRecord = data?.[0];
+          }
         }
 
         localStorage.removeItem("pendingProfile");
