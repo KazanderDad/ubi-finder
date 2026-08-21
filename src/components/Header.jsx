@@ -41,6 +41,15 @@ export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const [eligibilityModalOpen, setEligibilityModalOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    return localStorage.getItem("dismissedLaunchBanner") === "true";
+  });
+
+  const handleDismissBanner = (e) => {
+    e.stopPropagation();
+    setBannerDismissed(true);
+    localStorage.setItem("dismissedLaunchBanner", "true");
+  };
 
   useEffect(() => {
     if (user?.id) {
@@ -290,7 +299,7 @@ export default function Header() {
   );
 
   const renderMobileNav = () => (
-    <div className={`md:hidden absolute top-16 left-0 w-full bg-white shadow-xl border-t border-gray-100 transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100 visible h-auto' : 'opacity-0 invisible h-0 overflow-hidden'}`}>
+    <div className={`md:hidden absolute top-full left-0 w-full bg-white shadow-xl border-t border-gray-100 transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100 visible h-auto' : 'opacity-0 invisible h-0 overflow-hidden'}`}>
       <div className="flex flex-col p-4 space-y-3 text-sm">
         {navLinks.map((link) => {
           const isActive = location.pathname.toLowerCase() === link.path.toLowerCase();
@@ -373,10 +382,49 @@ export default function Header() {
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md transition-all duration-300 ease-in-out ${
+      className={`fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md transition-all duration-300 ease-in-out ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${isScrolled ? 'shadow-sm border-b border-gray-200' : 'border-b border-transparent'}`}
     >
+      {/* Dismissable Launch Announcement Banner */}
+      {!bannerDismissed && (
+        <div className="bg-gradient-to-r from-emerald-900 via-green-900 to-teal-950 text-white text-xs py-2 px-3 sm:px-6 flex items-center justify-between gap-3 shadow-inner border-b border-emerald-800/60 relative z-20 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap mx-auto text-center sm:text-left justify-center">
+            <span className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">
+              <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" />
+              Recently Launched
+            </span>
+            <span className="text-emerald-100 text-xs font-medium">
+              UBI Finder recently launched and we are actively looking for more basic income projects to feature!
+            </span>
+            
+            <div className="inline-flex items-center gap-2 mt-1 sm:mt-0">
+              <Link 
+                to="/Submit-Program"
+                className="inline-flex items-center gap-1 bg-white/15 hover:bg-white/25 text-white font-semibold px-2.5 py-1 rounded-lg border border-white/20 transition-all text-xs whitespace-nowrap shadow-xs"
+              >
+                Submit a Project &rarr;
+              </Link>
+              <Link 
+                to={user ? "/Programs" : "/login?view=signup"}
+                className="inline-flex items-center gap-1 bg-yellow-400 hover:bg-yellow-300 text-green-950 font-bold px-2.5 py-1 rounded-lg shadow-sm transition-all text-xs whitespace-nowrap"
+              >
+                Try Matching Engine &rarr;
+              </Link>
+            </div>
+          </div>
+
+          <button
+            onClick={handleDismissBanner}
+            aria-label="Dismiss launch banner"
+            className="text-emerald-300 hover:text-white p-1 rounded-md hover:bg-white/10 transition-colors flex-shrink-0 cursor-pointer"
+            title="Dismiss banner"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
