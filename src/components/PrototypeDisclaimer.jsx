@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { AlertCircle, ChevronUp, ChevronDown, Mail, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlertCircle, ChevronUp, ChevronDown, Mail, X, PlusCircle } from "lucide-react";
 
 export default function PrototypeDisclaimer() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -24,7 +25,7 @@ export default function PrototypeDisclaimer() {
           <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-transform" />
         </button>
       ) : (
-        <div className="bg-slate-900/95 text-slate-100 border border-slate-700 rounded-2xl p-4 shadow-2xl backdrop-blur-md max-w-xs sm:max-w-sm text-xs space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="bg-slate-900/95 text-slate-100 border border-slate-700 rounded-2xl p-4 shadow-2xl backdrop-blur-md max-w-xs sm:max-w-sm text-xs space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2">
             <div className="flex items-center gap-1.5 font-bold text-amber-400">
               <AlertCircle className="w-4 h-4" />
@@ -51,7 +52,18 @@ export default function PrototypeDisclaimer() {
             .
           </p>
 
-          <div className="flex justify-end pt-1">
+          <div className="p-2 bg-slate-800/60 rounded-xl border border-slate-700/60 flex items-center justify-between gap-2">
+            <span className="text-slate-300 font-medium">Missing a program?</span>
+            <Link
+              to="/Submit-Program"
+              onClick={() => setIsExpanded(false)}
+              className="text-emerald-400 hover:text-emerald-300 font-bold hover:underline inline-flex items-center gap-1 text-xs"
+            >
+              Submit Program &rarr;
+            </Link>
+          </div>
+
+          <div className="flex justify-end pt-0.5">
             <button
               type="button"
               onClick={() => setIsExpanded(false)}
