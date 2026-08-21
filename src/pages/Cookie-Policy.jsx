@@ -57,7 +57,7 @@ We may update our Cookie Policy from time to time. We will notify you of any cha
 
 If you have any questions about our use of cookies, please contact us at:
 
-Email: privacy@ubifinder.org
+Email: privacy@firebelly.xyz
 `;
 
 export default function CookiePolicy() {

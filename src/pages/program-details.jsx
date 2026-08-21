@@ -740,7 +740,7 @@ export default function ProgramDetailsPage() {
                       <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                         <span>Notice an error or outdated link?</span>
                         <a 
-                          href={`mailto:updates@ubifinder.org?subject=Update%20Report%20for%20${encodeURIComponent(program.name)}`}
+                          href={`mailto:updates@firebelly.xyz?subject=Update%20Report%20for%20${encodeURIComponent(program.name)}`}
                           className="text-green-700 hover:underline font-medium flex items-center gap-1"
                         >
                           Report an update &rarr;

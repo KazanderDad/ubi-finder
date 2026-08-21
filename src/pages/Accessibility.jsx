@@ -47,7 +47,7 @@ While we strive for WCAG 2.1 Level AA compliance, there may be some areas that n
 
 We welcome your feedback on the accessibility of UBI Finder. Please let us know if you encounter accessibility barriers:
 
-* Email: accessibility@ubifinder.org
+* Email: accessibility@firebelly.xyz
 * Phone: [Your Phone Number]
 
 ## Compatibility
@@ -70,7 +70,7 @@ For more information about web accessibility, we recommend:
 
 If you have specific questions or concerns about the accessibility of UBI Finder, please contact us:
 
-Email: accessibility@ubifinder.org
+Email: accessibility@firebelly.xyz
 `;
 
 export default function Accessibility() {

@@ -312,8 +312,8 @@ export default function About() {
                     </div>
                     <div>
                       <h4 className="font-bold text-sm text-gray-900">Direct Inquiries & Support</h4>
-                      <a href="mailto:info@ubifinder.org" className="text-xs text-green-700 hover:underline font-semibold">
-                        info@ubifinder.org
+                      <a href="mailto:info@firebelly.xyz" className="text-xs text-green-700 hover:underline font-semibold">
+                        info@firebelly.xyz
                       </a>
                     </div>
                   </div>

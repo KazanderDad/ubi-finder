@@ -76,7 +76,7 @@ These Terms shall be governed by the laws of the jurisdiction in which UBI Finde
 
 ## 12. Contact
 
-If you have any questions about these Terms, please contact us at legal@ubifinder.org.
+If you have any questions about these Terms, please contact us at legal@firebelly.xyz.
 `;
 
 export default function Terms() {

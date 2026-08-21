@@ -52,7 +52,7 @@ The information on UBI Finder is provided "as is," with no guarantees of complet
 
 If you have any questions about this Disclaimer, please contact us:
 
-Email: legal@ubifinder.org
+Email: legal@firebelly.xyz
 `;
 
 export default function Disclaimer() {
