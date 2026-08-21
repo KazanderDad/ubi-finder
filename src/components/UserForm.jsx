@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,24 +80,6 @@ function WhyTooltip({ text = WHY_GENDER }) {
       )}
     </div>
   );
-}
-
-// Helper: Ensure public.users row exists to prevent foreign key violations on user_profiles
-async function ensurePublicUserRow(user, name) {
-  if (!user?.id) return;
-  try {
-    const fullName = name?.trim() || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Member';
-    const email = user.email || `${user.id}@ubifinder.org`;
-    
-    await supabase.from('users').upsert({
-      id: user.id,
-      email: email,
-      full_name: fullName,
-      role: 'user'
-    }, { onConflict: 'id' });
-  } catch (err) {
-    console.warn("ensurePublicUserRow notice:", err);
-  }
 }
 
 export default function UserForm({ onSubmit, onComplete, initialData, isMandatoryModal = false }) {
@@ -188,7 +170,7 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
   const municipalOptions = MUNICIPAL_PILOTS[formData.state] || null;
   const isMultiPerson = formData.household_size > 1;
 
-  // Inline program count preview query with robust timeout & unmount protection
+  // Inline program count preview query with immediate fallback and unmount protection
   useEffect(() => {
     let isMounted = true;
 
@@ -234,13 +216,12 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
 
     fetchCount();
 
-    // Fallback safety timeout so it NEVER stays stuck
     const safetyTimer = setTimeout(() => {
       if (isMounted) {
         setLoadingCount(false);
         setMatchingCount(prev => prev ?? 12);
       }
-    }, 2000);
+    }, 1500);
 
     return () => {
       isMounted = false;
@@ -279,7 +260,6 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
         newData.women_count = "";
       }
       
-      // Persist to local storage immediately
       try {
         localStorage.setItem("pendingProfile", JSON.stringify(newData));
       } catch (e) {
@@ -299,11 +279,9 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
       console.warn("Could not save step advance:", e);
     }
 
-    // If authenticated, also persist partial draft to Supabase in the background
-    if (isAuthenticated && user?.id && formData.country) {
+    // If authenticated, also persist partial draft to Supabase matching created_by: user.email
+    if (isAuthenticated && user?.email && formData.country) {
       try {
-        await ensurePublicUserRow(user, formData.name);
-
         const partialPayload = {
           name: formData.name?.trim() || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Member',
           country: formData.country,
@@ -315,13 +293,13 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
           currency: formData.currency || 'USD',
           accepts_digital_currency: formData.accepts_digital_currency !== undefined ? Boolean(formData.accepts_digital_currency) : true,
           accepts_foreign_currency: formData.accepts_foreign_currency !== undefined ? Boolean(formData.accepts_foreign_currency) : true,
-          created_by_id: user.id
+          created_by: user.email
         };
 
         const { data: existing } = await supabase
           .from('user_profiles')
           .select('id')
-          .eq('created_by_id', user.id)
+          .eq('created_by', user.email)
           .limit(1);
 
         if (existing && existing.length > 0) {
@@ -355,19 +333,16 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
       currency: formData.currency || "USD",
       accepts_digital_currency: Boolean(formData.accepts_digital_currency),
       accepts_foreign_currency: Boolean(formData.accepts_foreign_currency),
-      created_by_id: user?.id || null
+      created_by: user?.email || email.trim() || null
     };
 
     try {
-      if (isAuthenticated && user?.id) {
-        // 1. Ensure user row exists in public.users to satisfy foreign key constraint
-        await ensurePublicUserRow(user, formData.name);
-
-        // 2. Query existing user_profiles
+      if (isAuthenticated && user?.email) {
+        // Query existing user_profiles by created_by (email)
         const { data: existing } = await supabase
           .from('user_profiles')
           .select('id')
-          .eq('created_by_id', user.id)
+          .eq('created_by', user.email)
           .limit(1);
 
         let savedRecord;
@@ -378,30 +353,16 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
             .eq('id', existing[0].id)
             .select();
           
-          if (error) {
-            // Handle possible foreign key or policy retry
-            await ensurePublicUserRow(user, formData.name);
-            const retry = await supabase.from('user_profiles').update(dbPayload).eq('id', existing[0].id).select();
-            if (retry.error) throw retry.error;
-            savedRecord = retry.data?.[0];
-          } else {
-            savedRecord = data?.[0];
-          }
+          if (error) throw error;
+          savedRecord = data?.[0];
         } else {
           const { data, error } = await supabase
             .from('user_profiles')
             .insert([dbPayload])
             .select();
 
-          if (error) {
-            // Handle possible foreign key retry
-            await ensurePublicUserRow(user, formData.name);
-            const retry = await supabase.from('user_profiles').insert([dbPayload]).select();
-            if (retry.error) throw retry.error;
-            savedRecord = retry.data?.[0];
-          } else {
-            savedRecord = data?.[0];
-          }
+          if (error) throw error;
+          savedRecord = data?.[0];
         }
 
         localStorage.removeItem("pendingProfile");

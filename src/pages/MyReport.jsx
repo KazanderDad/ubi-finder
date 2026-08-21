@@ -57,7 +57,20 @@ export default function MyReport() {
     try {
       // 1. Fetch user profile from Supabase or localStorage fallback
       let userProfile = null;
-      if (user?.id) {
+      if (user?.email) {
+        const { data: profiles } = await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("created_by", user.email)
+          .order("created_date", { ascending: false })
+          .limit(1);
+
+        if (profiles && profiles.length > 0) {
+          userProfile = profiles[0];
+        }
+      }
+
+      if (!userProfile && user?.id) {
         const { data: profiles } = await supabase
           .from("user_profiles")
           .select("*")

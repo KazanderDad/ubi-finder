@@ -42,25 +42,13 @@ export const AuthProvider = ({ children }) => {
         setUser(user);
         setIsAuthenticated(true);
 
-        // Ensure public.users row exists to satisfy foreign key constraint
-        try {
-          await supabase.from('users').upsert({
-            id: user.id,
-            email: user.email || `${user.id}@ubifinder.org`,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Member',
-            role: 'user'
-          }, { onConflict: 'id' });
-        } catch (uErr) {
-          console.warn("AuthContext public.users upsert notice:", uErr);
-        }
-
         const pendingProfile = localStorage.getItem("pendingProfile");
         if (pendingProfile) {
           try {
             const data = JSON.parse(pendingProfile);
-            if (data && data.country) {
+            if (data && data.country && user?.email) {
               const cleanProfile = {
-                name: data.name || user.user_metadata?.full_name || user.user_metadata?.display_name || user.email?.split('@')[0] || 'Member',
+                name: data.name || user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0] || 'Member',
                 country: data.country,
                 state: data.state || null,
                 municipality: data.municipality || null,
@@ -70,13 +58,13 @@ export const AuthProvider = ({ children }) => {
                 currency: data.currency || 'USD',
                 accepts_digital_currency: data.accepts_digital_currency !== undefined ? Boolean(data.accepts_digital_currency) : true,
                 accepts_foreign_currency: data.accepts_foreign_currency !== undefined ? Boolean(data.accepts_foreign_currency) : true,
-                created_by_id: user.id
+                created_by: user.email
               };
               
               const { data: existing } = await supabase
                 .from('user_profiles')
                 .select('id')
-                .eq('created_by_id', user.id)
+                .eq('created_by', user.email)
                 .limit(1);
 
               if (existing && existing.length > 0) {

@@ -80,21 +80,40 @@ export default function Programs() {
       let effectiveProfile = null;
 
       if (currentUser) {
-        const { data: profile } = await supabase.from('users').select('*').eq('id', currentUser.id).single();
+        let profile = null;
+        try {
+          const { data } = await supabase.from('users').select('*').eq('id', currentUser.id).maybeSingle();
+          profile = data;
+        } catch (e) {
+          console.warn("Users lookup notice:", e);
+        }
+
         setUser({
           id: currentUser.id,
           email: currentUser.email,
-          full_name: profile?.full_name || currentUser.user_metadata?.full_name,
+          full_name: profile?.full_name || currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0],
           role: profile?.role || 'user'
         });
         
-        const { data: profiles } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('created_by_id', currentUser.id);
+        let foundProfiles = null;
+        if (currentUser.email) {
+          const { data } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('created_by', currentUser.email);
+          if (data && data.length > 0) foundProfiles = data;
+        }
+
+        if (!foundProfiles && currentUser.id) {
+          const { data } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('created_by_id', currentUser.id);
+          if (data && data.length > 0) foundProfiles = data;
+        }
           
-        if (profiles && profiles.length > 0) {
-          effectiveProfile = profiles[0];
+        if (foundProfiles && foundProfiles.length > 0) {
+          effectiveProfile = foundProfiles[0];
           setUserProfile(effectiveProfile);
         }
       }

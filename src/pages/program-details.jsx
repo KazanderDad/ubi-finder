@@ -125,13 +125,24 @@ export default function ProgramDetailsPage() {
         setCanManage(managers && managers.length > 0);
         
         // Load their profile for eligibility checks
-        const { data: profiles } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('created_by_id', currentUser.id);
+        let foundProfile = null;
+        if (currentUser.email) {
+          const { data } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('created_by', currentUser.email);
+          if (data && data.length > 0) foundProfile = data[0];
+        }
+        if (!foundProfile && currentUser.id) {
+          const { data } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('created_by_id', currentUser.id);
+          if (data && data.length > 0) foundProfile = data[0];
+        }
           
-        if (profiles && profiles.length > 0) {
-          setUserProfile(profiles[0]);
+        if (foundProfile) {
+          setUserProfile(foundProfile);
         }
 
         // Check for Managed Application
