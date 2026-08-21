@@ -64,18 +64,21 @@ export const AuthProvider = ({ children }) => {
               let profileId = user?.user_metadata?.profile_id || localStorage.getItem("user_profile_id");
               if (profileId) {
                 await supabase.from('user_profiles').update(cleanProfile).eq('id', profileId);
+                localStorage.setItem("user_profile_data", JSON.stringify({ ...cleanProfile, id: profileId }));
               } else {
                 let res = await supabase.from('user_profiles').insert([{ ...cleanProfile, created_by_id: user.id }]).select();
                 if (res.error && (res.error.code === '23503' || res.error.message?.includes('foreign key'))) {
                   res = await supabase.from('user_profiles').insert([cleanProfile]).select();
                 }
                 if (res.data && res.data[0]?.id) {
-                  localStorage.setItem("user_profile_id", res.data[0].id);
-                  supabase.auth.updateUser({ data: { profile_id: res.data[0].id } }).catch(() => {});
+                  profileId = res.data[0].id;
+                  localStorage.setItem("user_profile_id", profileId);
+                  supabase.auth.updateUser({ data: { profile_id: profileId } }).catch(() => {});
                 }
+                localStorage.setItem("user_profile_data", JSON.stringify({ ...cleanProfile, id: profileId || "local-profile" }));
               }
 
-              localStorage.removeItem("pendingProfile");
+              localStorage.setItem("pendingProfile", JSON.stringify({ ...cleanProfile, id: profileId }));
               localStorage.removeItem("pendingProfileStep");
             }
           } catch (e) {

@@ -92,6 +92,16 @@ export default function MyReport() {
         }
       }
 
+      const profileDataStored = localStorage.getItem("user_profile_data");
+      if (profileDataStored) {
+        try {
+          const parsed = JSON.parse(profileDataStored);
+          userProfile = { ...(userProfile || {}), ...parsed };
+        } catch (e) {
+          console.warn("Could not parse user_profile_data:", e);
+        }
+      }
+
       const pending = localStorage.getItem("pendingProfile");
       if (pending) {
         try {
@@ -100,6 +110,11 @@ export default function MyReport() {
         } catch (e) {
           console.warn("Could not parse pending profile:", e);
         }
+      }
+
+      // If user has metadata name but no profile name, sync it
+      if (userProfile && !userProfile.name && user?.user_metadata?.full_name) {
+        userProfile.name = user.user_metadata.full_name;
       }
 
       setProfile(userProfile);
@@ -114,7 +129,7 @@ export default function MyReport() {
       setAllPrograms(programsList);
 
       // 3. Generate matches & compute snapshot deltas
-      if (programsList.length > 0) {
+      if (programsList.length > 0 && userProfile) {
         const deltaResult = await syncMatchSnapshotAndDetectDeltas(user, userProfile, programsList);
         if (deltaResult) {
           setReport(deltaResult.currentReport);
@@ -188,6 +203,10 @@ export default function MyReport() {
           <UserForm 
             onComplete={(savedProfile) => {
               setProfile(savedProfile);
+              if (allPrograms && allPrograms.length > 0) {
+                const calculated = generateUserMatchReport(savedProfile, allPrograms);
+                setReport(calculated);
+              }
               loadReportData();
             }}
             initialData={profile}

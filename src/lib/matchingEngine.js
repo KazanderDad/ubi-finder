@@ -29,12 +29,9 @@ export function getIncomeUpperLimit(range) {
 export function isProfileComplete(profile) {
   if (!profile) return false;
   const hasCountry = Boolean(profile.country && String(profile.country).trim());
-  const hasHousehold = Number(profile.household_size) >= 1;
-  const hasIncome = Boolean(profile.income_range);
-  const hasGender = Boolean(profile.gender || profile.women_count !== undefined);
   const needsState = ["United States", "Canada"].includes(profile.country);
   const hasState = !needsState || Boolean(profile.state || profile.state_province);
-  return hasCountry && hasHousehold && hasIncome && hasGender && hasState;
+  return hasCountry && hasState;
 }
 
 /**

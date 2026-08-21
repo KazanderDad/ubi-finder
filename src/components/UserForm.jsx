@@ -283,7 +283,21 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isStep1Valid || !isStep2Valid || !isStep3Valid) return;
+    if (!isStep1Valid) {
+      setStep(1);
+      setSendError("Please select your country (and state/province if applicable) to proceed.");
+      return;
+    }
+    if (!isStep2Valid) {
+      setStep(2);
+      setSendError("Please select your household size, income range, and gender option to proceed.");
+      return;
+    }
+    if (!isStep3Valid) {
+      setStep(3);
+      setSendError("Please enter your name to complete your profile.");
+      return;
+    }
 
     setSending(true);
     setSendError("");
@@ -308,14 +322,18 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
 
         let savedRecord = null;
         if (existingId) {
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .update(cleanPayload)
-            .eq('id', existingId)
-            .select();
-          
-          if (!error && data && data.length > 0) {
-            savedRecord = data[0];
+          try {
+            const { data, error } = await supabase
+              .from('user_profiles')
+              .update(cleanPayload)
+              .eq('id', existingId)
+              .select();
+            
+            if (!error && data && data.length > 0) {
+              savedRecord = data[0];
+            }
+          } catch (e) {
+            console.warn("Update existing profile error:", e);
           }
         }
 
@@ -334,16 +352,18 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
               .select();
           }
 
-          if (insertRes.error) throw insertRes.error;
-          savedRecord = insertRes.data?.[0];
+          if (!insertRes.error && insertRes.data && insertRes.data.length > 0) {
+            savedRecord = insertRes.data[0];
+          }
         }
 
         const finalProfile = savedRecord || { ...cleanPayload, id: existingId || "local-profile" };
-        if (finalProfile.id) {
+        if (finalProfile.id && finalProfile.id !== "local-profile") {
           localStorage.setItem("user_profile_id", finalProfile.id);
           supabase.auth.updateUser({ data: { profile_id: finalProfile.id } }).catch(() => {});
         }
 
+        localStorage.setItem("user_profile_data", JSON.stringify(finalProfile));
         localStorage.setItem("pendingProfile", JSON.stringify(finalProfile));
         localStorage.removeItem("pendingProfileStep");
         setSaveSuccess(true);
@@ -358,6 +378,7 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
           women_count: formData.women_count ? Number(formData.women_count) : null,
         };
 
+        localStorage.setItem("user_profile_data", JSON.stringify(unauthRecord));
         localStorage.setItem("pendingProfile", JSON.stringify(unauthRecord));
 
         const { error } = await supabase.auth.signInWithOtp({
@@ -379,6 +400,7 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
       console.error("Profile submission error:", err);
       // Fallback: save to localStorage so the user can continue smoothly
       const fallbackRecord = { ...cleanPayload, email: user?.email || email.trim() };
+      localStorage.setItem("user_profile_data", JSON.stringify(fallbackRecord));
       localStorage.setItem("pendingProfile", JSON.stringify(fallbackRecord));
       if (onComplete) onComplete(fallbackRecord);
       if (onSubmit) onSubmit(fallbackRecord);
