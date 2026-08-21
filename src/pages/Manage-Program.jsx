@@ -92,7 +92,7 @@ export default function ManageProgramPage() {
     organization: "",
     description: "",
     gender_requirement: null,
-    monthly_amount_usd: 0,
+    monthly_amount_usd: "",
     currency: "USD", // Add default currency
     available_regions: [],
     required_states: [],
@@ -216,9 +216,14 @@ export default function ManageProgramPage() {
       
       const dbId = programs[0].id;
       
+      const sanitizedMonthlyAmount = formData.monthly_amount_usd !== "" && !isNaN(Number(formData.monthly_amount_usd))
+        ? Number(formData.monthly_amount_usd)
+        : 0;
+
       // Update the program
       (await supabase.from('programs').update({
         ...formData,
+        monthly_amount_usd: sanitizedMonthlyAmount,
         program_id: parseInt(programId) // ensure it's an integer
       }).eq('id', dbId).select().single()).data;
 
@@ -466,9 +471,10 @@ export default function ManageProgramPage() {
                     type="number"
                     required
                     min="0"
+                    step="any"
                     value={formData.monthly_amount_usd}
-                    onChange={(e) => handleChange("monthly_amount_usd", parseFloat(e.target.value))}
-                    placeholder="0"
+                    onChange={(e) => handleChange("monthly_amount_usd", e.target.value)}
+                    placeholder="e.g. 500"
                   />
                 </div>
 

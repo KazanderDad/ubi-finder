@@ -85,7 +85,7 @@ export default function SubmitProgramPage() {
     organization: "",
     description: "",
     gender_requirement: null,
-    monthly_amount_usd: 0,
+    monthly_amount_usd: "",
     currency: "USD",
     available_regions: [],
     required_states: [],
@@ -179,11 +179,15 @@ export default function SubmitProgramPage() {
       
       // Convert to integer for saving
       const programId = parseInt(formData.program_id);
+      const sanitizedMonthlyAmount = formData.monthly_amount_usd !== "" && !isNaN(Number(formData.monthly_amount_usd))
+        ? Number(formData.monthly_amount_usd)
+        : 0;
       
       // Create the program
       (await supabase.from('programs').insert([{
         ...formData,
         program_id: programId,
+        monthly_amount_usd: sanitizedMonthlyAmount,
         submitter_email: userData.email,
         verified: false,
         status: 'pending_approval'
@@ -407,9 +411,10 @@ export default function SubmitProgramPage() {
                     type="number"
                     required
                     min="0"
+                    step="any"
                     value={formData.monthly_amount_usd}
-                    onChange={(e) => handleChange("monthly_amount_usd", parseFloat(e.target.value))}
-                    placeholder="0"
+                    onChange={(e) => handleChange("monthly_amount_usd", e.target.value)}
+                    placeholder="e.g. 500"
                   />
                 </div>
 
