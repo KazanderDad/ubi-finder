@@ -96,20 +96,27 @@ export default function Programs() {
         });
         
         let foundProfiles = null;
-        if (currentUser.email) {
-          const { data } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('created_by', currentUser.email);
-          if (data && data.length > 0) foundProfiles = data;
+        let profileId = currentUser.user_metadata?.profile_id || localStorage.getItem("user_profile_id");
+        if (profileId) {
+          try {
+            const { data } = await supabase.from('user_profiles').select('*').eq('id', profileId).limit(1);
+            if (data && data.length > 0) foundProfiles = data;
+          } catch (e) {
+            console.warn("Profile ID lookup notice:", e);
+          }
         }
 
         if (!foundProfiles && currentUser.id) {
-          const { data } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('created_by_id', currentUser.id);
-          if (data && data.length > 0) foundProfiles = data;
+          try {
+            const { data } = await supabase
+              .from('user_profiles')
+              .select('*')
+              .eq('created_by_id', currentUser.id)
+              .order('created_date', { ascending: false });
+            if (data && data.length > 0) foundProfiles = data;
+          } catch (e) {
+            console.warn("created_by_id lookup notice:", e);
+          }
         }
           
         if (foundProfiles && foundProfiles.length > 0) {
@@ -118,18 +125,18 @@ export default function Programs() {
         }
       }
 
-      // Check localStorage for pendingProfile if no profile from DB
+      // Check localStorage for user_profile_data or pendingProfile if no profile from DB
       if (!effectiveProfile) {
-        const pending = localStorage.getItem("pendingProfile");
-        if (pending) {
+        const stored = localStorage.getItem("user_profile_data") || localStorage.getItem("pendingProfile");
+        if (stored) {
           try {
-            const parsed = JSON.parse(pending);
+            const parsed = JSON.parse(stored);
             if (parsed && (parsed.country || parsed.income_range || parsed.state || parsed.municipality)) {
               effectiveProfile = parsed;
               setUserProfile(effectiveProfile);
             }
           } catch (e) {
-            console.warn("Could not parse pending profile:", e);
+            console.warn("Could not parse stored profile:", e);
           }
         }
       }
@@ -182,7 +189,7 @@ export default function Programs() {
 
   // Determine user authorization & profile completion states
   const isAuthorized = !!user;
-  const hasCompletedProfile = isProfileComplete(userProfile);
+  const hasCompletedProfile = Boolean(userProfile && (isProfileComplete(userProfile) || userProfile.country));
 
   // 1. Evaluate & Attach Match Scores to Programs
   const scoredPrograms = programs.map(program => {

@@ -24,7 +24,12 @@ import {
   ChevronUp, 
   Info,
   Clock,
-  Zap
+  Zap,
+  Users,
+  CreditCard,
+  Edit,
+  UserCheck,
+  X
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +52,24 @@ export default function MyReport() {
   const [activeTier, setActiveTier] = useState("all");
   const [expandedDiagnostics, setExpandedDiagnostics] = useState({});
   const [copied, setCopied] = useState(false);
+  const [isAnswersExpanded, setIsAnswersExpanded] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [dismissedDeltas, setDismissedDeltas] = useState(() => {
+    try {
+      return sessionStorage.getItem("ubi_dismissed_deltas") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const handleDismissDeltas = () => {
+    setDismissedDeltas(true);
+    try {
+      sessionStorage.setItem("ubi_dismissed_deltas", "true");
+    } catch (e) {
+      console.warn("Session storage notice:", e);
+    }
+  };
 
   useEffect(() => {
     loadReportData();
@@ -260,31 +283,192 @@ export default function MyReport() {
             <Button
               variant="outline"
               size="sm"
-              onClick={loadReportData}
-              className="border-green-700 text-green-700 hover:bg-green-50 text-xs flex items-center gap-1.5"
+              onClick={() => {
+                setIsAnswersExpanded(!isAnswersExpanded);
+              }}
+              className="border-green-600 text-green-700 hover:bg-green-50 text-xs flex items-center gap-1.5 shadow-sm font-medium"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Re-Calculate</span>
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>{isAnswersExpanded ? "Hide Profile Answers" : "My Answers & Filters"}</span>
+              {isAnswersExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </Button>
           </div>
         </div>
 
-        {/* Dynamic Delta Notification Banner */}
-        {deltas.length > 0 && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3 print:hidden shadow-sm animate-in fade-in">
-            <Bell className="w-5 h-5 text-emerald-700 mt-0.5 flex-shrink-0" />
-            <div className="flex-1 text-xs text-emerald-950">
-              <span className="font-bold text-sm block mb-1">
-                Updates Detected Since Your Previous Visit ({deltas.length})
-              </span>
-              <ul className="list-disc pl-4 space-y-1 text-emerald-900">
-                {deltas.map((d, idx) => (
-                  <li key={idx}><strong>{d.programName}:</strong> {d.message}</li>
-                ))}
-              </ul>
+        {/* Dynamic Delta Notification Banner (Dismissable) */}
+        {deltas.length > 0 && !dismissedDeltas && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start justify-between gap-3 print:hidden shadow-sm animate-in fade-in">
+            <div className="flex items-start gap-3 flex-1">
+              <Bell className="w-5 h-5 text-emerald-700 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 text-xs text-emerald-950">
+                <span className="font-bold text-sm block mb-1">
+                  Updates Detected Since Your Previous Visit ({deltas.length})
+                </span>
+                <ul className="list-disc pl-4 space-y-1 text-emerald-900">
+                  {deltas.map((d, idx) => (
+                    <li key={idx}><strong>{d.programName}:</strong> {d.message}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={handleDismissDeltas}
+              className="text-emerald-700 hover:text-emerald-950 hover:bg-emerald-100/70 p-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold flex-shrink-0 cursor-pointer"
+              title="Dismiss notification"
+            >
+              <X className="w-4 h-4" />
+              <span className="hidden sm:inline">Dismiss</span>
+            </button>
           </div>
         )}
+
+        {/* Expandable Answers & Edit Form View at Top of Screen */}
+        <Card className="border-green-200 bg-white/95 backdrop-blur-sm shadow-sm overflow-hidden print:hidden transition-all duration-300">
+          <CardHeader 
+            className="p-4 sm:p-5 flex flex-row items-center justify-between cursor-pointer hover:bg-green-50/40 transition-colors"
+            onClick={() => setIsAnswersExpanded(!isAnswersExpanded)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-green-100 border border-green-300 flex items-center justify-center text-green-800 flex-shrink-0">
+                <UserCheck className="w-4.5 h-4.5 text-green-700" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-green-950">
+                    My Eligibility Answers & Demographics
+                  </h3>
+                  <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-300 font-semibold">
+                    Live Fit Criteria
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">
+                  {profile?.municipality ? `${profile.municipality}, ` : ''}{profile?.state ? `${profile.state}, ` : ''}{profile?.country || "Global"} &bull; Household of {profile?.household_size || 1} &bull; {profile?.income_range || "0-20k"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs border-green-600 text-green-700 hover:bg-green-50 font-semibold"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingProfile(!isEditingProfile);
+                  if (!isAnswersExpanded) setIsAnswersExpanded(true);
+                }}
+              >
+                <Edit className="w-3.5 h-3.5 mr-1.5" />
+                {isEditingProfile ? "Close Editor" : "Edit Answers"}
+              </Button>
+              <div className="p-1 rounded-md text-gray-500 hover:text-green-800">
+                {isAnswersExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </div>
+            </div>
+          </CardHeader>
+
+          {isAnswersExpanded && (
+            <CardContent className="p-5 pt-0 border-t border-green-100 animate-in fade-in duration-200">
+              {isEditingProfile ? (
+                <div className="pt-4 space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <span className="text-xs font-bold text-green-950 uppercase tracking-wider">
+                      Updating Profile & Answers
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-gray-500 hover:text-gray-900 h-7 cursor-pointer"
+                      onClick={() => setIsEditingProfile(false)}
+                    >
+                      Cancel & Return to Answers
+                    </Button>
+                  </div>
+                  <UserForm
+                    initialData={profile}
+                    onComplete={(updatedProfile) => {
+                      setProfile(updatedProfile);
+                      if (allPrograms && allPrograms.length > 0) {
+                        setReport(generateUserMatchReport(updatedProfile, allPrograms));
+                      }
+                      loadReportData();
+                      setIsEditingProfile(false);
+                    }}
+                    isMandatoryModal={false}
+                  />
+                </div>
+              ) : (
+                <div className="pt-4 space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                    <div className="bg-green-50/70 p-3.5 rounded-xl border border-green-100">
+                      <span className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                        Location
+                      </span>
+                      <span className="text-xs font-semibold text-green-950 flex items-center gap-1.5 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                        {profile?.municipality ? `${profile.municipality}, ` : ''}
+                        {profile?.state ? `${profile.state}, ` : ''}
+                        {profile?.country || "Global"}
+                      </span>
+                    </div>
+
+                    <div className="bg-green-50/70 p-3.5 rounded-xl border border-green-100">
+                      <span className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                        Household Size
+                      </span>
+                      <span className="text-xs font-semibold text-green-950 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                        {profile?.household_size || 1} {Number(profile?.household_size) === 1 ? "Person" : "People"}
+                      </span>
+                    </div>
+
+                    <div className="bg-green-50/70 p-3.5 rounded-xl border border-green-100">
+                      <span className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                        Annual Income
+                      </span>
+                      <span className="text-xs font-semibold text-green-950 flex items-center gap-1.5">
+                        <DollarSign className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                        {profile?.income_range || "0-20k"}
+                      </span>
+                    </div>
+
+                    <div className="bg-green-50/70 p-3.5 rounded-xl border border-green-100">
+                      <span className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                        Gender / Category
+                      </span>
+                      <span className="text-xs font-semibold text-green-950 capitalize flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                        {profile?.gender === "female" ? "Female" : profile?.gender === "male" ? "Male" : "Abstain / General"}
+                      </span>
+                    </div>
+
+                    <div className="bg-green-50/70 p-3.5 rounded-xl border border-green-100">
+                      <span className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                        Accepted Rails
+                      </span>
+                      <span className="text-xs font-semibold text-green-950 flex items-center gap-1.5 truncate">
+                        <CreditCard className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                        {profile?.accepts_digital_currency ? "Digital + Fiat" : "Direct Fiat Bank"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-1">
+                    <Button
+                      size="sm"
+                      className="bg-green-700 hover:bg-green-800 text-white text-xs h-8 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      onClick={() => setIsEditingProfile(true)}
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      Edit My Answers
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          )}
+        </Card>
 
         {/* Executive Header Banner */}
         <div className="bg-gradient-to-br from-green-900 via-green-800 to-emerald-950 text-white rounded-3xl p-6 md:p-10 shadow-xl relative overflow-hidden">
