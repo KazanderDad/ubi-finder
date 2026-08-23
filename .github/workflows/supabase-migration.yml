@@ -14,6 +14,9 @@ jobs:
   migrate:
     name: Apply Database Migrations & Deploy Functions
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
     steps:
       - name: Checkout Repository
@@ -24,31 +27,23 @@ jobs:
         with:
           version: latest
 
-      - name: Link to Supabase Project
-        if: env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_DB_PASSWORD != ''
+      - name: Check Secrets
         run: |
-          supabase link --project-ref "${{ vars.SUPABASE_PROJECT_ID || 'oinubdnkqnifeaaejmjl' }}" --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "::error title=Missing Secrets::SUPABASE_ACCESS_TOKEN or SUPABASE_DB_PASSWORD secret is not populated in GitHub Actions secrets."
+            exit 1
+          fi
+          echo "Supabase secrets found and loaded."
+
+      - name: Link to Supabase Project
+        run: |
+          supabase link --project-ref "${{ vars.SUPABASE_PROJECT_ID || 'oinubdnkqnifeaaejmjl' }}" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Push Database Migrations
-        if: env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_DB_PASSWORD != ''
         run: |
-          supabase db push --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          supabase db push --password "$SUPABASE_DB_PASSWORD"
 
       - name: Deploy Edge Functions
-        if: env.SUPABASE_ACCESS_TOKEN != ''
         run: |
           supabase functions deploy notify-new-submission --project-ref "${{ vars.SUPABASE_PROJECT_ID || 'oinubdnkqnifeaaejmjl' }}" --no-verify-jwt
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Notice if Secrets are Missing
-        if: env.SUPABASE_ACCESS_TOKEN == '' || env.SUPABASE_DB_PASSWORD == ''
-        run: |
-          echo "::warning title=Supabase Secrets Required::SUPABASE_ACCESS_TOKEN or SUPABASE_DB_PASSWORD secret is not configured in GitHub repository secrets. Add them in Repository Settings -> Secrets and Variables -> Actions."
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
