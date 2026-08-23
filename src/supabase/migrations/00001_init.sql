@@ -32,7 +32,7 @@ exception when duplicate_object then null; end $$;
 
 
 do $$ begin
- create type program_status as enum ('active', 'active_open', 'active_closed', 'upcoming', 'closed');
+ create type program_status as enum ('active', 'active_open', 'active_closed', 'upcoming', 'closed', 'pending_approval');
 exception when duplicate_object then null; end $$;
 
 
@@ -102,6 +102,7 @@ create table if not exists public.user_profiles (
  min_monthly_payment      numeric(12, 2),
  profile_picture          text,
  dismissed_program_info   boolean not null default false,
+ is_public                boolean not null default false,
  -- built-in audit fields
  created_by_id            uuid references public.users(id) on delete set null,
  created_date             timestamptz not null default now(),
@@ -374,9 +375,17 @@ create policy "users_admin_all"    on public.users
 
 
 -- User Profiles: owner full access; others read none
-create policy "profiles_owner_all" on public.user_profiles
- for all using (created_by_id = auth.uid())
- with check (created_by_id = auth.uid());
+create policy "profiles_read_public" on public.user_profiles
+  for select using (is_public = true or created_by_id = auth.uid());
+
+create policy "profiles_write_owner" on public.user_profiles
+  for insert with check (created_by_id = auth.uid());
+
+create policy "profiles_update_owner" on public.user_profiles
+  for update using (created_by_id = auth.uid());
+
+create policy "profiles_delete_owner" on public.user_profiles
+  for delete using (created_by_id = auth.uid());
 
 
 -- Programs: public read; submitter/admins write
@@ -407,9 +416,51 @@ create policy "programs_delete_owner" on public.programs
 
 
 -- Program Managers: owner of the record (by email) full access
-create policy "pm_owner_all" on public.program_managers
- for all using (user_email = public.current_user_email())
- with check (user_email = public.current_user_email());
+create policy "pm_select" on public.program_managers
+ for select using (
+   user_email = public.current_user_email()
+   or exists (
+     select 1 from public.program_managers pm
+     where pm.program_id = program_managers.program_id
+       and pm.user_email = public.current_user_email()
+       and pm.role in ('owner', 'admin')
+   )
+   or exists (
+     select 1 from public.programs p
+     where p.program_id = program_managers.program_id
+       and p.created_by_id = auth.uid()
+   )
+ );
+
+create policy "pm_all" on public.program_managers
+ for all using (
+   user_email = public.current_user_email()
+   or exists (
+     select 1 from public.program_managers pm
+     where pm.program_id = program_managers.program_id
+       and pm.user_email = public.current_user_email()
+       and pm.role in ('owner', 'admin')
+   )
+   or exists (
+     select 1 from public.programs p
+     where p.program_id = program_managers.program_id
+       and p.created_by_id = auth.uid()
+   )
+ )
+ with check (
+   user_email = public.current_user_email()
+   or exists (
+     select 1 from public.program_managers pm
+     where pm.program_id = program_managers.program_id
+       and pm.user_email = public.current_user_email()
+       and pm.role in ('owner', 'admin')
+   )
+   or exists (
+     select 1 from public.programs p
+     where p.program_id = program_managers.program_id
+       and p.created_by_id = auth.uid()
+   )
+ );
 
 
 -- Applications: applicant full access
@@ -481,32 +532,3 @@ create policy "comments_author_write" on public.comments
 
 
 -- ============================================================================
--- Seed (optional reference data — safe to drop)
--- ============================================================================
-insert into public.programs (
- program_id, name, organization, description, gender_requirement,
- monthly_amount_usd, currency, available_regions, required_states,
- payment_method, amount_description, max_household_income_usd,
- eligibility, status, website, verified
-) values
- (
-   1, 'Stockton SEED', 'City of Stockton', 'A guaranteed income pilot providing $500/month to eligible residents.',
-   null, 500, 'USD', ARRAY['USA'], ARRAY['CA'], 'standard',
-   '$500 per month for 24 months', 46000,
-   'Resident of Stockton, CA; income at or below median.', 'closed',
-   'https://www.stocktoncity.org/seed', true
- ),
- (
-   2, 'Magnolia Mother’s Trust', 'Springboard To Opportunities', 'Monthly guaranteed income for low-income mothers.',
-   'female', 1000, 'USD', ARRAY['USA'], ARRAY['MS'], 'standard',
-   '$1,000 per month for 12 months', 30000,
-   'Low-income mother in Jackson, MS.', 'active_open',
-   'https://springboardto.org/mmt', true
- )
-on conflict (program_id) do nothing;
-
-
--- ============================================================================
--- End of migration
--- ============================================================================
-
