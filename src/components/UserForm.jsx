@@ -51,6 +51,7 @@ const MUNICIPAL_PILOTS = {
 const WHY_GENDER = "Many programs are geared towards women. We do our utmost to keep your information safe, but you should only disclose if you are comfortable doing so. We only use this information to show you programs applicable to you. It's always your decision if you then apply to them or not.";
 const WHY_HOUSEHOLD = "Program payout amounts and qualification thresholds often scale based on the number of people and dependents sharing living expenses in your household.";
 const WHY_INCOME = "Most guaranteed income pilots have income limits (often tied to federal poverty guidelines or area median income) to prioritize support for eligible households.";
+const WHY_AGE = "Many UBI programs are targeted by age — such as youth initiatives (e.g. 18–24), working-age adults (18+), or senior dividends (65+). We use your birth year solely to match you with age-eligible programs.";
 
 function WhyTooltip({ text = WHY_GENDER }) {
   const [show, setShow] = useState(false);
@@ -106,6 +107,7 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
       accepts_foreign_currency: merged.accepts_foreign_currency !== undefined ? merged.accepts_foreign_currency : true,
       gender: merged.gender || "",
       women_count: merged.women_count !== undefined ? String(merged.women_count) : "",
+      birth_year: merged.birth_year !== undefined && merged.birth_year !== null ? String(merged.birth_year) : "",
       currency: merged.currency || (merged.country ? getCurrencyForCountry(merged.country) : "USD"),
     };
   };
@@ -310,6 +312,7 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
       household_size: Number(formData.household_size) >= 1 ? Number(formData.household_size) : 1,
       income_range: formData.income_range || '0-20k',
       gender: formData.gender || "abstain",
+      birth_year: formData.birth_year && !isNaN(parseInt(formData.birth_year, 10)) ? parseInt(formData.birth_year, 10) : null,
       currency: formData.currency || "USD",
       accepts_digital_currency: Boolean(formData.accepts_digital_currency),
       accepts_foreign_currency: Boolean(formData.accepts_foreign_currency),
@@ -586,6 +589,25 @@ export default function UserForm({ onSubmit, onComplete, initialData, isMandator
                   </Select>
                 </div>
               )}
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label htmlFor="birth_year" className="text-sm font-semibold text-gray-800">
+                    Birth Year <span className="text-gray-400 font-normal text-xs">(optional)</span>
+                  </Label>
+                  <WhyTooltip text={WHY_AGE} />
+                </div>
+                <Input
+                  id="birth_year"
+                  type="number"
+                  min="1900"
+                  max={new Date().getFullYear()}
+                  placeholder={`e.g. ${new Date().getFullYear() - 30}`}
+                  value={formData.birth_year || ""}
+                  onChange={(e) => handleChange("birth_year", e.target.value)}
+                  className="bg-white"
+                />
+              </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">

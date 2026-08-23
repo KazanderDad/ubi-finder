@@ -133,8 +133,39 @@ export function evaluateEligibility(program, profile) {
       score += 15;
     }
   } else {
-    diagnostics.push({ label: "Demographics", passed: true, text: "Universal qualification (No gender restrictions)" });
+    diagnostics.push({ label: "Gender", passed: true, text: "Universal qualification (No gender restrictions)" });
     score += 15;
+  }
+
+  // 2b. Age Criteria Evaluation (Up to 10 points)
+  const currentYear = new Date().getFullYear();
+  const userAge = profile.birth_year && !isNaN(parseInt(profile.birth_year, 10))
+    ? currentYear - parseInt(profile.birth_year, 10)
+    : (profile.age && !isNaN(parseInt(profile.age, 10)) ? parseInt(profile.age, 10) : null);
+
+  const minAge = program.min_age !== null && program.min_age !== undefined ? Number(program.min_age) : null;
+  const maxAge = program.max_age !== null && program.max_age !== undefined ? Number(program.max_age) : null;
+
+  if (userAge !== null) {
+    if (minAge !== null && userAge < minAge) {
+      disqualifiers.push(`Minimum age requirement is ${minAge} (Your age: ${userAge})`);
+      diagnostics.push({ label: "Age Requirement", passed: false, text: `Minimum age is ${minAge}` });
+    } else if (maxAge !== null && userAge > maxAge) {
+      disqualifiers.push(`Maximum age requirement is ${maxAge} (Your age: ${userAge})`);
+      diagnostics.push({ label: "Age Requirement", passed: false, text: `Maximum age is ${maxAge}` });
+    } else if (minAge !== null || maxAge !== null) {
+      score += 10;
+      diagnostics.push({ 
+        label: "Age Fit", 
+        passed: true, 
+        text: `Meets age criteria (${minAge ? `${minAge}+` : ''}${minAge && maxAge ? ' – ' : ''}${maxAge ? `up to ${maxAge}` : ''})` 
+      });
+    } else {
+      score += 10;
+      diagnostics.push({ label: "Age Fit", passed: true, text: "Universal qualification (No age restrictions)" });
+    }
+  } else {
+    diagnostics.push({ label: "Age Fit", passed: true, text: minAge || maxAge ? `Age criteria: ${minAge ? `${minAge}+` : ''}${maxAge ? ` (max ${maxAge})` : ''}` : "No age restrictions" });
   }
 
   // 3. Economic & Income Threshold Evaluation (Up to 25 points)

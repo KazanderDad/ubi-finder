@@ -111,6 +111,8 @@ export default function ManageProgramPage() {
     organization: "",
     description: "",
     gender_requirement: "",
+    min_age: null,
+    max_age: null,
     monthly_amount_usd: "",
     currency: "USD",
     available_regions: [],
@@ -326,6 +328,8 @@ export default function ManageProgramPage() {
       await supabase.from('programs').update({
         ...formData,
         gender_requirement: finalGender,
+        min_age: formData.min_age !== "" && formData.min_age !== null && !isNaN(Number(formData.min_age)) ? parseInt(formData.min_age, 10) : null,
+        max_age: formData.max_age !== "" && formData.max_age !== null && !isNaN(Number(formData.max_age)) ? parseInt(formData.max_age, 10) : null,
         monthly_amount_usd: sanitizedMonthlyAmount,
         currency: formData.currency || "USD",
         available_regions: finalRegions,
@@ -826,6 +830,32 @@ export default function ManageProgramPage() {
                     <p className="text-xs text-gray-500 mt-1">
                       You can leave this empty or select "No gender requirement" for universal programs.
                     </p>
+                  </div>
+
+                  {/* Age Limits (Optional) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="font-semibold">Minimum Age (optional)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="120"
+                        value={formData.min_age || ""}
+                        onChange={(e) => handleChange("min_age", e.target.value ? parseInt(e.target.value, 10) : null)}
+                        placeholder="e.g. 18 (leave empty if none)"
+                      />
+                    </div>
+                    <div>
+                      <Label className="font-semibold">Maximum Age (optional)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="120"
+                        value={formData.max_age || ""}
+                        onChange={(e) => handleChange("max_age", e.target.value ? parseInt(e.target.value, 10) : null)}
+                        placeholder="e.g. 29 (leave empty if none)"
+                      />
+                    </div>
                   </div>
 
                   {/* Available Regions with Separate Global Checkmark */}

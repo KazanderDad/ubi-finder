@@ -8,6 +8,7 @@
 -- =====================================================================
 INSERT INTO programs
  (program_id, name, organization, description, gender_requirement,
+  min_age, max_age,
   monthly_amount_usd, currency, available_regions, required_states,
   payment_method, amount_description, max_household_income_usd, eligibility,
   status, website, verified, submitter_email,
@@ -17,7 +18,7 @@ INSERT INTO programs
 VALUES
   (1, 'Evanston Guaranteed Income Program 2026', 'City of Evanston',
    'This program provides 102 qualifying Evanston households with $500 per month in unrestricted cash for six months. It targets low-income seniors and families caring for young children, with participants selected by lottery.',
-   NULL, 500.0, 'USD',
+   NULL, 18, NULL, 500.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Illinois']::text[],
    'standard', '$500 per month for 6 months', NULL,
@@ -35,7 +36,7 @@ VALUES
 
   (2, 'Howard County Guaranteed Basic Income 2', 'Howard County Government and Community Action Council of Howard County',
    'The second Howard County Guaranteed Basic Income program provides participating families with $500 per month in unrestricted cash for 12 months. An additional $500 per month is deposited into savings and released after participants complete financial-literacy requirements.',
-   NULL, 500.0, 'USD',
+   NULL, 18, NULL, 500.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Maryland']::text[],
    'standard', '$500 per month for 12 months (plus $500 monthly savings deposit)', NULL,
@@ -54,7 +55,7 @@ VALUES
 
   (3, 'Healthy Mama, Healthy Baby', 'The Neighbors Trust and Puentes de Salud',
    'Healthy Mama, Healthy Baby provides $8,000 in unconditional cash over 18 months to selected prenatal patients in Philadelphia. It focuses primarily on low-income Latina mothers, including patients who cannot obtain health insurance, and distributes the funds through a debit card.',
-   'female', 444.44, 'USD',
+   'female', 18, NULL, 444.44, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Pennsylvania']::text[],
    'standard', '$8,000 distributed over 18 months (~$444.44 monthly)', NULL,
@@ -71,7 +72,7 @@ VALUES
 
   (4, 'Philly Joy Bank', 'Philadelphia Department of Public Health and Philadelphia City Fund',
    'The Philly Joy Bank provides pregnant Philadelphia residents with $1,000 per month from the second trimester of pregnancy through the child''s first birthday. The program is designed to improve birth outcomes and address racial and geographic disparities in infant mortality.',
-   NULL, 1000.0, 'USD',
+   NULL, 18, NULL, 1000.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Pennsylvania']::text[],
    'standard', '$1,000 per month during pregnancy and child''s first year', 100000.0,
@@ -89,7 +90,7 @@ VALUES
 
   (5, 'Rx Kids', 'Michigan State University Rx Kids and GiveDirectly',
    'Rx Kids provides unconditional cash to pregnant mothers and families with infants in participating communities, without an income test. Enrolled families generally receive a $1,500 prenatal payment followed by $500 per month for six to twelve months, depending on the community.',
-   'female', 500.0, 'USD',
+   'female', 18, NULL, 500.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Michigan']::text[],
    'standard', '$1,500 prenatal grant plus $500 per month for 6 to 12 months', NULL,
@@ -107,7 +108,7 @@ VALUES
 
   (6, 'Preserving Our Diversity', 'City of Santa Monica',
    'Preserving Our Diversity provides monthly cash assistance to low-income, long-term senior renters living in rent-controlled Santa Monica apartments. Benefits vary according to household circumstances, with the maximum for a one-senior household listed at $939 per month.',
-   NULL, 939.0, 'USD',
+   NULL, 65, NULL, 939.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['California']::text[],
    'standard', 'Up to $939 per month based on household circumstances', NULL,
@@ -126,7 +127,7 @@ VALUES
 
   (7, 'Supporting Transitional-Aged Youth and Survivors in Achieving Financial Empowerment Los Angeles', 'City of Los Angeles Community Investment for Families Department',
    'STAY SAFE Los Angeles provides unconditional cash to transitional-aged youth and survivors of intimate-partner violence who are connected to designated community organizations. Participants receive a total of $24,000, generally structured as $1,000 per month, with an alternative front-loaded payment option for some participants.',
-   NULL, 1000.0, 'USD',
+   NULL, 18, NULL, 1000.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['California']::text[],
    'standard', '$24,000 total (structured as $1,000 per month)', NULL,
@@ -144,7 +145,7 @@ VALUES
 
   (8, 'Basic Income for the Arts Scheme 2026-2029', 'Government of Ireland Department of Culture, Communications and Sport',
    'Ireland''s new Basic Income for the Arts scheme will provide 2,000 professional artists and creative-arts workers with EUR 325 per week for three years. The program is intended to support sustained artistic practice and generate further evidence about the effects of basic income in the cultural sector.',
-   NULL, 1640.0, 'EUR',
+   NULL, 18, NULL, 1640.0, 'EUR',
    ARRAY['Ireland']::text[],
    ARRAY[]::text[],
    'standard', 'EUR 325 per week for 3 years (~$1,640 USD monthly)', NULL,
@@ -162,7 +163,7 @@ VALUES
 
   (9, 'Rural Basic Income Pilot Programme', 'Republic of Korea Ministry of Agriculture, Food and Rural Affairs',
    'South Korea''s rural basic-income pilot pays residents of ten participating counties KRW 150,000 per month in locally usable currency during 2026 and 2027. The program seeks to address rural depopulation, strengthen household stability, and stimulate local economic activity.',
-   NULL, 107.0, 'KRW',
+   NULL, 18, NULL, 107.0, 'KRW',
    ARRAY['South Korea']::text[],
    ARRAY['Gyeonggi', 'Gangwon', 'North Chungcheong', 'South Chungcheong', 'North Jeolla', 'South Jeolla', 'North Gyeongsang', 'South Gyeongsang']::text[],
    'standard', 'KRW 150,000 per month in local currency (~$107 USD monthly)', NULL,
@@ -179,7 +180,7 @@ VALUES
 
   (10, 'ENRA Universal Basic Income Program', 'Republic of the Marshall Islands Ministry of Finance',
    'ENRA distributes quarterly, unconditional payments to eligible Marshallese citizens residing in the Marshall Islands. The long-term program is funded through Compact-related revenue and is expected to continue for approximately two decades, with the listed monthly value representing the equivalent of a roughly $200 quarterly payment.',
-   NULL, 66.67, 'USD',
+   NULL, 18, NULL, 66.67, 'USD',
    ARRAY['Marshall Islands']::text[],
    ARRAY[]::text[],
    'standard', 'Equivalent of ~$200 USD quarterly (~$66.67 USD monthly)', NULL,
@@ -196,7 +197,7 @@ VALUES
 
   (11, 'Alaska Permanent Fund Dividend 2026', 'State of Alaska Permanent Fund Dividend Division',
    'The Alaska Permanent Fund Dividend distributes an annual cash payment to qualifying residents from state mineral-revenue investment earnings. The 2026 payment was set at a combined $1,200, including the dividend and energy rebate, which is shown here as a $100 monthly equivalent.',
-   NULL, 100.0, 'USD',
+   NULL, 18, NULL, 100.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Alaska']::text[],
    'standard', '$1,200 annual payment (~$100 USD monthly equivalent)', NULL,
@@ -215,7 +216,7 @@ VALUES
 
   (12, 'Macao Wealth Partaking Scheme 2026', 'Government of the Macao Special Administrative Region',
    'The Wealth Partaking Scheme distributes an annual cash payment to qualifying Macao residents, with permanent residents receiving MOP 10,000 in 2026. The listed monthly amount is the approximate monthly equivalent of that annual payment, while residents with qualifying absences may submit an exception claim.',
-   NULL, 104.0, 'MOP',
+   NULL, 18, NULL, 104.0, 'MOP',
    ARRAY['China']::text[],
    ARRAY['Macao Special Administrative Region']::text[],
    'standard', 'MOP 10,000 annual payment (~$104 USD monthly equivalent)', NULL,
@@ -232,7 +233,7 @@ VALUES
 
   (13, 'Québec Basic Income Program', 'Government of Québec',
    'Québec''s Basic Income Program provides an enhanced monthly income to people with severe and persistent health-related employment limitations. Eligible Social Solidarity recipients are generally enrolled automatically, and the 2026 base benefit is CAD 1,336 per month before possible adjustments.',
-   NULL, 961.0, 'CAD',
+   NULL, 18, NULL, 961.0, 'CAD',
    ARRAY['Canada']::text[],
    ARRAY['Quebec']::text[],
    'standard', 'CAD 1,336 per month base benefit (~$961 USD monthly)', NULL,
@@ -249,7 +250,7 @@ VALUES
 
   (14, 'Guaranteed Income Supplement', 'Government of Canada',
    'The Guaranteed Income Supplement is a monthly, tax-free payment for low-income seniors who receive the Old Age Security pension. The maximum payment for a single, widowed, or divorced recipient is approximately CAD 1,123.17 per month, although the actual amount depends on income and marital status.',
-   NULL, 808.0, 'CAD',
+   NULL, 18, NULL, 808.0, 'CAD',
    ARRAY['Canada']::text[],
    ARRAY[]::text[],
    'standard', 'Up to CAD 1,123.17 per month (~$808 USD monthly)', NULL,
@@ -267,7 +268,7 @@ VALUES
 
   (15, 'Ingreso Mínimo Vital', 'Government of Spain Social Security Administration',
    'Ingreso Mínimo Vital is a national minimum-income benefit intended to prevent poverty and social exclusion among financially vulnerable individuals and households. In 2026, the guaranteed benchmark for a single adult is EUR 733.60 per month, with the actual payment calculated as the difference between the benchmark and countable household income.',
-   NULL, 851.0, 'EUR',
+   NULL, 18, NULL, 851.0, 'EUR',
    ARRAY['Spain']::text[],
    ARRAY[]::text[],
    'standard', 'EUR 733.60 per month single-adult benchmark (~$851 USD monthly)', NULL,
@@ -286,7 +287,7 @@ VALUES
 
   (16, 'Social Relief of Distress Grant', 'South African Social Security Agency',
    'South Africa''s Social Relief of Distress Grant provides ZAR 370 per month to working-age people with insufficient income or financial support. The national benefit has been extended through March 2027 and uses recurring income and identity checks to determine monthly eligibility.',
-   NULL, 23.0, 'ZAR',
+   NULL, 18, NULL, 23.0, 'ZAR',
    ARRAY['South Africa']::text[],
    ARRAY[]::text[],
    'standard', 'ZAR 370 per month (~$23 USD monthly)', NULL,
@@ -305,7 +306,7 @@ VALUES
 
   (17, 'GiveDirectly 12-Year Universal Basic Income Study', 'GiveDirectly',
    'GiveDirectly''s long-term Kenya study provides selected adults with approximately $22.50 per month for 12 years, making it one of the longest-running randomized basic-income experiments. Payments are unconditional and delivered through mobile money to eligible adults in selected rural villages.',
-   NULL, 22.5, 'KES',
+   NULL, 18, NULL, 22.5, 'KES',
    ARRAY['Kenya']::text[],
    ARRAY[]::text[],
    'standard', 'Approximately $22.50 USD per month for 12 years', NULL,
@@ -322,7 +323,7 @@ VALUES
 
   (18, 'Mein Grundeinkommen Basic Income Raffle', 'Mein Grundeinkommen e.V.',
    'Mein Grundeinkommen uses crowdfunding to award unconditional basic incomes through free public raffles. Each winner receives EUR 1,000 per month for one year, and participation is open internationally subject to the organization''s registration and raffle rules.',
-   NULL, 1161.0, 'EUR',
+   NULL, 18, NULL, 1161.0, 'EUR',
    ARRAY['Global']::text[],
    ARRAY[]::text[],
    'standard', 'EUR 1,000 per month for 1 year (~$1,161 USD monthly)', NULL,
@@ -339,7 +340,7 @@ VALUES
 
   (19, 'World WLD Airdrop Program', 'World Foundation',
    'World distributes recurring WLD token grants to eligible proof-of-human participants who enrolled in an airdrop cycle before the June 2026 cutoff. Existing cycles continue for up to 12 months, but installment sizes decline over time and vary by verification status and cycle.',
-   NULL, 0.59, 'WLD',
+   NULL, 18, NULL, 0.59, 'WLD',
    ARRAY['Global']::text[],
    ARRAY[]::text[],
    'digital', 'Recurring WLD token grants (~$0.59 USD monthly equivalent)', NULL,
@@ -357,7 +358,7 @@ VALUES
 
   (20, 'Citizen Account Program', 'Government of Saudi Arabia Ministry of Human Resources and Social Development',
    'Saudi Arabia''s Citizen Account Program provides monthly cash support to eligible households to offset the effects of economic reforms and changes in living costs. Payment amounts vary by household income and composition, with a reported average family payment of approximately SAR 1,474 in early 2026.',
-   NULL, 393.0, 'SAR',
+   NULL, 18, NULL, 393.0, 'SAR',
    ARRAY['Saudi Arabia']::text[],
    ARRAY[]::text[],
    'standard', 'Average SAR 1,474 per month (~$393 USD monthly)', NULL,
@@ -376,7 +377,7 @@ VALUES
 
   (21, 'GoodDollar', 'GoodDollar Foundation & GoodDAO',
    'GoodDollar is a decentralized, reserve-backed crypto basic income protocol and DAO. It generates yield through DeFi protocols and distributes daily G$ basic income directly to verified unique humans globally via smart contracts on Celo and Ethereum networks.',
-   NULL, 10.0, 'G$',
+   NULL, 18, NULL, 10.0, 'G$',
    ARRAY['Global']::text[],
    ARRAY[]::text[],
    'digital', 'Daily free G$ claims via GoodWallet (approx. $5–$15 USD/mo)', NULL,
@@ -393,7 +394,7 @@ VALUES
 
   (22, 'European Digital Euro Pilot', 'European Central Bank & Eurosystem',
    'The European Digital Euro initiative is the ECB''s official framework and preparatory testing phase exploring a digital euro central bank digital currency (CBDC) to complement cash, strengthen European monetary sovereignty, and enable universal, instant digital payment rails for euro area residents.',
-   NULL, 47.0, 'EUR',
+   NULL, 18, NULL, 47.0, 'EUR',
    ARRAY['Germany', 'France', 'Spain', 'Italy', 'Ireland', 'Netherlands', 'Belgium', 'Austria', 'Portugal', 'Finland', 'Greece']::text[],
    ARRAY[]::text[],
    'digital', '43 EUR (~$47 USD) testing allowance benchmark', NULL,
@@ -410,7 +411,7 @@ VALUES
 
   (23, 'FundLoop', 'FundLoop Network',
    'FundLoop is a monthly networked economy for shared prosperity. Participating software projects pool a recurring percentage of revenue, verified contributors prove personhood via CUBID.me, and each monthly epoch automatically distributes and accounts for claimable Citizen Salary awards.',
-   NULL, 25.0, 'USD',
+   NULL, 18, NULL, 25.0, 'USD',
    ARRAY['Global']::text[],
    ARRAY[]::text[],
    'digital', 'Monthly revenue-share distribution based on contribution & participation', NULL,
@@ -427,7 +428,7 @@ VALUES
 
   (24, 'Community Support Initiative', 'Regional Development Council',
    'Quarterly support payments for local residents',
-   NULL, 123.0, 'USD',
+   NULL, 18, NULL, 123.0, 'USD',
    ARRAY['Australia', 'New Zealand']::text[],
    ARRAY[]::text[],
    'standard', '123 per month', NULL,
@@ -441,7 +442,7 @@ VALUES
 
   (25, 'Digital Income Project', 'Future Foundation',
    'Monthly digital currency payments for eligible participants',
-   NULL, 234.0, 'USD',
+   NULL, 18, NULL, 234.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['California', 'New York']::text[],
    'digital', '234 per month', 40000.0,
@@ -455,7 +456,7 @@ VALUES
 
   (26, 'Global Basic Income', 'World UBI Initiative',
    'Worldwide basic income program with flexible payment options',
-   NULL, 329.0, 'USD',
+   NULL, 18, NULL, 329.0, 'USD',
    ARRAY[]::text[],
    ARRAY[]::text[],
    'both', '345', NULL,
@@ -469,7 +470,7 @@ VALUES
 
   (27, 'Women''s Empowerment Fund', 'Global Women''s Initiative',
    'Supporting women through monthly basic income',
-   'female', 800.0, 'USD',
+   'female', 18, NULL, 800.0, 'USD',
    ARRAY['United States', 'Canada', 'United Kingdom']::text[],
    ARRAY[]::text[],
    'both', '$800 monthly', 50000.0,
@@ -483,7 +484,7 @@ VALUES
 
   (28, 'Youth Basic Income', 'Future Foundation',
    'Basic income for young adults',
-   NULL, 1000.0, 'USD',
+   NULL, 18, NULL, 1000.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['California', 'New York']::text[],
    'digital', '$1,000 monthly', 30000.0,
@@ -497,7 +498,7 @@ VALUES
 
   (29, 'Digital Income Project (Duplicate)', 'Future Economy Foundation',
    'A pilot program providing monthly digital currency payments to residents in select urban areas.',
-   NULL, 500.0, 'USD',
+   NULL, 18, NULL, 500.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['California', 'New York']::text[],
    'digital', '$500 monthly in digital currency', NULL,
@@ -511,7 +512,7 @@ VALUES
 
   (30, 'Community Support Initiative (Duplicate)', 'Regional Development Coalition',
    'Providing basic income to support local community resilience and economic development.',
-   NULL, 650.0, 'USD',
+   NULL, 18, NULL, 650.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Michigan', 'Ohio', 'Pennsylvania']::text[],
    'standard', '$650 monthly via direct deposit', NULL,
@@ -525,7 +526,7 @@ VALUES
 
   (31, 'Rural Resilience Program', 'Agricultural Futures Institute',
    'Supporting rural communities with monthly income supplements to address economic challenges in agricultural regions.',
-   NULL, 450.0, 'USD',
+   NULL, 18, NULL, 450.0, 'USD',
    ARRAY['United States', 'Canada']::text[],
    ARRAY[]::text[],
    'both', '$450 monthly with payment options', NULL,
@@ -539,7 +540,7 @@ VALUES
 
   (32, 'Youth Opportunity Fund', 'Next Generation Alliance',
    'Providing financial support to young adults ages 18-24 to pursue education, training, or entrepreneurship.',
-   NULL, 800.0, 'USD',
+   NULL, 18, NULL, 800.0, 'USD',
    ARRAY['United Kingdom', 'Canada']::text[],
    ARRAY[]::text[],
    'standard', '$800 monthly stipend', NULL,
@@ -553,7 +554,7 @@ VALUES
 
   (33, 'asdf', 'asdf',
    'afsd',
-   NULL, 12.0, 'USD',
+   NULL, 18, NULL, 12.0, 'USD',
    ARRAY[]::text[],
    ARRAY[]::text[],
    'standard', 'asdf', NULL,
@@ -567,7 +568,7 @@ VALUES
 
   (34, 'Test 2', 'asdf',
    'asdf',
-   NULL, 0.0, 'USD',
+   NULL, 18, NULL, 0.0, 'USD',
    ARRAY[]::text[],
    ARRAY[]::text[],
    'standard', 'asdf', NULL,
@@ -581,7 +582,7 @@ VALUES
 
   (35, 'Women''s Economic Empowerment Initiative', 'Gender Equity Coalition',
    'Financial support program designed to promote economic independence and entrepreneurship for women.',
-   'female', 700.0, 'USD',
+   'female', 18, NULL, 700.0, 'USD',
    ARRAY['United States', 'Canada', 'United Kingdom']::text[],
    ARRAY[]::text[],
    'standard', '$700 monthly grant', NULL,
@@ -595,7 +596,7 @@ VALUES
 
   (36, 'Universal Dividend Network', 'Global Commons Foundation',
    'Blockchain-based UBI available worldwide, using cryptocurrency for efficient borderless payments.',
-   NULL, 300.0, 'USD',
+   NULL, 18, NULL, 300.0, 'USD',
    ARRAY[]::text[],
    ARRAY[]::text[],
    'digital', 'Equivalent of $300 monthly in cryptocurrency', NULL,
@@ -609,7 +610,7 @@ VALUES
 
   (37, 'Senior Security Program', 'Elder Care Alliance',
    'Income supplement for seniors over 65 to help with rising costs of living and healthcare expenses.',
-   NULL, 550.0, 'USD',
+   NULL, 18, NULL, 550.0, 'USD',
    ARRAY['United States', 'Canada']::text[],
    ARRAY[]::text[],
    'standard', '$550 monthly payment', NULL,
@@ -623,7 +624,7 @@ VALUES
 
   (38, 'New Brunswick Youth Basic Income Pilot', 'Government of New Brunswick & Social Labs',
    'A regional basic income initiative delivering monthly financial floors to young adults transitioning into the workforce in Moncton and Saint John.',
-   NULL, 750.0, 'CAD',
+   NULL, 18, 29, 750.0, 'CAD',
    ARRAY['Canada']::text[],
    ARRAY['NB', 'New Brunswick']::text[],
    'standard', '$1,000 CAD per month', NULL,
@@ -637,7 +638,7 @@ VALUES
 
   (39, 'Cook County Promise Guaranteed Income Program — Next Phase', 'Cook County Government, Bureau of Economic Development',
    'The next phase is a successor to Cook County''s 2022–2025 Promise pilot, which paid 3,250 low-to-moderate-income households $500 per month for two years. Cook County has appropriated $7.5 million for fiscal year 2026 and is designing the successor, but its payment amount, participant count, application process, and final eligibility rules have not been announced; the numeric amount is therefore recorded as 0 rather than assuming the prior $500 rate.',
-   NULL, 0.0, 'USD',
+   NULL, 18, NULL, 0.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Illinois']::text[],
    'standard', 'Payment amount under design for FY2026', NULL,
@@ -651,7 +652,7 @@ VALUES
 
   (40, 'California Guaranteed Income Pilot Program for Older Californians (CASH SJC)', 'California Department of Social Services, Housing Authority of the County of San Joaquin, and GiveDirectly',
    'California''s Guaranteed Income Pilot Program for Older Californians is being implemented in San Joaquin County as CASH SJC by the county housing authority and GiveDirectly, with state funding. Selected seniors will receive $1,000 per month for 12 months with no spending restrictions; applications open August 24, 2026, and the first payment is scheduled for January 20, 2027.',
-   NULL, 1000.0, 'USD',
+   NULL, 18, NULL, 1000.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['California']::text[],
    'standard', '$1,000 per month for 12 months', NULL,
@@ -665,7 +666,7 @@ VALUES
 
   (41, 'The Bridge Project', 'The Bridge Project',
    'The Bridge Project provides unrestricted cash to pregnant mothers and their babies to reduce childhood poverty and strengthen maternal and infant stability. Its standard three-year schedule includes a $1,125 prenatal stipend, $750 per month for the child''s first 15 months, and $375 per month for the next 21 months; the numeric field records the initial $750 monthly rate. Open enrollment currently covers Arkansas, selected Maryland ZIP codes, and ARC-designated counties in Kentucky, Ohio, West Virginia, and Tennessee, with Appalachia using an 18-month high-cash/low-cash research design.',
-   'female', 750.0, 'USD',
+   'female', 18, NULL, 750.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Arkansas', 'Maryland', 'Kentucky', 'Ohio', 'West Virginia', 'Tennessee']::text[],
    'standard', '$1,125 prenatal stipend + $750/mo for 15 mos + $375/mo for 21 mos', NULL,
@@ -679,7 +680,7 @@ VALUES
 
   (42, 'The Magnolia Mother’s Trust', 'Springboard to Opportunities',
    'The Magnolia Mother’s Trust is a guaranteed-income initiative for extremely low-income Black mothers in Jackson, Mississippi, designed to strengthen family stability while shifting narratives about poverty and deservedness. Its seventh cohort launched May 15, 2026, with about 100 mothers receiving $1,000 per month for 12 months, plus optional peer support, goal-setting, community-building, mental-health, self-care, and whole-family programming.',
-   'female', 1000.0, 'USD',
+   'female', 18, NULL, 1000.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Mississippi']::text[],
    'standard', '$1,000 per month for 12 months', NULL,
@@ -693,7 +694,7 @@ VALUES
 
   (43, 'UBI4ALL European Basic Income Raffle', 'UBI4ALL, operated by EBI Politische Teilhabe in Europa gemeinnützige UG',
    'UBI4ALL is a donation-funded global raffle that awards one winner a total of €9,600 in unconditional monthly payments, with free participation for people aged 16 or older. The monthly amount depends on the winner''s country-income classification—€160 for 60 months, €200 for 48, €267 for 36, €400 for 24, or €800 for 12—and the numeric USD field uses the €800 tier converted at the European Central Bank''s August 19, 2026 reference rate.',
-   NULL, 928.4, 'EUR',
+   NULL, 18, NULL, 928.4, 'EUR',
    ARRAY['Global']::text[],
    ARRAY[]::text[],
    'standard', '€800 per month for 12 months (~$928.40 USD monthly equivalent)', NULL,
@@ -707,7 +708,7 @@ VALUES
 
   (44, 'Guaranteed Income for Artists', 'Springboard for the Arts',
    'Springboard for the Arts'' Guaranteed Income for Artists pilot provides restriction-free cash to artists, culture bearers, and creative workers in Minnesota, with an equity focus on communities with weak or unstable safety nets. The expanded program supports 100 participants—50 in Saint Paul''s Frogtown/Rondo neighborhoods and 50 in Otter Tail County—with $500 per month over a total program period of five years, alongside optional financial, student-loan, and housing counseling.',
-   NULL, 500.0, 'USD',
+   NULL, 18, NULL, 500.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Minnesota']::text[],
    'standard', '$500 per month for up to 5 years', NULL,
@@ -721,7 +722,7 @@ VALUES
 
   (45, 'Sacramento Creative Growth Fellowship Program', 'City of Sacramento Office of Arts and Culture',
    'The City of Sacramento''s Creative Growth Fellowship provides unrestricted monthly stipends so local artists can pursue and advance their creative careers. Two hundred artists were selected through panel review followed by lottery to receive $850 per month from September 1, 2025, through August 31, 2026, and the city says no second round is currently planned.',
-   NULL, 850.0, 'USD',
+   NULL, 18, NULL, 850.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['California']::text[],
    'standard', '$850 per month for 12 months', NULL,
@@ -735,7 +736,7 @@ VALUES
 
   (46, 'Camp Harbor View Guaranteed Income Program', 'Camp Harbor View, in partnership with UpTogether',
    'Camp Harbor View made guaranteed income a permanent family-support offering after a 2021–2023 pilot, partnering with UpTogether to help Boston families just above public-benefit thresholds build stability and pursue personal goals. Its 2024–2026 cohort included 38 Leadership Academy families receiving $652.90 per month for 28 months, plus optional mobility mentoring and biannual convenings; that cohort was scheduled to conclude in July 2026.',
-   NULL, 652.9, 'USD',
+   NULL, 18, NULL, 652.9, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Massachusetts']::text[],
    'standard', '$652.90 per month for 28 months', NULL,
@@ -749,7 +750,7 @@ VALUES
 
   (47, 'PHLHousing+', 'Philadelphia Housing Development Corporation and the City of Philadelphia',
    'PHLHousing+ was a direct-to-tenant cash rental-assistance pilot for 301 low-income Philadelphia families with children, designed as a flexible alternative to a housing voucher. Monthly prepaid-debit-card payments were calculated so housing costs would equal roughly 30% of household income; the post-recertification median was $850, and the nearly four-year program ended in June 2026.',
-   NULL, 850.0, 'USD',
+   NULL, 18, NULL, 850.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Pennsylvania']::text[],
    'standard', 'Median $850 per month flexible housing cash', NULL,
@@ -763,7 +764,7 @@ VALUES
 
   (48, 'One Family Philadelphia Guaranteed Income Financial Treatment Pilot', 'University of Pennsylvania and Humanity Forward Foundation, with Jefferson Health; funded by One Family Foundation',
    'The One Family Philadelphia Guaranteed Income Financial Treatment pilot is a randomized trial testing whether unconditional cash and financial navigation reduce financial toxicity and improve quality of life and treatment adherence for low-income adults with advanced cancer. Participants assigned to the cash arm receive $1,000 per month for 12 months, while Humanity Forward Foundation administers payments and benefits counseling and the University of Pennsylvania recruits participants and evaluates outcomes.',
-   NULL, 1000.0, 'USD',
+   NULL, 18, NULL, 1000.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Pennsylvania']::text[],
    'standard', '$1,000 per month for 12 months', NULL,
@@ -777,7 +778,7 @@ VALUES
 
   (49, 'Guaranteed Income for Survivors of Firearm Violence', 'Philadelphia Department of Public Health and the Philadelphia Hospital-Based Violence Intervention Program Coalition',
    'The Philadelphia pilot tests whether six months of unrestricted cash can help survivors meet immediate needs after a firearm injury and improve well-being and engagement with hospital-based violence intervention services. Its original design enrolled 50 participants from six Level I trauma centers and paid $500 per month; Pennsylvania still listed the project as active in June 2026 even though the original procurement anticipated completion by June 30, 2024.',
-   NULL, 500.0, 'USD',
+   NULL, 18, NULL, 500.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Pennsylvania']::text[],
    'standard', '$500 per month for 6 months', NULL,
@@ -791,7 +792,7 @@ VALUES
 
   (50, 'Network Economic Support Transfers Pilot Project', 'City of Philadelphia',
    'The Network Economic Support Transfers Pilot Project is a 60-person guaranteed-income pilot in Philadelphia County that began April 1, 2025, and remained on Pennsylvania''s active-pilot registry in June 2026. Public sources do not disclose the transfer amount, payment cadence, duration, detailed target population, or intake method, so the numeric amount is recorded as 0 rather than estimated.',
-   NULL, 0.0, 'USD',
+   NULL, 18, NULL, 0.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Pennsylvania']::text[],
    'standard', 'Transfer amount not publicly disclosed', NULL,
@@ -805,7 +806,7 @@ VALUES
 
   (51, 'Thriving Providers Project — Pittsburgh', 'United Way of Southwestern Pennsylvania, Home Grown, and Trying Together',
    'The Pittsburgh Thriving Providers Project provides direct cash to 25 preselected home-based child care providers in Allegheny County to stabilize their finances and test how provider economic security affects children and communities. Participants receive $250 twice monthly for 18 months beginning in July 2025, with optional tax-preparation, financial-planning, and digital-skills support.',
-   NULL, 500.0, 'USD',
+   NULL, 18, NULL, 500.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY['Pennsylvania']::text[],
    'standard', '$250 twice monthly ($500/mo) for 18 months', NULL,
@@ -819,7 +820,7 @@ VALUES
 
   (52, 'Programa de Renda Básica de Cidadania de Maricá', 'Prefeitura de Maricá, Secretaria de Economia Solidária e Empreendedorismo Social',
    'Maricá''s Renda Básica de Cidadania provides monthly local-currency income to low-income municipal residents to strengthen food security, social protection, and the local economy. More than 70,000 residents receive 230 Mumbucas per month, valued at R$230; BRL is used here because the municipal currency is valued one-to-one with the Brazilian real.',
-   NULL, 44.2, 'BRL',
+   NULL, 18, NULL, 44.2, 'BRL',
    ARRAY['Brazil']::text[],
    ARRAY['Rio de Janeiro']::text[],
    'standard', '230 Mumbucas (~R$230 / $44.20 USD) per month', NULL,
@@ -833,7 +834,7 @@ VALUES
 
   (53, 'Moeda Social Arariboia', 'Prefeitura de Niterói, Secretaria Municipal de Assistência Social e Economia Solidária',
    'Niterói''s permanent Moeda Social Arariboia program supports low-income and vulnerable households while directing spending to participating local businesses. The base benefit is 345 Arariboias, equivalent to R$345, monthly plus R$125 per additional family member up to six members and a R$970 household maximum; BRL is used because the local currency is denominated one-to-one in reais.',
-   NULL, 66.29, 'BRL',
+   NULL, 18, NULL, 66.29, 'BRL',
    ARRAY['Brazil']::text[],
    ARRAY['Rio de Janeiro']::text[],
    'standard', '345 Arariboias base benefit (~$66.29 USD) per month', NULL,
@@ -847,7 +848,7 @@ VALUES
 
   (54, 'Renda Básica da Cidadania de Saquarema', 'Prefeitura de Saquarema, Secretaria Municipal de Desenvolvimento Social',
    'Saquarema''s Renda Básica da Cidadania uses the local Saquá currency to provide monthly social protection to households experiencing poverty or vulnerability and to stimulate local commerce. From July 1, 2026, 10,277 beneficiaries receive 400 Saquás, equivalent to R$400; BRL is used because Saquá is legally valued one-to-one with the Brazilian real.',
-   NULL, 76.86, 'BRL',
+   NULL, 18, NULL, 76.86, 'BRL',
    ARRAY['Brazil']::text[],
    ARRAY['Rio de Janeiro']::text[],
    'standard', '400 Saquás (~$76.86 USD) per month', NULL,
@@ -861,7 +862,7 @@ VALUES
 
   (55, 'Gyeonggi Youth Basic Income', 'Gyeonggi Provincial Government, participating municipalities, and the Gyeonggi Future Generation Foundation',
    'Gyeonggi Youth Basic Income supports the social rights, future preparation, and local economic participation of eligible 24-year-old residents without an income or employment test. It pays KRW250,000 per quarter, up to KRW1 million in 2026, through participating municipalities'' local-currency systems; the USD field is the monthly equivalent.',
-   NULL, 59.89, 'KRW',
+   NULL, 18, NULL, 59.89, 'KRW',
    ARRAY['South Korea']::text[],
    ARRAY['Gyeonggi Province']::text[],
    'standard', 'KRW 250,000 quarterly (~$59.89 USD monthly equivalent)', NULL,
@@ -875,7 +876,7 @@ VALUES
 
   (56, 'Seoul Youth Allowance', 'Seoul Metropolitan Government',
    'Seoul Youth Allowance helps unemployed or short-term-working young adults focus on career exploration and labor-market entry through financial and tailored growth support. Selected participants receive KRW500,000 per month for up to six months, together with mentoring, employment programs, and related services.',
-   NULL, 359.33, 'KRW',
+   NULL, 18, NULL, 359.33, 'KRW',
    ARRAY['South Korea']::text[],
    ARRAY['Seoul']::text[],
    'standard', 'KRW 500,000 per month for up to 6 months (~$359.33 USD)', NULL,
@@ -889,7 +890,7 @@ VALUES
 
   (57, 'Rodzina 800+', 'Social Insurance Institution (ZUS), under Poland''s Ministry of Family, Labour and Social Policy',
    'Rodzina 800+ is Poland''s national child-rearing benefit designed to help families meet the costs of raising children. ZUS pays PLN800 per month for each eligible child until age 18 regardless of household income, subject to an electronic application for each annual benefit period.',
-   NULL, 214.68, 'PLN',
+   NULL, 18, NULL, 214.68, 'PLN',
    ARRAY['Poland']::text[],
    ARRAY[]::text[],
    'standard', 'PLN 800 per month per child (~$214.68 USD)', NULL,
@@ -903,7 +904,7 @@ VALUES
 
   (58, 'Comingle', 'Comingle, Inc., supported by the Income to Support All Foundation',
    'Comingle is a private mutual-aid basic-income network in which members pledge 7% of their income, pool the funds, and receive an equal weekly payout that offsets their personal pledge. It has no fixed monthly grant: the USD field uses a conservative $130 monthly equivalent of the site''s statement that a zero-income week should yield more than $30, while actual net payments fluctuate.',
-   NULL, 130.0, 'USD',
+   NULL, 18, NULL, 130.0, 'USD',
    ARRAY['United States']::text[],
    ARRAY[]::text[],
    'standard', 'Weekly pooled dividend (~$130/mo benchmark)', NULL,

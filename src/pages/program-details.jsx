@@ -263,17 +263,51 @@ export default function ProgramDetailsPage() {
   
   // Check if user meets each eligibility requirement
   const checkGenderRequirement = () => {
-    if (!program.gender_requirement || !userProfile) return true;
-    return program.gender_requirement === userProfile.gender;
+    if (!program.gender_requirement || program.gender_requirement === "none" || program.gender_requirement === "any") return true;
+    if (!userProfile) return true;
+    if (userProfile.gender === "abstain") return true;
+    if (program.gender_requirement === "female") {
+      return userProfile.gender === "female" || Number(userProfile.women_count) > 0;
+    }
+    if (program.gender_requirement === "male") {
+      return userProfile.gender === "male";
+    }
+    return true;
+  };
+
+  const checkAgeRequirement = () => {
+    const minAge = program.min_age !== null && program.min_age !== undefined ? Number(program.min_age) : null;
+    const maxAge = program.max_age !== null && program.max_age !== undefined ? Number(program.max_age) : null;
+    if (minAge === null && maxAge === null) return true;
+    if (!userProfile) return true;
+    
+    const currentYear = new Date().getFullYear();
+    const userAge = userProfile.birth_year && !isNaN(parseInt(userProfile.birth_year, 10))
+      ? currentYear - parseInt(userProfile.birth_year, 10)
+      : (userProfile.age && !isNaN(parseInt(userProfile.age, 10)) ? parseInt(userProfile.age, 10) : null);
+    
+    if (userAge === null || isNaN(userAge)) return true;
+    if (minAge !== null && userAge < minAge) return false;
+    if (maxAge !== null && userAge > maxAge) return false;
+    return true;
   };
   
   const checkLocationRequirement = () => {
-    if (!program.available_regions || program.available_regions.length === 0 || !userProfile) return true;
+    if (!program.available_regions || program.available_regions.length === 0) return true;
     
-    const inRegion = program.available_regions.includes(userProfile.country) || program.available_regions.includes("Global") || program.available_regions.includes("Worldwide");
+    const isGlobal = program.available_regions.some(r => /^(global|worldwide|international|all)$/i.test(r)) ||
+      program.municipalities?.some(m => /^(global|worldwide)$/i.test(m)) ||
+      /GoodDollar|FundLoop|Mein Grundeinkommen|World WLD|Circles/i.test(program.name || "");
+      
+    if (isGlobal) return true;
+    if (!userProfile) return true;
     
-    if (inRegion && program.required_states && program.required_states.length > 0) {
-      return program.required_states.includes(userProfile.state);
+    const inRegion = program.available_regions.includes(userProfile.country);
+    if (!inRegion) return false;
+    
+    const stateProvince = userProfile.state || userProfile.state_province;
+    if (inRegion && program.required_states && program.required_states.length > 0 && stateProvince) {
+      return program.required_states.includes(stateProvince);
     }
     
     return inRegion;
@@ -633,81 +667,192 @@ export default function ProgramDetailsPage() {
 
                   <Separator className="my-6" />
 
-                  {/* 4b. Eligibility checklist with visual feedback */}
+                  {/* 4b. Eligibility checklist with 3-column visual feedback */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-green-950">Eligibility & Qualifications</h3>
+                    <div>
+                      <h3 className="text-lg font-bold text-green-950">Eligibility & Qualifications</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Review key qualification criteria and your personal match status.
+                      </p>
+                    </div>
                     
-                    <div className="grid grid-cols-1 gap-3">
-                      {/* Location check */}
-                      <div className="p-3.5 bg-gray-50/80 rounded-xl border border-gray-200/80 flex items-start gap-3">
-                        <MapPin className="w-5 h-5 text-green-700 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <p className="font-semibold text-gray-900 text-sm">Geographic Eligibility</p>
-                            {userProfile && (
-                              checkLocationRequirement() 
-                                ? <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full font-medium"><CheckCircle className="w-3.5 h-3.5" /> Matches You</span>
-                                : <span className="inline-flex items-center gap-1 text-xs text-red-700 bg-red-100 px-2 py-0.5 rounded-full font-medium"><XCircle className="w-3.5 h-3.5" /> Region Mismatch</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-600 mt-0.5">
+                    <div className="space-y-2.5">
+                      {/* 1. Geography */}
+                      <div className="p-4 bg-gray-50/90 rounded-2xl border border-gray-200/75 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
+                        {/* Col 1: Heading (Less pronounced) */}
+                        <div className="md:col-span-3">
+                          <span className="text-[11px] font-medium uppercase tracking-wider text-gray-500 block">
+                            Geography
+                          </span>
+                        </div>
+
+                        {/* Col 2: Actual details from database (More pronounced) */}
+                        <div className="md:col-span-6">
+                          <p className="text-sm font-semibold text-gray-950 leading-snug">
                             {program.available_regions && program.available_regions.length > 0 
-                              ? `Open to residents of: ${program.available_regions.join(", ")}` 
-                              : "Open to international applicants worldwide"}
+                              ? `Residents of ${program.available_regions.join(", ")}` 
+                              : "Globally available (Open to all countries)"}
                             {program.required_states && program.required_states.length > 0 &&
-                              ` (${program.required_states.join(", ")})`}
+                              ` • ${program.required_states.join(", ")}`}
+                            {program.municipalities && program.municipalities.length > 0 && !program.municipalities.some(m => /^(global|statewide|nationwide|all)$/i.test(m)) &&
+                              ` (${program.municipalities.join(", ")})`}
                           </p>
+                        </div>
+
+                        {/* Col 3: Personal match */}
+                        <div className="md:col-span-3 md:text-right">
+                          {userProfile ? (
+                            checkLocationRequirement() ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+                                <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[2.5]" />
+                                <span>Matches Location</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-rose-800 bg-rose-100/80 border border-rose-200 px-3 py-1 rounded-full font-bold">
+                                <X className="w-3.5 h-3.5 text-rose-700 stroke-[2.5]" />
+                                <span>Region Mismatch</span>
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-xs text-gray-400 font-medium">Log in to check match</span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Income limit check */}
-                      <div className="p-3.5 bg-gray-50/80 rounded-xl border border-gray-200/80 flex items-start gap-3">
-                        <DollarSign className="w-5 h-5 text-green-700 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <p className="font-semibold text-gray-900 text-sm">Income Threshold</p>
-                            {userProfile && (
-                              checkIncomeRequirement() 
-                                ? <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full font-medium"><CheckCircle className="w-3.5 h-3.5" /> Within Limit</span>
-                                : <span className="inline-flex items-center gap-1 text-xs text-red-700 bg-red-100 px-2 py-0.5 rounded-full font-medium"><XCircle className="w-3.5 h-3.5" /> Income Exceeds Limit</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-600 mt-0.5">
+                      {/* 2. Income */}
+                      <div className="p-4 bg-gray-50/90 rounded-2xl border border-gray-200/75 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
+                        {/* Col 1: Heading (Less pronounced) */}
+                        <div className="md:col-span-3">
+                          <span className="text-[11px] font-medium uppercase tracking-wider text-gray-500 block">
+                            Income
+                          </span>
+                        </div>
+
+                        {/* Col 2: Actual details from database (More pronounced) */}
+                        <div className="md:col-span-6">
+                          <p className="text-sm font-semibold text-gray-950 leading-snug">
                             {program.max_household_income_usd
-                              ? `Maximum household income: $${program.max_household_income_usd.toLocaleString()} per year`
-                              : "No income restrictions or means test required"}
+                              ? `Maximum household income: $${Number(program.max_household_income_usd).toLocaleString()} / year`
+                              : "No income restrictions (Unconditional / Universal)"}
                           </p>
+                        </div>
+
+                        {/* Col 3: Personal match */}
+                        <div className="md:col-span-3 md:text-right">
+                          {userProfile ? (
+                            checkIncomeRequirement() ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+                                <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[2.5]" />
+                                <span>Within Limit</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-rose-800 bg-rose-100/80 border border-rose-200 px-3 py-1 rounded-full font-bold">
+                                <X className="w-3.5 h-3.5 text-rose-700 stroke-[2.5]" />
+                                <span>Exceeds Limit</span>
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-xs text-gray-400 font-medium">Log in to check match</span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Gender requirement */}
-                      <div className="p-3.5 bg-gray-50/80 rounded-xl border border-gray-200/80 flex items-start gap-3">
-                        <Users className="w-5 h-5 text-green-700 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <p className="font-semibold text-gray-900 text-sm">Demographics</p>
-                            {userProfile && (
-                              checkGenderRequirement() 
-                                ? <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full font-medium"><CheckCircle className="w-3.5 h-3.5" /> Eligible</span>
-                                : <span className="inline-flex items-center gap-1 text-xs text-red-700 bg-red-100 px-2 py-0.5 rounded-full font-medium"><XCircle className="w-3.5 h-3.5" /> Does Not Match</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-600 mt-0.5">
-                            {program.gender_requirement 
-                              ? `Dedicated to ${program.gender_requirement} applicants` 
-                              : "Open to all qualifying applicants regardless of gender"}
+                      {/* 3. Age */}
+                      <div className="p-4 bg-gray-50/90 rounded-2xl border border-gray-200/75 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
+                        {/* Col 1: Heading (Less pronounced) */}
+                        <div className="md:col-span-3">
+                          <span className="text-[11px] font-medium uppercase tracking-wider text-gray-500 block">
+                            Age
+                          </span>
+                        </div>
+
+                        {/* Col 2: Actual details from database (More pronounced) */}
+                        <div className="md:col-span-6">
+                          <p className="text-sm font-semibold text-gray-950 leading-snug">
+                            {program.min_age && program.max_age
+                              ? `Age ${program.min_age} to ${program.max_age} years old`
+                              : program.min_age
+                              ? `Age ${program.min_age} or older`
+                              : program.max_age
+                              ? `Under age ${program.max_age}`
+                              : "No age restrictions (Open to all ages)"}
                           </p>
+                        </div>
+
+                        {/* Col 3: Personal match */}
+                        <div className="md:col-span-3 md:text-right">
+                          {userProfile ? (
+                            checkAgeRequirement() ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+                                <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[2.5]" />
+                                <span>Age Eligible</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-rose-800 bg-rose-100/80 border border-rose-200 px-3 py-1 rounded-full font-bold">
+                                <X className="w-3.5 h-3.5 text-rose-700 stroke-[2.5]" />
+                                <span>Age Mismatch</span>
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-xs text-gray-400 font-medium">Log in to check match</span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Additional criteria */}
+                      {/* 4. Gender */}
+                      <div className="p-4 bg-gray-50/90 rounded-2xl border border-gray-200/75 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
+                        {/* Col 1: Heading (Less pronounced) */}
+                        <div className="md:col-span-3">
+                          <span className="text-[11px] font-medium uppercase tracking-wider text-gray-500 block">
+                            Gender
+                          </span>
+                        </div>
+
+                        {/* Col 2: Actual details from database (More pronounced) */}
+                        <div className="md:col-span-6">
+                          <p className="text-sm font-semibold text-gray-950 leading-snug">
+                            {program.gender_requirement === "female"
+                              ? "Female only / Women & mothers focused"
+                              : program.gender_requirement === "male"
+                              ? "Male only"
+                              : program.gender_requirement && program.gender_requirement !== "none" && program.gender_requirement !== "any"
+                              ? `Dedicated to ${program.gender_requirement} applicants`
+                              : "No gender requirement (Universal / Open to all)"}
+                          </p>
+                        </div>
+
+                        {/* Col 3: Personal match */}
+                        <div className="md:col-span-3 md:text-right">
+                          {userProfile ? (
+                            checkGenderRequirement() ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+                                <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[2.5]" />
+                                <span>Matches Gender</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-rose-800 bg-rose-100/80 border border-rose-200 px-3 py-1 rounded-full font-bold">
+                                <X className="w-3.5 h-3.5 text-rose-700 stroke-[2.5]" />
+                                <span>Gender Mismatch</span>
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-xs text-gray-400 font-medium">Log in to check match</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Additional Detailed Criteria if present */}
                       {program.eligibility && (
-                        <div className="p-3.5 bg-gray-50/80 rounded-xl border border-gray-200/80 flex items-start gap-3">
-                          <Info className="w-5 h-5 text-green-700 mt-0.5 flex-shrink-0" />
+                        <div className="p-4 bg-gray-50/60 rounded-2xl border border-gray-200/60 flex items-start gap-3 mt-2">
+                          <Info className="w-4 h-4 text-green-700 mt-0.5 flex-shrink-0" />
                           <div className="flex-1">
-                            <p className="font-semibold text-gray-900 text-sm">Eligibility Criteria & Requirements</p>
-                            <div className="text-xs text-gray-700 mt-1 whitespace-pre-line leading-relaxed">
-                              <span className={!user ? "blur-sm select-none opacity-50 block" : ""}>{program.eligibility}</span>
+                            <span className="text-[11px] font-medium uppercase tracking-wider text-gray-500 block mb-1">
+                              Additional Requirements & Rules
+                            </span>
+                            <div className="text-xs text-gray-800 whitespace-pre-line leading-relaxed font-medium">
+                              <span className={!user ? "blur-sm select-none opacity-50 block" : ""}>
+                                {program.eligibility}
+                              </span>
                             </div>
                           </div>
                         </div>

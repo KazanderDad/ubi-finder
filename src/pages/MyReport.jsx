@@ -472,7 +472,7 @@ export default function MyReport() {
                 </div>
               ) : (
                 <div className="pt-4 space-y-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                     <div className="bg-green-50/70 p-3.5 rounded-xl border border-green-100">
                       <span className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
                         Location
@@ -502,6 +502,18 @@ export default function MyReport() {
                       <span className="text-xs font-semibold text-green-950 flex items-center gap-1.5">
                         <DollarSign className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
                         {profile?.income_range || "0-20k"}
+                      </span>
+                    </div>
+
+                    <div className="bg-green-50/70 p-3.5 rounded-xl border border-green-100">
+                      <span className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                        Birth Year / Age
+                      </span>
+                      <span className="text-xs font-semibold text-green-950 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                        {profile?.birth_year 
+                          ? `${profile.birth_year} (${new Date().getFullYear() - Number(profile.birth_year)} yrs)`
+                          : "Unspecified"}
                       </span>
                     </div>
 
