@@ -384,7 +384,7 @@ export default function MyReport() {
 
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-green-200 block mb-1">
-                  Web3 Daily Claim Protocols
+                  Other / Digital & Streaming
                 </span>
                 <div className="text-2xl md:text-3xl font-black text-purple-200">
                   {report?.tierSummary?.tier_2_daily_claim?.length || 0}
@@ -568,7 +568,7 @@ export default function MyReport() {
             onClick={() => setActiveTier(TIERS.TIER_2_DAILY_CLAIM)}
             className={activeTier === TIERS.TIER_2_DAILY_CLAIM ? "bg-purple-700 text-white" : "border-purple-200 text-purple-800 bg-purple-50"}
           >
-            🟣 Daily Claim Protocols ({report?.tierSummary?.tier_2_daily_claim?.length || 0})
+            🟣 Other ({report?.tierSummary?.tier_2_daily_claim?.length || 0})
           </Button>
 
           <Button

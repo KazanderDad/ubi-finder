@@ -105,7 +105,7 @@ export default function MatchingPrograms({ programs, profile, onToggleFavorite, 
           onClick={() => setSelectedTier(TIERS.TIER_2_DAILY_CLAIM)}
           className={`px-2.5 py-1 rounded-full font-medium transition-colors ${selectedTier === TIERS.TIER_2_DAILY_CLAIM ? "bg-purple-700 text-white" : "bg-purple-50 text-purple-800 hover:bg-purple-100"}`}
         >
-          🟣 Daily Claim ({report.tierSummary.tier_2_daily_claim?.length || 0})
+          🟣 Other ({report.tierSummary.tier_2_daily_claim?.length || 0})
         </button>
 
         <button

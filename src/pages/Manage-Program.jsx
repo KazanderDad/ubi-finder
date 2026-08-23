@@ -37,13 +37,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, Save, Plus, X, LockKeyhole, FileEdit, Calendar, User as UserIcon, Tag } from "lucide-react";
+import { ChevronLeft, Save, Plus, X, LockKeyhole, FileEdit, Calendar, User as UserIcon, Tag, Link2, Globe } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
 const COUNTRIES = [
-  "Global",
-  "Worldwide",
   "United States",
   "Canada",
   "United Kingdom",
@@ -98,22 +96,32 @@ export default function ManageProgramPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loginAlertOpen, setLoginAlertOpen] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
+
+  // Custom field toggles
   const [isOtherCurrency, setIsOtherCurrency] = useState(false);
+  const [isOtherPaymentMethod, setIsOtherPaymentMethod] = useState(false);
+  const [isOtherStatus, setIsOtherStatus] = useState(false);
+  const [isGlobal, setIsGlobal] = useState(false);
+
+  // Additional link URLs (papers, news, studies)
+  const [additionalLinks, setAdditionalLinks] = useState([]);
   
   const [formData, setFormData] = useState({
     name: "",
     organization: "",
     description: "",
-    gender_requirement: null,
+    gender_requirement: "",
     monthly_amount_usd: "",
-    currency: "USD", // Add default currency
+    currency: "USD",
     available_regions: [],
     required_states: [],
     payment_method: "standard",
+    custom_payment_method: "",
     amount_description: "",
     max_household_income_usd: null,
     eligibility: "",
     status: "active_open",
+    custom_status: "",
     website: "",
     verified: false,
     program_id: null,
@@ -178,7 +186,7 @@ export default function ManageProgramPage() {
       setProgramManagers(managers);
       
       // Check if user is authorized to edit this program
-      const isAdmin = user?.role === 'admin'; // Add null check with optional chaining
+      const isAdmin = user?.role === 'admin';
       const isManager = managers.some(m => m.user_email === userEmail && (m.role === "owner" || m.role === "admin"));
       
       if (!isAdmin && !isManager) {
@@ -191,11 +199,42 @@ export default function ManageProgramPage() {
       
       // Set form data from program
       setFormData(programData);
-      setRegions(programData.available_regions || []);
+      const isGlob = Boolean(
+        programData.available_regions?.some(r => /^(global|worldwide|international|all)$/i.test(r)) ||
+        programData.municipalities?.some(m => /^(global|worldwide)$/i.test(m)) ||
+        /^(global|worldwide)$/i.test(programData.state_province)
+      );
+      setIsGlobal(isGlob);
+      setRegions(isGlob ? ["Global"] : (programData.available_regions || []));
       setRequiredStates(programData.required_states || []);
 
+      // Check for other currency / payment / status
+      if (programData.currency && !STANDARD_CURRENCIES.includes(programData.currency)) {
+        setIsOtherCurrency(true);
+      }
+      if (programData.payment_method && !["standard", "digital"].includes(programData.payment_method)) {
+        setIsOtherPaymentMethod(true);
+        setFormData(prev => ({
+          ...prev,
+          custom_payment_method: programData.payment_method.replace(/^other:\s*/i, '')
+        }));
+      }
+      if (programData.status && !["active_open", "active_closed", "upcoming", "closed"].includes(programData.status)) {
+        setIsOtherStatus(true);
+        setFormData(prev => ({
+          ...prev,
+          custom_status: programData.status.replace(/^other:\s*/i, '')
+        }));
+      }
+
+      // Initialize additional links from sources
+      if (programData.sources && Array.isArray(programData.sources)) {
+        const otherSources = programData.sources.filter(s => s && s !== programData.website);
+        setAdditionalLinks(otherSources);
+      }
+
       const allPosts = (await supabase.from('blog_posts').select('*')).data;
-      const relatedPosts = allPosts.filter(post => 
+      const relatedPosts = (allPosts || []).filter(post => 
         post.related_programs && 
         post.related_programs.includes(id.toString())
       );
@@ -206,6 +245,42 @@ export default function ManageProgramPage() {
       console.error("Error loading program:", error);
       setLoading(false);
       navigate("/Programs");
+    }
+  };
+
+  // Additional link handlers
+  const handleAddLink = () => {
+    setAdditionalLinks(prev => [...prev, ""]);
+  };
+
+  const handleUpdateLink = (index, value) => {
+    setAdditionalLinks(prev => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  };
+
+  const handleRemoveLink = (index) => {
+    setAdditionalLinks(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleToggleGlobal = (checked) => {
+    setIsGlobal(checked);
+    if (checked) {
+      setRegions(["Global"]);
+      setRequiredStates([]);
+      setFormData(prev => ({
+        ...prev,
+        available_regions: ["Global"],
+        required_states: []
+      }));
+    } else {
+      setRegions([]);
+      setFormData(prev => ({
+        ...prev,
+        available_regions: []
+      }));
     }
   };
 
@@ -220,10 +295,9 @@ export default function ManageProgramPage() {
     try {
       setSaving(true);
       
-      // Get the program's ID from the database
-      const programs = (await supabase.from('programs').select('*').match({ program_id: parseInt(programId) })).data;
+      const { data: programs } = await supabase.from('programs').select('*').match({ program_id: parseInt(programId) });
       
-      if (programs.length === 0) {
+      if (!programs || programs.length === 0) {
         throw new Error("Program not found");
       }
       
@@ -233,12 +307,34 @@ export default function ManageProgramPage() {
         ? Number(formData.monthly_amount_usd)
         : 0;
 
+      const finalRegions = isGlobal ? ["Global"] : (regions.length > 0 ? regions : ["Global"]);
+      const allSources = [formData.website, ...additionalLinks.map(l => l.trim())].filter(Boolean);
+
+      const finalPaymentMethod = isOtherPaymentMethod && formData.custom_payment_method
+        ? `other: ${formData.custom_payment_method}`
+        : formData.payment_method;
+
+      const finalStatus = isOtherStatus && formData.custom_status
+        ? `other: ${formData.custom_status}`
+        : formData.status;
+
+      const finalGender = (formData.gender_requirement === "" || formData.gender_requirement === "none" || !formData.gender_requirement)
+        ? null
+        : formData.gender_requirement;
+
       // Update the program
-      (await supabase.from('programs').update({
+      await supabase.from('programs').update({
         ...formData,
+        gender_requirement: finalGender,
         monthly_amount_usd: sanitizedMonthlyAmount,
-        program_id: parseInt(programId) // ensure it's an integer
-      }).eq('id', dbId).select().single()).data;
+        currency: formData.currency || "USD",
+        available_regions: finalRegions,
+        required_states: isGlobal ? [] : requiredStates,
+        payment_method: finalPaymentMethod,
+        status: finalStatus,
+        sources: allSources,
+        program_id: parseInt(programId)
+      }).eq('id', dbId);
 
       setUpdateSuccess(true);
       setTimeout(() => {
@@ -314,8 +410,7 @@ export default function ManageProgramPage() {
     }));
   };
   
-  // Check if any of the selected regions are USA or Canada
-  const showStatesSelector = regions.some(r => r === "United States" || r === "Canada");
+  const showStatesSelector = !isGlobal && regions.some(r => r === "United States" || r === "Canada");
   
   // Get appropriate states/provinces options based on selected regions
   const getStateOptions = () => {
@@ -441,7 +536,7 @@ export default function ManageProgramPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <Label>Program Name</Label>
+                  <Label className="font-semibold">Program Name</Label>
                   <Input
                     required
                     value={formData.name}
@@ -451,7 +546,7 @@ export default function ManageProgramPage() {
                 </div>
 
                 <div>
-                  <Label>Organization</Label>
+                  <Label className="font-semibold">Organization</Label>
                   <Input
                     required
                     value={formData.organization}
@@ -460,30 +555,74 @@ export default function ManageProgramPage() {
                   />
                 </div>
 
-                <div>
-                  <Label>Website</Label>
-                  <Input
-                    type="url"
-                    required
-                    value={formData.website}
-                    onChange={(e) => handleChange("website", e.target.value)}
-                    placeholder="https://..."
-                  />
+                {/* Primary Website & Additional Links */}
+                <div className="space-y-3 p-4 bg-gray-50/80 rounded-2xl border border-gray-200/70">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <Label className="font-semibold flex items-center gap-1.5 text-gray-900">
+                        <Link2 className="w-4 h-4 text-green-700" />
+                        Official Website / Primary Application Link
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddLink}
+                        className="h-7 text-xs border-green-600 text-green-700 hover:bg-green-50 font-semibold cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Add another link
+                      </Button>
+                    </div>
+                    <Input
+                      type="url"
+                      required
+                      value={formData.website}
+                      onChange={(e) => handleChange("website", e.target.value)}
+                      placeholder="https://..."
+                      className="bg-white"
+                    />
+                  </div>
+
+                  {additionalLinks.map((link, idx) => (
+                    <div key={idx} className="flex items-center gap-2 animate-in fade-in duration-150">
+                      <Input
+                        type="url"
+                        value={link}
+                        onChange={(e) => handleUpdateLink(idx, e.target.value)}
+                        placeholder={`https://... (Research paper, news article, or study #${idx + 1})`}
+                        className="bg-white text-xs"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveLink(idx)}
+                        className="h-9 w-9 text-gray-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0 cursor-pointer"
+                        title="Remove link"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    💡 <em>Encouraged:</em> Add links to research papers, whitepapers, press releases, evaluation studies, or news articles covering this program.
+                  </p>
                 </div>
 
                 <div>
-                  <Label>Description</Label>
+                  <Label className="font-semibold">Description</Label>
                   <Textarea
                     required
                     value={formData.description}
                     onChange={(e) => handleChange("description", e.target.value)}
                     placeholder="Detailed description of the program"
-                    className="h-32"
+                    className="h-28"
                   />
                 </div>
 
                 <div>
-                  <Label>UBI Payout Terms, Amount and Description</Label>
+                  <Label className="font-semibold">UBI Payout Terms, Amount and Description</Label>
                   <Input
                     required
                     value={formData.amount_description}
@@ -492,21 +631,9 @@ export default function ManageProgramPage() {
                   />
                 </div>
 
+                {/* Currency Selector (with OTHER custom option) */}
                 <div>
-                  <Label>Monthly Equivalent Value in USD</Label>
-                  <Input
-                    type="number"
-                    required
-                    min="0"
-                    step="any"
-                    value={formData.monthly_amount_usd}
-                    onChange={(e) => handleChange("monthly_amount_usd", e.target.value)}
-                    placeholder="e.g. 500"
-                  />
-                </div>
-
-                <div>
-                  <Label>Currency</Label>
+                  <Label className="font-semibold">Currency</Label>
                   <Select
                     value={STANDARD_CURRENCIES.includes(formData.currency) ? formData.currency : (isOtherCurrency || formData.currency ? "OTHER" : "USD")}
                     onValueChange={(value) => {
@@ -520,7 +647,7 @@ export default function ManageProgramPage() {
                     }}
                     required
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white">
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
                     <SelectContent>
@@ -553,38 +680,101 @@ export default function ManageProgramPage() {
                   )}
                 </div>
 
+                {/* Monthly Equivalent Value in USD (Moved below Currency) */}
                 <div>
-                  <Label>Payment Method</Label>
+                  <Label className="font-semibold">Monthly Equivalent Value in USD</Label>
+                  <Input
+                    type="number"
+                    required
+                    min="0"
+                    step="any"
+                    value={formData.monthly_amount_usd}
+                    onChange={(e) => handleChange("monthly_amount_usd", e.target.value)}
+                    placeholder="e.g. 500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Used to calculate the total estimated monthly cash floor in applicant portfolios.
+                  </p>
+                </div>
+
+                {/* Payment Method (with OTHER option) */}
+                <div>
+                  <Label className="font-semibold">Payment Method</Label>
                   <Select
-                    value={formData.payment_method}
-                    onValueChange={(value) => handleChange("payment_method", value)}
+                    value={isOtherPaymentMethod ? "other" : formData.payment_method}
+                    onValueChange={(value) => {
+                      if (value === "other") {
+                        setIsOtherPaymentMethod(true);
+                      } else {
+                        setIsOtherPaymentMethod(false);
+                        handleChange("payment_method", value);
+                        handleChange("custom_payment_method", "");
+                      }
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white">
                       <SelectValue placeholder="Select payment method" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="standard">Standard (Bank Transfer)</SelectItem>
-                      <SelectItem value="digital">Digital (Crypto/Digital Wallet)</SelectItem>
+                      <SelectItem value="standard">Standard (Bank Transfer / Direct Deposit / Check)</SelectItem>
+                      <SelectItem value="digital">Digital (Crypto / Web3 Wallet / Token Protocol)</SelectItem>
+                      <SelectItem value="other">Other (please specify below)</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  {isOtherPaymentMethod && (
+                    <div className="mt-2 animate-in fade-in duration-150">
+                      <Input
+                        type="text"
+                        placeholder="Please specify payment method (e.g. Prepaid Debit Card, Mobile Money, Cash in hand)"
+                        value={formData.custom_payment_method || ""}
+                        onChange={(e) => handleChange("custom_payment_method", e.target.value)}
+                        required
+                        className="bg-gray-50/90 font-medium"
+                      />
+                    </div>
+                  )}
                 </div>
 
+                {/* Program Status (with OTHER option) */}
                 <div>
-                  <Label>Program Status</Label>
+                  <Label className="font-semibold">Program Status</Label>
                   <Select
-                    value={formData.status}
-                    onValueChange={(value) => handleChange("status", value)}
+                    value={isOtherStatus ? "other" : formData.status}
+                    onValueChange={(value) => {
+                      if (value === "other") {
+                        setIsOtherStatus(true);
+                      } else {
+                        setIsOtherStatus(false);
+                        handleChange("status", value);
+                        handleChange("custom_status", "");
+                      }
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active_open">Active, open for applications</SelectItem>
                       <SelectItem value="active_closed">Active, applications closed</SelectItem>
-                      <SelectItem value="upcoming">Upcoming</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
+                      <SelectItem value="upcoming">Upcoming / Planned pilot</SelectItem>
+                      <SelectItem value="closed">Closed / Completed</SelectItem>
+                      <SelectItem value="other">Other (please specify below)</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  {isOtherStatus && (
+                    <div className="mt-2 animate-in fade-in duration-150">
+                      <Input
+                        type="text"
+                        placeholder="Please specify program status (e.g. In Review, Pilot Phase 2, Suspended)"
+                        value={formData.custom_status || ""}
+                        onChange={(e) => handleChange("custom_status", e.target.value)}
+                        required
+                        className="bg-gray-50/90 font-medium"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Only admins can change verification status */}
@@ -603,90 +793,127 @@ export default function ManageProgramPage() {
               <Separator className="my-6" />
               
               <div>
-                <h3 className="text-lg font-semibold text-green-800 mb-4">Eligibility Requirements</h3>
+                <h3 className="text-lg font-bold text-green-800 mb-4">Eligibility Requirements</h3>
                 <div className="space-y-6">
                   <div>
-                    <Label>Is There a Maximum Household Income? (USD equivalent, optional)</Label>
+                    <Label className="font-semibold">Is There a Maximum Household Income? (USD equivalent, optional)</Label>
                     <Input
                       type="number"
                       min="0"
                       value={formData.max_household_income_usd || ""}
                       onChange={(e) => handleChange("max_household_income_usd", e.target.value ? parseFloat(e.target.value) : null)}
-                      placeholder="Leave empty if no limit"
+                      placeholder="Leave empty if no income limit / unconditional"
                     />
                   </div>
                   
+                  {/* Gender Requirement (Optional / Universal by default) */}
                   <div>
-                    <Label>Gender Requirement</Label>
+                    <Label className="font-semibold">Gender Requirement (optional)</Label>
                     <Select
-                      value={formData.gender_requirement || ""}
-                      onValueChange={(value) => handleChange("gender_requirement", value === "" ? null : value)}
+                      value={formData.gender_requirement || "none"}
+                      onValueChange={(value) => handleChange("gender_requirement", value === "none" ? "" : value)}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender requirement" />
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="No gender requirement (Universal)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={null}>Not applicable</SelectItem>
-                        <SelectItem value="female">Female only</SelectItem>
+                        <SelectItem value="none">No gender requirement (Universal / Open to all)</SelectItem>
+                        <SelectItem value="female">Female only / Women-focused</SelectItem>
                         <SelectItem value="male">Male only</SelectItem>
                         <SelectItem value="other">other gender-related requirement (please describe below)</SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      You can leave this empty or select "No gender requirement" for universal programs.
+                    </p>
                   </div>
 
+                  {/* Available Regions with Separate Global Checkmark */}
                   <div>
-                    <Label>Available Regions (select one or multiple countries)</Label>
-                    <div className="flex gap-2 mb-2">
-                      <Select
-                        value={selectedCountry}
-                        onValueChange={handleSelectRegion}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Add country / region..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {COUNTRIES.map(country => (
-                            <SelectItem key={country} value={country}>
-                              {regions.includes(country) ? `✓ ${country}` : country}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button type="button" onClick={addRegion} className="cursor-pointer">
-                        <Plus className="w-4 h-4 mr-1" /> Add
-                      </Button>
+                    <Label className="font-semibold mb-2 block">Available Regions</Label>
+                    
+                    {/* Global Checkbox */}
+                    <div className="flex items-start space-x-3 p-3.5 bg-green-50/80 rounded-xl border border-green-200 mb-3">
+                      <input
+                        type="checkbox"
+                        id="manageIsGlobalCheckbox"
+                        checked={isGlobal}
+                        onChange={(e) => handleToggleGlobal(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                      />
+                      <label htmlFor="manageIsGlobalCheckbox" className="text-sm font-medium text-green-950 cursor-pointer select-none">
+                        <span className="font-bold flex items-center gap-1.5">
+                          <Globe className="w-4 h-4 text-green-700" />
+                          Globally Available / Worldwide (Open to all countries)
+                        </span>
+                        <span className="text-xs text-green-800 block mt-0.5 font-normal">
+                          Check this box if anyone worldwide can participate regardless of country or residency.
+                        </span>
+                      </label>
                     </div>
-                    {regions.length > 0 && (
-                      <div className="flex flex-wrap gap-2 p-2.5 bg-gray-50/80 rounded-xl border border-gray-100">
-                        {regions.map(region => (
-                          <div
-                            key={region}
-                            className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs"
+
+                    {!isGlobal && (
+                      <div className="space-y-2 animate-in fade-in duration-150">
+                        <div className="flex gap-2">
+                          <Select
+                            value={selectedCountry}
+                            onValueChange={handleSelectRegion}
+                            disabled={isGlobal}
                           >
-                            <span>{region}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeRegion(region)}
-                              className="hover:text-red-700 rounded-full hover:bg-green-200/60 p-0.5 transition-colors cursor-pointer"
-                              title={`Remove ${region}`}
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
+                            <SelectTrigger className="flex-1 bg-white">
+                              <SelectValue placeholder="Select country to add..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {COUNTRIES.map(country => (
+                                <SelectItem key={country} value={country}>
+                                  {regions.includes(country) ? `✓ ${country}` : country}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            type="button" 
+                            onClick={addRegion} 
+                            disabled={isGlobal || !selectedCountry}
+                            className="cursor-pointer"
+                          >
+                            <Plus className="w-4 h-4 mr-1" /> Add
+                          </Button>
+                        </div>
+
+                        {regions.length > 0 && (
+                          <div className="flex flex-wrap gap-2 p-2.5 bg-gray-50/80 rounded-xl border border-gray-100">
+                            {regions.map(region => (
+                              <div
+                                key={region}
+                                className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs"
+                              >
+                                <span>{region}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeRegion(region)}
+                                  className="hover:text-red-700 rounded-full hover:bg-green-200/60 p-0.5 transition-colors cursor-pointer"
+                                  title={`Remove ${region}`}
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
                   </div>
 
                   {showStatesSelector && (
                     <div>
-                      <Label>Required States/Provinces</Label>
+                      <Label className="font-semibold">Required States/Provinces</Label>
                       <div className="flex gap-2 mb-2">
                         <Select
                           value={selectedState}
                           onValueChange={handleSelectState}
                         >
-                          <SelectTrigger className="flex-1">
+                          <SelectTrigger className="flex-1 bg-white">
                             <SelectValue placeholder="Add state / province..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -725,13 +952,12 @@ export default function ManageProgramPage() {
                   )}
 
                   <div>
-                    <Label>Other Detailed Requirements</Label>
+                    <Label className="font-semibold">Other Detailed Requirements</Label>
                     <Textarea
-                      required
                       value={formData.eligibility}
                       onChange={(e) => handleChange("eligibility", e.target.value)}
-                      placeholder="Additional eligibility requirements not covered above"
-                      className="h-32"
+                      placeholder="Additional eligibility criteria, age limits, residency rules, or enrollment requirements"
+                      className="h-28"
                     />
                   </div>
                 </div>
