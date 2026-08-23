@@ -54,6 +54,7 @@ export default function MyReport() {
   const [copied, setCopied] = useState(false);
   const [isAnswersExpanded, setIsAnswersExpanded] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showAllDemoted, setShowAllDemoted] = useState(false);
   const [dismissedDeltas, setDismissedDeltas] = useState(() => {
     try {
       return sessionStorage.getItem("ubi_dismissed_deltas") === "true";
@@ -323,7 +324,78 @@ export default function MyReport() {
           </div>
         )}
 
-        {/* Expandable Answers & Edit Form View at Top of Screen */}
+        {/* Executive Header Banner */}
+        <div className="bg-gradient-to-br from-green-900 via-green-800 to-emerald-950 text-white rounded-3xl p-6 md:p-10 shadow-xl relative overflow-hidden">
+          <div className="relative z-10 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-green-700/60 pb-6">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-700/60 rounded-full text-xs font-semibold text-green-200 mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                  Verified Custom Qualification Report
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
+                  Personalized UBI Income Portfolio
+                </h1>
+                <p className="text-green-100 text-xs md:text-sm mt-1">
+                  Prepared for: <span className="font-semibold text-white">{profile?.name || user?.email || "Applicant"}</span> &bull; Location: <span className="font-semibold text-white">{profile?.municipality ? `${profile.municipality}, ` : ""}{profile?.state ? `${profile.state}, ` : ""}{profile?.country || "Global"}</span>
+                </p>
+              </div>
+
+              <div className="flex flex-col items-start md:items-end">
+                <span className="text-[11px] uppercase tracking-wider text-green-300 font-bold">Report Status</span>
+                <div className="flex items-center gap-1.5 text-sm font-bold text-white mt-0.5">
+                  <ShieldCheck className="w-4 h-4 text-green-400" />
+                  <span>Dynamic Snapshot Verified</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Key KPI Metrics Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200 block mb-1">
+                  Potential Monthly Floor
+                </span>
+                <div className="text-2xl md:text-3xl font-black text-yellow-300">
+                  ${report?.totalPotentialMonthlyUsd?.toLocaleString() || 0}
+                  <span className="text-xs font-normal text-white ml-1">USD/mo</span>
+                </div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200 block mb-1">
+                  Total Eligible Matches
+                </span>
+                <div className="text-2xl md:text-3xl font-black text-white">
+                  {report?.totalEligibleCount || 0}
+                  <span className="text-xs font-normal text-green-200 ml-1">programs</span>
+                </div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200 block mb-1">
+                  Avg Match Confidence
+                </span>
+                <div className="text-2xl md:text-3xl font-black text-emerald-300">
+                  {report?.averageScore || 0}%
+                  <span className="text-xs font-normal text-white ml-1">fit</span>
+                </div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200 block mb-1">
+                  Web3 Daily Claim Protocols
+                </span>
+                <div className="text-2xl md:text-3xl font-black text-purple-200">
+                  {report?.tierSummary?.tier_2_daily_claim?.length || 0}
+                  <span className="text-xs font-normal text-white ml-1">active</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Expandable Answers & Edit Form View under Executive Header Banner */}
         <Card className="border-green-200 bg-white/95 backdrop-blur-sm shadow-sm overflow-hidden print:hidden transition-all duration-300">
           <CardHeader 
             className="p-4 sm:p-5 flex flex-row items-center justify-between cursor-pointer hover:bg-green-50/40 transition-colors"
@@ -469,77 +541,6 @@ export default function MyReport() {
             </CardContent>
           )}
         </Card>
-
-        {/* Executive Header Banner */}
-        <div className="bg-gradient-to-br from-green-900 via-green-800 to-emerald-950 text-white rounded-3xl p-6 md:p-10 shadow-xl relative overflow-hidden">
-          <div className="relative z-10 space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-green-700/60 pb-6">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-700/60 rounded-full text-xs font-semibold text-green-200 mb-2">
-                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                  Verified Custom Qualification Report
-                </div>
-                <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
-                  Personalized UBI Income Portfolio
-                </h1>
-                <p className="text-green-100 text-xs md:text-sm mt-1">
-                  Prepared for: <span className="font-semibold text-white">{profile?.name || user?.email || "Applicant"}</span> &bull; Location: <span className="font-semibold text-white">{profile?.municipality ? `${profile.municipality}, ` : ""}{profile?.state ? `${profile.state}, ` : ""}{profile?.country || "Global"}</span>
-                </p>
-              </div>
-
-              <div className="flex flex-col items-start md:items-end">
-                <span className="text-[11px] uppercase tracking-wider text-green-300 font-bold">Report Status</span>
-                <div className="flex items-center gap-1.5 text-sm font-bold text-white mt-0.5">
-                  <ShieldCheck className="w-4 h-4 text-green-400" />
-                  <span>Dynamic Snapshot Verified</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Key KPI Metrics Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200 block mb-1">
-                  Potential Monthly Floor
-                </span>
-                <div className="text-2xl md:text-3xl font-black text-yellow-300">
-                  ${report?.totalPotentialMonthlyUsd?.toLocaleString() || 0}
-                  <span className="text-xs font-normal text-white ml-1">USD/mo</span>
-                </div>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200 block mb-1">
-                  Total Eligible Matches
-                </span>
-                <div className="text-2xl md:text-3xl font-black text-white">
-                  {report?.totalEligibleCount || 0}
-                  <span className="text-xs font-normal text-green-200 ml-1">programs</span>
-                </div>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200 block mb-1">
-                  Avg Match Confidence
-                </span>
-                <div className="text-2xl md:text-3xl font-black text-emerald-300">
-                  {report?.averageScore || 0}%
-                  <span className="text-xs font-normal text-white ml-1">fit</span>
-                </div>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-green-200 block mb-1">
-                  Web3 Daily Claim Protocols
-                </span>
-                <div className="text-2xl md:text-3xl font-black text-purple-200">
-                  {report?.tierSummary?.tier_2_daily_claim?.length || 0}
-                  <span className="text-xs font-normal text-white ml-1">active</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Interactive Tier Filter Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 print:hidden">
@@ -787,12 +788,12 @@ export default function MyReport() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {report.demotedOrIneligible.slice(0, 4).map(prog => (
-                  <div key={prog.program_id} className="p-3 bg-white rounded-xl border border-gray-200 text-xs flex items-center justify-between gap-4">
-                    <div>
+                {(showAllDemoted ? report.demotedOrIneligible : report.demotedOrIneligible.slice(0, 5)).map(prog => (
+                  <div key={prog.program_id} className="p-3 bg-white rounded-xl border border-gray-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex-1">
                       <span className="font-bold text-gray-900">{prog.name}</span>
-                      <span className="text-gray-400 mx-2">&bull;</span>
-                      <span className="text-red-700 font-medium">
+                      <span className="text-gray-400 mx-2 hidden sm:inline">&bull;</span>
+                      <span className="text-red-700 font-medium block sm:inline mt-1 sm:mt-0">
                         {prog.disqualifiers?.join("; ") || "Outside eligible criteria"}
                       </span>
                     </div>
@@ -800,12 +801,27 @@ export default function MyReport() {
                       variant="outline"
                       size="sm"
                       onClick={() => navigate('/program-details', { state: { programId: prog.program_id } })}
-                      className="text-[11px] h-7"
+                      className="text-[11px] h-7 self-end sm:self-auto cursor-pointer"
                     >
                       Inspect
                     </Button>
                   </div>
                 ))}
+
+                {report.demotedOrIneligible.length > 5 && (
+                  <div className="pt-2 text-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAllDemoted(!showAllDemoted)}
+                      className="text-xs text-gray-600 hover:text-green-800 font-semibold cursor-pointer"
+                    >
+                      {showAllDemoted 
+                        ? "Show Fewer Disqualified Programs ↑" 
+                        : `Show All ${report.demotedOrIneligible.length} Disqualified Programs (${report.demotedOrIneligible.length - 5} more) ↓`}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

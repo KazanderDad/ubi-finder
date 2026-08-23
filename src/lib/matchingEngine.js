@@ -63,40 +63,53 @@ export function evaluateEligibility(program, profile) {
 
   // 1. Geographic Hierarchy Evaluation (Up to 30 points)
   const regions = program.available_regions || [];
-  const isGlobal = regions.length === 0 || regions.includes("Global") || regions.includes("Worldwide");
+  const progName = program.name || "";
+  const progMunicipalities = program.municipalities || [];
+  const progState = program.state_province || "";
+
+  const isGlobal = 
+    regions.length === 0 || 
+    regions.some(r => /^(global|worldwide|international|all)$/i.test(r)) ||
+    progMunicipalities.some(m => /^(global|worldwide|international|all)$/i.test(m)) ||
+    /^(global|worldwide|international|all)$/i.test(progState) ||
+    /GoodDollar|FundLoop|Mein Grundeinkommen|World WLD|Circles/i.test(progName);
+
   const matchesCountry = isGlobal || (profile.country && regions.includes(profile.country));
 
   let geoScore = 0;
   if (!matchesCountry) {
     disqualifiers.push(`Restricted to ${regions.join(", ")} (Your location: ${profile.country || "Unspecified"})`);
     diagnostics.push({ label: "Location", passed: false, text: `Available only in ${regions.join(", ")}` });
+  } else if (isGlobal) {
+    geoScore = 25;
+    diagnostics.push({ label: "Global Access", passed: true, text: "Open worldwide without residency restrictions" });
   } else {
-    // Check Municipal & State level precision
+    // Regional & Municipal Precision Evaluation for Local Programs
     const stateProvince = profile.state || profile.state_province;
     const municipality = profile.municipality;
 
-    if (program.municipalities && program.municipalities.length > 0) {
-      if (municipality && program.municipalities.includes(municipality)) {
+    const hasCitySpecifics = progMunicipalities.length > 0 && !progMunicipalities.some(m => /^(global|statewide|nationwide|all|other)$/i.test(m));
+
+    if (hasCitySpecifics) {
+      if (municipality && progMunicipalities.includes(municipality)) {
         geoScore = 30; // Direct city/municipality match!
         diagnostics.push({ label: "Hyper-Local Match", passed: true, text: `Directly targeted to residents of ${municipality}` });
-      } else if (municipality === "Other / Not listed") {
-        // Restricted to municipal boundaries within the state
-        disqualifiers.push(`Restricted to city boundaries: ${program.municipalities.join(", ")}`);
-        diagnostics.push({ label: "Municipal Boundary", passed: false, text: `Limited to ${program.municipalities.join(", ")}` });
+      } else if (municipality === "Other / Not listed" || (municipality && !progMunicipalities.includes(municipality))) {
+        // Restricted to specific municipal boundaries
+        disqualifiers.push(`Restricted to city boundaries: ${progMunicipalities.join(", ")}`);
+        diagnostics.push({ label: "Municipal Boundary", passed: false, text: `Limited to ${progMunicipalities.join(", ")}` });
       } else {
         geoScore = 20;
         diagnostics.push({ label: "Regional Match", passed: true, text: `Located in your region` });
       }
-    } else if (program.state_province && stateProvince) {
+    } else if (program.state_province && stateProvince && !/^(global|all|nationwide)$/i.test(program.state_province)) {
       if (program.state_province.toLowerCase() === stateProvince.toLowerCase()) {
         geoScore = 25; // State match
         diagnostics.push({ label: "State/Province Match", passed: true, text: `Statewide program for ${stateProvince}` });
       } else {
-        geoScore = 15;
+        disqualifiers.push(`Restricted to ${program.state_province} (Your location: ${stateProvince})`);
+        diagnostics.push({ label: "State Boundary", passed: false, text: `Limited to ${program.state_province}` });
       }
-    } else if (isGlobal) {
-      geoScore = 20;
-      diagnostics.push({ label: "Global Access", passed: true, text: "Open worldwide without residency restrictions" });
     } else {
       geoScore = 22;
       diagnostics.push({ label: "Country Match", passed: true, text: `Nationwide program in ${profile.country}` });
@@ -109,7 +122,6 @@ export function evaluateEligibility(program, profile) {
   if (program.gender_requirement && program.gender_requirement !== "any") {
     const userGender = profile.gender;
     const womenCount = parseInt(profile.women_count || "0", 10);
-    const householdSize = parseInt(profile.household_size || "1", 10);
 
     const isWoman = userGender === "female" || womenCount > 0;
 
@@ -145,7 +157,7 @@ export function evaluateEligibility(program, profile) {
   }
 
   // 4. Payout Delivery Rail Compatibility (Up to 15 points)
-  const isDigitalPayout = program.payment_method === "digital" || program.payout_rail === "crypto_wallet";
+  const isDigitalPayout = program.payment_method === "digital" || program.payout_rail === "crypto_wallet" || program.distribution_type === "daily_claim_protocol";
   const userAcceptsDigital = profile.accepts_digital_currency !== false;
 
   if (isDigitalPayout && !userAcceptsDigital) {
@@ -158,7 +170,7 @@ export function evaluateEligibility(program, profile) {
     diagnostics.push({ 
       label: "Payout Rail", 
       passed: true, 
-      text: program.payout_rail === "crypto_wallet" ? "Compatible with Web3 wallet preference" : "Compatible with standard bank/card delivery" 
+      text: (isDigitalPayout || program.payout_rail === "crypto_wallet") ? "Compatible with Web3/crypto wallet preference" : "Compatible with standard bank/card delivery" 
     });
   }
 
@@ -176,13 +188,13 @@ export function evaluateEligibility(program, profile) {
       text: "Applications are currently closed" 
     });
     fitBreakdown.status = 0;
-  } else if (program.status === "active_open" || program.application_status === "Accepting applications") {
+  } else if (program.status === "active_open" || program.status === "active" || program.application_status === "Accepting applications" || program.application_status === "Accepting registrations" || program.application_status === "Accepting raffle entries") {
     fitBreakdown.status = 15;
     score += 15;
     diagnostics.push({ 
       label: "Application Status", 
       passed: true, 
-      text: "Actively accepting applications" 
+      text: "Actively accepting applications or claims" 
     });
   } else if (program.status === "upcoming" || program.application_status === "Accepting waitlist") {
     fitBreakdown.status = 8;
@@ -193,8 +205,8 @@ export function evaluateEligibility(program, profile) {
       text: "Accepting waitlist entries" 
     });
   } else {
-    fitBreakdown.status = 5;
-    score += 5;
+    fitBreakdown.status = 10;
+    score += 10;
   }
 
   // Final score clamping
@@ -206,9 +218,16 @@ export function evaluateEligibility(program, profile) {
     tier = null;
   } else if (program.status === "upcoming" || program.application_status === "Accepting waitlist") {
     tier = TIERS.TIER_4_WAITLIST;
-  } else if (program.distribution_type === "daily_claim_protocol") {
+  } else if (
+    program.distribution_type === "daily_claim_protocol" || 
+    /GoodDollar|Circles|FundLoop/i.test(progName) ||
+    program.custom_claim_path
+  ) {
     tier = TIERS.TIER_2_DAILY_CLAIM;
-  } else if (program.distribution_type === "lottery_raffle") {
+  } else if (
+    program.distribution_type === "lottery_raffle" || 
+    /Raffle|Grundeinkommen|Lottery/i.test(progName)
+  ) {
     tier = TIERS.TIER_3_LOTTERY;
   }
 
