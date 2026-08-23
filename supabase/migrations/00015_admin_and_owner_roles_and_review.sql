@@ -147,8 +147,8 @@ CREATE TABLE IF NOT EXISTS public.admin_notifications (
     type TEXT NOT NULL DEFAULT 'program_submitted',
     title TEXT NOT NULL,
     message TEXT NOT NULL,
-    program_id INT REFERENCES public.programs(id) ON DELETE CASCADE,
-    submitter_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    program_id TEXT,
+    submitter_id UUID,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
