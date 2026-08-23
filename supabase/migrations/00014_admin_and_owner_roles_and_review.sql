@@ -7,7 +7,7 @@ DO $$ BEGIN
   ALTER TYPE public.user_role ADD VALUE IF NOT EXISTS 'owner' BEFORE 'admin';
 EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
--- 2. Update is_admin() and create is_owner() helper functions
+-- 2. Update is_admin() and create is_owner() helper functions (using role::text for transactional enum safety)
 CREATE OR REPLACE FUNCTION public.is_admin()
   RETURNS boolean
   LANGUAGE sql
@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION public.is_admin()
 AS $$
   SELECT exists (
     SELECT 1 FROM public.users
-    WHERE id = auth.uid() AND (role = 'admin' OR role = 'owner')
+    WHERE id = auth.uid() AND (role::text = 'admin' OR role::text = 'owner')
   );
 $$;
 
@@ -30,7 +30,7 @@ CREATE OR REPLACE FUNCTION public.is_owner()
 AS $$
   SELECT exists (
     SELECT 1 FROM public.users
-    WHERE id = auth.uid() AND role = 'owner'
+    WHERE id = auth.uid() AND role::text = 'owner'
   );
 $$;
 
@@ -43,22 +43,22 @@ SET search_path = public
 AS $$
 BEGIN
   -- If the target row is currently an owner and someone attempts to change their role
-  IF OLD.role = 'owner' AND NEW.role != 'owner' THEN
+  IF OLD.role::text = 'owner' AND NEW.role::text != 'owner' THEN
     RAISE EXCEPTION 'Owners cannot be demoted or removed from the owner role.';
   END IF;
 
   -- If non-owner tries to modify any owner account data
-  IF OLD.role = 'owner' AND NOT public.is_owner() AND auth.uid() IS NOT NULL THEN
+  IF OLD.role::text = 'owner' AND NOT public.is_owner() AND auth.uid() IS NOT NULL THEN
     RAISE EXCEPTION 'Only owners can modify owner accounts.';
   END IF;
 
   -- If non-admin tries to change any role
-  IF OLD.role != NEW.role AND NOT public.is_admin() AND auth.uid() IS NOT NULL THEN
+  IF OLD.role::text != NEW.role::text AND NOT public.is_admin() AND auth.uid() IS NOT NULL THEN
     RAISE EXCEPTION 'Only administrators can change user roles.';
   END IF;
 
   -- If non-owner tries to promote someone to owner
-  IF NEW.role = 'owner' AND OLD.role != 'owner' AND NOT public.is_owner() AND auth.uid() IS NOT NULL THEN
+  IF NEW.role::text = 'owner' AND OLD.role::text != 'owner' AND NOT public.is_owner() AND auth.uid() IS NOT NULL THEN
     RAISE EXCEPTION 'Only owners can promote users to the owner role.';
   END IF;
 
@@ -79,7 +79,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF OLD.role = 'owner' THEN
+  IF OLD.role::text = 'owner' THEN
     RAISE EXCEPTION 'Owner accounts cannot be deleted.';
   END IF;
   RETURN OLD;
@@ -101,7 +101,7 @@ AS $$
 DECLARE
   caller_is_admin boolean;
   caller_is_owner boolean;
-  target_current_role user_role;
+  target_current_role text;
 BEGIN
   caller_is_admin := public.is_admin();
   IF NOT caller_is_admin THEN
@@ -110,7 +110,7 @@ BEGIN
 
   caller_is_owner := public.is_owner();
 
-  SELECT role INTO target_current_role FROM public.users WHERE id = target_user_id;
+  SELECT role::text INTO target_current_role FROM public.users WHERE id = target_user_id;
   IF target_current_role IS NULL THEN
     RAISE EXCEPTION 'User not found.';
   END IF;
