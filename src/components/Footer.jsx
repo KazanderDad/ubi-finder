@@ -1,13 +1,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Leaf } from "lucide-react";
+import { Leaf, Shield } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Footer() {
+  const { isAuthenticated, isAdmin, user } = useAuth();
+  const showAdminLinks = isAuthenticated && Boolean(isAdmin || user?.role === 'admin' || user?.role === 'owner');
+
   return (
     <footer className="bg-green-50/50 border-t border-green-100">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className={`grid grid-cols-1 md:grid-cols-4 ${showAdminLinks ? "lg:grid-cols-5" : ""} gap-8`}>
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <Leaf className="w-5 h-5 text-green-700" />
@@ -50,6 +54,28 @@ export default function Footer() {
               <li><Link to={createPageUrl("Accessibility")}>Accessibility</Link></li>
             </ul>
           </div>
+
+          {/* Admin Section — Only visible to authenticated admins / owners */}
+          {showAdminLinks && (
+            <div>
+              <h3 className="font-semibold text-purple-900 mb-4 flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-purple-700" />
+                Administration
+              </h3>
+              <ul className="space-y-2 text-sm text-purple-900/80">
+                <li>
+                  <Link to="/admin/submissions" className="hover:text-purple-700 font-medium">
+                    Review Submissions
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/admin/users" className="hover:text-purple-700 font-medium">
+                    Manage Admins
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
         
         <div className="mt-8 pt-8 border-t border-green-200">

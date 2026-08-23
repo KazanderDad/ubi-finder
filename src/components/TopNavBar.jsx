@@ -42,7 +42,7 @@ export default function TopNavBar({ user, userProfile }) {
 
     try {
       // Only admins or users with program management rights should see this
-      if (user.role === 'admin') {
+      if (user.role === 'admin' || user.role === 'owner') {
         setHasPrograms(true);
         return;
       }

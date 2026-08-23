@@ -32,6 +32,8 @@ import FundLoopClaim from './pages/claim/FundLoopClaim';
 import CirclesClaim from './pages/claim/CirclesClaim';
 import ServicesPage from './pages/Services';
 import EcosystemPage from './pages/Ecosystem';
+import AdminSubmissions from './pages/admin/AdminSubmissions';
+import AdminUsers from './pages/admin/AdminUsers';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import PrototypeDisclaimer from './components/PrototypeDisclaimer';
@@ -119,6 +121,13 @@ const AuthenticatedApp = () => {
         <Route path="/submitprogram" element={<SubmitProgramPage />} />
         <Route path="/Submit-Program" element={<SubmitProgramPage />} />
         <Route path="/submit-program" element={<SubmitProgramPage />} />
+        
+        {/* Admin Moderation & User Management Routes */}
+        <Route path="/admin/submissions" element={<AdminSubmissions />} />
+        <Route path="/Admin/Submissions" element={<AdminSubmissions />} />
+        <Route path="/admin/review" element={<AdminSubmissions />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/Admin/Users" element={<AdminUsers />} />
       </Route>
 
       {/* 404 Catch-All */}

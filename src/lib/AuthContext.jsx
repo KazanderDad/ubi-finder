@@ -39,7 +39,30 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setIsAuthenticated(false);
       } else {
-        setUser(user);
+        // Fetch role from public.users table to verify admin/owner privilege
+        let userRole = user.user_metadata?.role || 'user';
+        try {
+          const { data: dbUser } = await supabase
+            .from('users')
+            .select('role, full_name, email')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (dbUser?.role) {
+            userRole = dbUser.role;
+          }
+        } catch (e) {
+          console.warn("Could not load user role from database:", e);
+        }
+
+        const enrichedUser = {
+          ...user,
+          role: userRole,
+          isAdmin: userRole === 'admin' || userRole === 'owner',
+          isOwner: userRole === 'owner',
+        };
+
+        setUser(enrichedUser);
         setIsAuthenticated(true);
 
         const pendingProfile = localStorage.getItem("pendingProfile");
@@ -119,6 +142,8 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{ 
       user, 
       isAuthenticated, 
+      isAdmin: Boolean(user?.isAdmin || user?.role === 'admin' || user?.role === 'owner'),
+      isOwner: Boolean(user?.isOwner || user?.role === 'owner'),
       isLoadingAuth,
       isLoadingPublicSettings: false,
       authError,

@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import { notifyAdminsOfNewSubmission } from "@/lib/adminNotifications";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -368,6 +369,18 @@ export default function SubmitProgramPage() {
           added_date: new Date().toISOString()
         }]);
       }
+
+      // Notify platform admins & owners of the new submission
+      notifyAdminsOfNewSubmission({
+        program_id: programId,
+        name: formData.name,
+        organization: formData.organization,
+        submitter_email: userData.email,
+        amount_description: formData.amount_description,
+        monthly_amount_usd: sanitizedMonthlyAmount,
+        available_regions: finalRegions,
+        website: formData.website,
+      }).catch(err => console.warn("Admin notification non-blocking error:", err));
 
       setSubmissionSuccess(true);
       setTimeout(() => {

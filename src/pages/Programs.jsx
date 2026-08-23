@@ -776,7 +776,7 @@ export default function Programs() {
                     favoritePrograms={favoritePrograms}
                     onToggleFavorite={toggleFavorite}
                     userEmail={user?.email}
-                    isAdmin={user?.role === 'admin'}
+                    isAdmin={user?.role === 'admin' || user?.role === 'owner'}
                     onClearFilters={clearFilters}
                   />
                 )}

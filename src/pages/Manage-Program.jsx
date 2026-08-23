@@ -188,7 +188,7 @@ export default function ManageProgramPage() {
       setProgramManagers(managers);
       
       // Check if user is authorized to edit this program
-      const isAdmin = user?.role === 'admin';
+      const isAdmin = user?.role === 'admin' || user?.role === 'owner';
       const isManager = managers.some(m => m.user_email === userEmail && (m.role === "owner" || m.role === "admin"));
       
       if (!isAdmin && !isManager) {
@@ -781,8 +781,8 @@ export default function ManageProgramPage() {
                   )}
                 </div>
 
-                {/* Only admins can change verification status */}
-                {user?.role === "admin" && (
+                {/* Only admins and owners can change verification status */}
+                {(user?.role === "admin" || user?.role === "owner") && (
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="verified"
