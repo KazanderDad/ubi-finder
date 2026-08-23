@@ -203,23 +203,37 @@ export function evaluateEligibility(program, profile) {
       passed: true, 
       text: (isDigitalPayout || program.payout_rail === "crypto_wallet") ? "Compatible with Web3/crypto wallet preference" : "Compatible with standard bank/card delivery" 
     });
-  }
+  }  // 5. Monthly Value & Application Status Evaluation (Up to 15 points)
+  // Only include protocols and programs that are currently accepting applications in the matching criteria.
+  const appStatus = (program.application_status || "").toLowerCase();
+  const progStatus = (program.status || "").toLowerCase();
+  const payoutStatus = (program.payout_status || "").toLowerCase();
 
-  // 5. Monthly Value & Application Status Evaluation (Up to 15 points)
-  const isClosed = 
-    program.status === "closed" || 
-    program.status === "active_closed" || 
-    (program.application_status && program.application_status.toLowerCase().includes("no longer accepting"));
+  const isPlanned = progStatus === "planned" || appStatus.includes("planned") || progStatus === "upcoming";
+  const isHistorical = progStatus === "closed" || progStatus === "completed" || appStatus.includes("pilot completed") || payoutStatus.includes("completed");
+  const isClosedOngoing = !isHistorical && (progStatus === "active_closed" || appStatus.includes("no longer accepting") || appStatus.includes("referral") || (payoutStatus.includes("ongoing") && appStatus.includes("no longer")));
+  
+  const isAcceptingApplications = !isPlanned && !isHistorical && !isClosedOngoing && (
+    progStatus === "active_open" ||
+    appStatus.includes("accepting") ||
+    progStatus === "active" ||
+    program.distribution_type === "daily_claim_protocol" ||
+    program.distribution_type === "lottery_raffle"
+  );
 
-  if (isClosed) {
-    disqualifiers.push("Program is no longer accepting new applications");
-    diagnostics.push({ 
-      label: "Application Status", 
-      passed: false, 
-      text: "Applications are currently closed" 
-    });
+  if (!isAcceptingApplications) {
+    if (isPlanned) {
+      disqualifiers.push("Program is in planning stage and not yet open for applications");
+      diagnostics.push({ label: "Application Status", passed: false, text: "Planned / Upcoming initiative" });
+    } else if (isHistorical) {
+      disqualifiers.push("Program is a completed historical initiative");
+      diagnostics.push({ label: "Application Status", passed: false, text: "Closed / Completed pilot" });
+    } else {
+      disqualifiers.push("Program is no longer accepting new applications (Closed, ongoing cohort)");
+      diagnostics.push({ label: "Application Status", passed: false, text: "No longer accepting applications" });
+    }
     fitBreakdown.status = 0;
-  } else if (program.status === "active_open" || program.status === "active" || program.application_status === "Accepting applications" || program.application_status === "Accepting registrations" || program.application_status === "Accepting raffle entries") {
+  } else {
     fitBreakdown.status = 15;
     score += 15;
     diagnostics.push({ 
@@ -227,17 +241,6 @@ export function evaluateEligibility(program, profile) {
       passed: true, 
       text: "Actively accepting applications or claims" 
     });
-  } else if (program.status === "upcoming" || program.application_status === "Accepting waitlist") {
-    fitBreakdown.status = 8;
-    score += 8;
-    diagnostics.push({ 
-      label: "Application Status", 
-      passed: true, 
-      text: "Accepting waitlist entries" 
-    });
-  } else {
-    fitBreakdown.status = 10;
-    score += 10;
   }
 
   // Final score clamping
@@ -245,20 +248,11 @@ export function evaluateEligibility(program, profile) {
 
   // Determine Tier
   let tier = TIERS.TIER_1_GUARANTEED;
-  if (isClosed) {
+  if (!isAcceptingApplications) {
     tier = null;
-  } else if (program.status === "upcoming" || program.application_status === "Accepting waitlist") {
-    tier = TIERS.TIER_4_WAITLIST;
-  } else if (
-    program.distribution_type === "daily_claim_protocol" || 
-    /GoodDollar|Circles|FundLoop/i.test(progName) ||
-    program.custom_claim_path
-  ) {
+  } else if (program.distribution_type === "daily_claim_protocol" || /GoodDollar|Circles|World WLD/i.test(program.name || "")) {
     tier = TIERS.TIER_2_DAILY_CLAIM;
-  } else if (
-    program.distribution_type === "lottery_raffle" || 
-    /Raffle|Grundeinkommen|Lottery/i.test(progName)
-  ) {
+  } else if (program.distribution_type === "lottery_raffle" || /Mein Grundeinkommen/i.test(program.name || "")) {
     tier = TIERS.TIER_3_LOTTERY;
   }
 

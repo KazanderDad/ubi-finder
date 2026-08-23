@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,59 +7,159 @@ import {
   Leaf, 
   Filter, 
   Search, 
-  ArrowUpDown, 
   Plus, 
   Map as MapIcon, 
   List as ListIcon, 
   Coins, 
   Gift, 
   CheckCircle2, 
-  Layers,
-  Sparkles,
+  Clock,
+  History,
   Lock,
-  FileText,
-  UserCheck
+  ChevronDown,
+  X,
+  SlidersHorizontal,
+  FileCheck
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import ProgramList from "../components/dashboard/ProgramList";
 import ProgramsMap from "../components/ProgramsMap";
 import { Link } from 'react-router-dom';
 import { Switch } from "@/components/ui/switch";
 import PageHeader from "@/components/ui/page-header";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Helmet } from "react-helmet-async";
 import { evaluateEligibility, isProfileComplete } from "@/lib/matchingEngine";
+
+// Multi-select facet dropdown component
+function FacetMultiSelect({ label, options, selectedValues = [], onChange }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleOption = (val) => {
+    if (selectedValues.includes(val)) {
+      onChange(selectedValues.filter(v => v !== val));
+    } else {
+      onChange([...selectedValues, val]);
+    }
+  };
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <Label className="text-xs font-semibold text-gray-700 mb-1 block">{label}</Label>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`w-full bg-white border rounded-lg px-3 py-2 text-xs flex items-center justify-between transition-colors shadow-2xs text-left cursor-pointer ${
+          selectedValues.length > 0
+            ? "border-green-600 ring-1 ring-green-600 bg-green-50/20"
+            : "border-gray-200 hover:border-gray-300"
+        }`}
+      >
+        <span className="truncate text-gray-800 font-medium">
+          {selectedValues.length === 0
+            ? "All / Any"
+            : `${selectedValues.length} selected`}
+        </span>
+        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full min-w-[210px] bg-white rounded-xl shadow-xl border border-gray-200 p-2 space-y-1 max-h-56 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+          {options.map((opt) => {
+            const isSelected = selectedValues.includes(opt.value);
+            return (
+              <label
+                key={opt.value}
+                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer select-none transition-colors ${
+                  isSelected ? "bg-green-50 text-green-950 font-semibold" : "hover:bg-gray-50 text-gray-700"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleOption(opt.value)}
+                  className="rounded border-gray-300 text-green-700 focus:ring-green-600 h-3.5 w-3.5"
+                />
+                <span className="truncate">{opt.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Program status matcher
+export const matchesProgramStatus = (program, statusKey) => {
+  const appStatus = (program.application_status || "").toLowerCase();
+  const progStatus = (program.status || "").toLowerCase();
+  const payoutStatus = (program.payout_status || "").toLowerCase();
+
+  const isPlanned = progStatus === "planned" || appStatus.includes("planned") || progStatus === "upcoming";
+  const isHistorical = progStatus === "closed" || progStatus === "completed" || appStatus.includes("pilot completed") || payoutStatus.includes("completed");
+  const isClosedOngoing = !isHistorical && (progStatus === "active_closed" || appStatus.includes("no longer accepting") || appStatus.includes("referral") || (payoutStatus.includes("ongoing") && appStatus.includes("no longer")));
+  const isAccepting = !isPlanned && !isHistorical && !isClosedOngoing && (
+    progStatus === "active_open" ||
+    appStatus.includes("accepting") ||
+    progStatus === "active" ||
+    program.distribution_type === "daily_claim_protocol" ||
+    program.distribution_type === "lottery_raffle"
+  );
+
+  switch (statusKey) {
+    case "accepting_applications":
+      return isAccepting;
+    case "planned":
+      return isPlanned;
+    case "closed_ongoing":
+      return isClosedOngoing;
+    case "closed_historical":
+      return isHistorical;
+    case "all":
+    default:
+      return true;
+  }
+};
 
 export default function Programs() {
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("list"); // 'list' | 'map'
-  const [filters, setFilters] = useState({
-    country: "all",
-    state: "all",
-    paymentType: "all",
-    distributionType: "all",
-    payoutRail: "all",
-    fundingSource: "all",
-    involvementLevel: "all",
-    status: "all",
+
+  // Filter Mode: "quick" (default) or "advanced" (either/or)
+  const [filterMode, setFilterMode] = useState("quick");
+
+  // Quick select status filter (Default: "accepting_applications")
+  const [quickFilter, setQuickFilter] = useState("accepting_applications");
+
+  // Advanced multi-select facet filters
+  const [advancedFilters, setAdvancedFilters] = useState({
+    statuses: [],
+    countries: [],
+    distributionTypes: [],
+    payoutRails: [],
+    fundingSources: [],
+    involvementLevels: [],
     includeUnverified: false
   });
+
   const [favoritePrograms, setFavoritePrograms] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [availableCountries, setAvailableCountries] = useState(['all']);
   const [sortField, setSortField] = useState('best_fit'); // 'best_fit' | 'name' | 'amount'
-  const [showSearch, setShowSearch] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
   const [user, setUser] = useState(null);
   
   useEffect(() => {
@@ -125,7 +225,6 @@ export default function Programs() {
         }
       }
 
-      // Check localStorage for user_profile_data or pendingProfile if no profile from DB
       if (!effectiveProfile) {
         const stored = localStorage.getItem("user_profile_data") || localStorage.getItem("pendingProfile");
         if (stored) {
@@ -171,20 +270,31 @@ export default function Programs() {
     localStorage.setItem('favoritePrograms', JSON.stringify(newFavorites));
   };
 
-  const clearFilters = () => {
-    setFilters({
-      country: "all",
-      state: "all",
-      paymentType: "all",
-      distributionType: "all",
-      payoutRail: "all",
-      fundingSource: "all",
-      involvementLevel: "all",
-      status: "all",
+  const clearAllFilters = () => {
+    setQuickFilter("accepting_applications");
+    setAdvancedFilters({
+      statuses: [],
+      countries: [],
+      distributionTypes: [],
+      payoutRails: [],
+      fundingSources: [],
+      involvementLevels: [],
       includeUnverified: false
     });
     setSearchTerm("");
     setSortField(hasCompletedProfile ? 'best_fit' : 'name');
+  };
+
+  const clearAllAdvancedFilters = () => {
+    setAdvancedFilters({
+      statuses: [],
+      countries: [],
+      distributionTypes: [],
+      payoutRails: [],
+      fundingSources: [],
+      involvementLevels: [],
+      includeUnverified: false
+    });
   };
 
   // Determine user authorization & profile completion states
@@ -198,62 +308,89 @@ export default function Programs() {
       return {
         ...program,
         matchScore: matchResult.score,
-        matchResult
+        eligible: matchResult.eligible,
+        reasons: matchResult.reasons,
+        matchTier: matchResult.tier,
+        fitBreakdown: matchResult.fitBreakdown
       };
     }
-    return {
-      ...program,
-      matchScore: undefined,
-      matchResult: null
-    };
+    return program;
   });
 
-  // 2. Filter Programs
+  // 2. Filter Programs with Either/Or logic
   const filteredPrograms = scoredPrograms.filter(program => {
     if (program.internal_status === 'deleted') {
       return false;
     }
 
-    if (!filters.includeUnverified && !program.verified) {
-      return false;
-    }
-    
-    if (searchTerm && !program.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !program.description.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
-    
-    if (filters.country !== "all" && !program.available_regions?.includes(filters.country)) {
-      return false;
-    }
-    
-    if (filters.status !== "all" && program.status !== filters.status) {
-      return false;
-    }
-    
-    if (filters.paymentType !== "all" && program.payment_method !== filters.paymentType) {
-      return false;
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      const matchName = program.name?.toLowerCase().includes(q);
+      const matchDesc = program.description?.toLowerCase().includes(q);
+      const matchOrg = program.organization?.toLowerCase().includes(q);
+      if (!matchName && !matchDesc && !matchOrg) return false;
     }
 
-    // Capability 4 Facet Filtering
-    if (filters.distributionType !== "all" && program.distribution_type !== filters.distributionType) {
-      return false;
-    }
+    if (filterMode === "quick") {
+      // Quick Select Mode: Either/Or
+      if (!matchesProgramStatus(program, quickFilter)) {
+        return false;
+      }
+      return true;
+    } else {
+      // Advanced Filters Multi-Select Mode
+      if (!advancedFilters.includeUnverified && !program.verified) {
+        return false;
+      }
 
-    if (filters.payoutRail !== "all" && program.payout_rail !== filters.payoutRail) {
-      return false;
-    }
+      // Statuses multi-select
+      if (advancedFilters.statuses.length > 0) {
+        const matchesAny = advancedFilters.statuses.some(st => matchesProgramStatus(program, st));
+        if (!matchesAny) return false;
+      }
 
-    if (filters.fundingSource !== "all" && program.funding_source !== filters.fundingSource) {
-      return false;
-    }
+      // Countries multi-select
+      if (advancedFilters.countries.length > 0) {
+        const programRegions = program.available_regions || [];
+        const matchesAnyCountry = advancedFilters.countries.some(c => 
+          c === "Global" 
+            ? programRegions.some(r => /^(global|worldwide|international|all)$/i.test(r)) || programRegions.length === 0
+            : programRegions.includes(c)
+        );
+        if (!matchesAnyCountry) return false;
+      }
 
-    // Involvement Level Filter
-    if (filters.involvementLevel !== "all" && (program.involvement_level || 'external_self_apply') !== filters.involvementLevel) {
-      return false;
+      // Distribution Type multi-select
+      if (advancedFilters.distributionTypes.length > 0) {
+        if (!advancedFilters.distributionTypes.includes(program.distribution_type)) {
+          return false;
+        }
+      }
+
+      // Payout Rail multi-select
+      if (advancedFilters.payoutRails.length > 0) {
+        if (!advancedFilters.payoutRails.includes(program.payout_rail)) {
+          return false;
+        }
+      }
+
+      // Funding Source multi-select
+      if (advancedFilters.fundingSources.length > 0) {
+        if (!advancedFilters.fundingSources.includes(program.funding_source)) {
+          return false;
+        }
+      }
+
+      // Involvement Level multi-select
+      if (advancedFilters.involvementLevels.length > 0) {
+        const progInvolvement = program.involvement_level || 'external_self_apply';
+        if (!advancedFilters.involvementLevels.includes(progInvolvement)) {
+          return false;
+        }
+      }
+
+      return true;
     }
-    
-    return true;
   });
 
   // 3. Sort Programs (Default to Best Fit when profile data exists)
@@ -264,7 +401,6 @@ export default function Programs() {
       if (scoreB !== scoreA) {
         return scoreB - scoreA; // Highest score first
       }
-      // Secondary sort: Monthly Amount USD descending
       const amountA = Number(a.monthly_amount_usd || 0);
       const amountB = Number(b.monthly_amount_usd || 0);
       return amountB - amountA;
@@ -276,9 +412,108 @@ export default function Programs() {
       return amountB - amountA;
     }
 
-    // Default alphabetical by name
     return a.name.localeCompare(b.name);
   });
+
+  // Active chips generator for Advanced Filters mode
+  const activeFilterChips = [];
+  if (filterMode === "advanced") {
+    const statusLabels = {
+      accepting_applications: "Accepting applications",
+      planned: "Planned",
+      closed_ongoing: "Closed, ongoing",
+      closed_historical: "Closed, historical",
+    };
+    advancedFilters.statuses.forEach((st) => {
+      activeFilterChips.push({
+        id: `status-${st}`,
+        facet: "statuses",
+        value: st,
+        category: "Status",
+        label: statusLabels[st] || st,
+      });
+    });
+
+    advancedFilters.countries.forEach((c) => {
+      activeFilterChips.push({
+        id: `country-${c}`,
+        facet: "countries",
+        value: c,
+        category: "Country",
+        label: c,
+      });
+    });
+
+    const distLabels = {
+      guaranteed_recurrent: "Guaranteed Monthly",
+      daily_claim_protocol: "Daily Claim Protocol",
+      lottery_raffle: "Lottery / Raffle",
+    };
+    advancedFilters.distributionTypes.forEach((dt) => {
+      activeFilterChips.push({
+        id: `dist-${dt}`,
+        facet: "distributionTypes",
+        value: dt,
+        category: "Distribution",
+        label: distLabels[dt] || dt,
+      });
+    });
+
+    const railLabels = {
+      direct_deposit: "Direct Deposit / ACH",
+      prepaid_card: "Prepaid Card",
+      crypto_wallet: "Crypto Wallet",
+      mobile_money: "Mobile Money",
+    };
+    advancedFilters.payoutRails.forEach((pr) => {
+      activeFilterChips.push({
+        id: `rail-${pr}`,
+        facet: "payoutRails",
+        value: pr,
+        category: "Payout Rail",
+        label: railLabels[pr] || pr,
+      });
+    });
+
+    const fundingLabels = {
+      municipal_government: "Municipal Government",
+      state_federal: "State / Federal",
+      philanthropic_grant: "Philanthropic Grant",
+      protocol_yield: "Protocol Yield",
+      community_crowdfund: "Crowdfunded",
+    };
+    advancedFilters.fundingSources.forEach((fs) => {
+      activeFilterChips.push({
+        id: `funding-${fs}`,
+        facet: "fundingSources",
+        value: fs,
+        category: "Funding",
+        label: fundingLabels[fs] || fs,
+      });
+    });
+
+    const involvementLabels = {
+      managed_application: "Managed Application",
+      automated_claim: "Automated Claim Protocol",
+      external_self_apply: "External Self-Apply",
+    };
+    advancedFilters.involvementLevels.forEach((il) => {
+      activeFilterChips.push({
+        id: `involvement-${il}`,
+        facet: "involvementLevels",
+        value: il,
+        category: "Involvement",
+        label: involvementLabels[il] || il,
+      });
+    });
+  }
+
+  const removeChip = (chip) => {
+    setAdvancedFilters((prev) => ({
+      ...prev,
+      [chip.facet]: prev[chip.facet].filter((v) => v !== chip.value),
+    }));
+  };
 
   return (
     <>
@@ -296,138 +531,280 @@ export default function Programs() {
             subtitle="Explore active municipal pilots, Web3 daily claim protocols, and community-funded basic income distributions worldwide."
           />
 
-          {/* Top Controls: Quick Filter Pills, View Switcher & Submit Action */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Quick Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setFilters(prev => ({ ...prev, distributionType: "all" }))}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  filters.distributionType === "all"
-                    ? "bg-green-700 text-white shadow-sm"
-                    : "bg-white text-gray-600 hover:bg-green-50 border border-gray-200"
-                }`}
-              >
-                All Programs
-              </button>
-              <button
-                onClick={() => setFilters(prev => ({ ...prev, distributionType: "guaranteed_recurrent" }))}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                  filters.distributionType === "guaranteed_recurrent"
-                    ? "bg-emerald-700 text-white shadow-sm"
-                    : "bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200"
-                }`}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Guaranteed Monthly
-              </button>
-              <button
-                onClick={() => setFilters(prev => ({ ...prev, distributionType: "daily_claim_protocol" }))}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                  filters.distributionType === "daily_claim_protocol"
-                    ? "bg-purple-700 text-white shadow-sm"
-                    : "bg-white text-purple-800 hover:bg-purple-50 border border-purple-200"
-                }`}
-              >
-                <Coins className="w-3.5 h-3.5" />
-                Daily Claim Protocols
-              </button>
-              <button
-                onClick={() => setFilters(prev => ({ ...prev, distributionType: "lottery_raffle" }))}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                  filters.distributionType === "lottery_raffle"
-                    ? "bg-amber-600 text-white shadow-sm"
-                    : "bg-white text-amber-800 hover:bg-amber-50 border border-amber-200"
-                }`}
-              >
-                <Gift className="w-3.5 h-3.5" />
-                Lotteries & Raffles
-              </button>
-            </div>
+          {/* ========================================================================= */}
+          {/* EITHER/OR FILTER CONTROLS: QUICK SELECT vs ADVANCED FILTERS */}
+          {/* ========================================================================= */}
+          {filterMode === "quick" ? (
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Quick Select Status Filter Pills */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuickFilter("accepting_applications")}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      quickFilter === "accepting_applications"
+                        ? "bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-700"
+                        : "bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200"
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Accepting applications
+                  </button>
 
-            {/* View Mode Switcher (List vs Map) & Submit Button */}
-            <div className="flex items-center gap-3">
-              <div className="bg-gray-100 p-1 rounded-xl flex items-center border border-gray-200">
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                    viewMode === "list" 
-                      ? "bg-white text-green-950 shadow-sm" 
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <ListIcon className="w-3.5 h-3.5" />
-                  List View
-                </button>
-                <button
-                  onClick={() => setViewMode("map")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                    viewMode === "map" 
-                      ? "bg-white text-green-950 shadow-sm" 
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <MapIcon className="w-3.5 h-3.5" />
-                  Map View
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuickFilter("all")}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                      quickFilter === "all"
+                        ? "bg-green-800 text-white shadow-sm ring-1 ring-green-800"
+                        : "bg-white text-gray-700 hover:bg-green-50 border border-gray-200"
+                    }`}
+                  >
+                    All
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setQuickFilter("planned")}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      quickFilter === "planned"
+                        ? "bg-blue-700 text-white shadow-sm ring-1 ring-blue-700"
+                        : "bg-white text-blue-800 hover:bg-blue-50 border border-blue-200"
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    Planned
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setQuickFilter("closed_ongoing")}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      quickFilter === "closed_ongoing"
+                        ? "bg-purple-700 text-white shadow-sm ring-1 ring-purple-700"
+                        : "bg-white text-purple-800 hover:bg-purple-50 border border-purple-200"
+                    }`}
+                  >
+                    <Coins className="w-3.5 h-3.5" />
+                    Closed, ongoing
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setQuickFilter("closed_historical")}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      quickFilter === "closed_historical"
+                        ? "bg-gray-700 text-white shadow-sm ring-1 ring-gray-700"
+                        : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                    }`}
+                  >
+                    <History className="w-3.5 h-3.5" />
+                    Closed, historical
+                  </button>
+                </div>
+
+                {/* View Mode Switcher (List vs Map) & Submit Button */}
+                <div className="flex items-center gap-3">
+                  <div className="bg-gray-100 p-1 rounded-xl flex items-center border border-gray-200">
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        viewMode === "list" 
+                          ? "bg-white text-green-950 shadow-sm" 
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      <ListIcon className="w-3.5 h-3.5" />
+                      List View
+                    </button>
+                    <button
+                      onClick={() => setViewMode("map")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        viewMode === "map" 
+                          ? "bg-white text-green-950 shadow-sm" 
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      <MapIcon className="w-3.5 h-3.5" />
+                      Map View
+                    </button>
+                  </div>
+
+                  <Link to={user ? "/Submit-Program" : "/login?view=signup&redirectTo=/Submit-Program"}>
+                    <Button className="bg-green-700 hover:bg-green-800 text-xs shadow-sm h-9 cursor-pointer">
+                      <Plus className="w-4 h-4 mr-1" />
+                      Submit Program
+                    </Button>
+                  </Link>
+                </div>
               </div>
 
-              <Link to={user ? "/Submit-Program" : "/login?view=signup&redirectTo=/Submit-Program"}>
-                <Button className="bg-green-700 hover:bg-green-800 text-xs shadow-sm h-9">
-                  <Plus className="w-4 h-4 mr-1" />
-                  Submit Program
-                </Button>
-              </Link>
+              {/* Inconspicuous small link to switch to advanced filters */}
+              <div className="flex justify-start pt-1">
+                <button
+                  type="button"
+                  onClick={() => setFilterMode("advanced")}
+                  className="text-[11px] text-gray-500 hover:text-green-800 underline transition-colors cursor-pointer inline-flex items-center gap-1"
+                >
+                  <span>Advanced filters</span>
+                  <SlidersHorizontal className="w-3 h-3 text-gray-400" />
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* Advanced Filters Panel (Either/Or Mode: Quick Select is hidden) */
+            <Card className="shadow-sm border-gray-200 bg-white/95 animate-in fade-in duration-200">
+              <CardHeader className="py-3 px-5 border-b border-gray-100 bg-gray-50/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-green-700" />
+                    <CardTitle className="text-sm font-bold text-gray-900">Advanced Filters</CardTitle>
+                    <span className="text-xs text-gray-400 font-normal">
+                      (Multi-select options to customize your filter query)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearAllAdvancedFilters();
+                      setFilterMode("quick");
+                    }}
+                    className="text-xs text-gray-500 hover:text-green-800 underline transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    ← Back to quick filters
+                  </button>
+                </div>
+              </CardHeader>
 
-          {/* Quick Filter Involvement Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-            <button
-              type="button"
-              onClick={() => setFilters(prev => ({ ...prev, involvementLevel: 'all' }))}
-              className={`px-3 py-1.5 rounded-full font-semibold border transition-all whitespace-nowrap ${
-                filters.involvementLevel === 'all'
-                  ? 'bg-green-800 text-white border-green-800 shadow-sm'
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              All Projects ({programs.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilters(prev => ({ ...prev, involvementLevel: 'managed_application' }))}
-              className={`px-3 py-1.5 rounded-full font-semibold border transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                filters.involvementLevel === 'managed_application'
-                  ? 'bg-emerald-800 text-white border-emerald-800 shadow-sm'
-                  : 'bg-emerald-50/70 text-emerald-900 border-emerald-200 hover:bg-emerald-100'
-              }`}
-            >
-              🛡️ Managed Applications
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilters(prev => ({ ...prev, involvementLevel: 'automated_claim' }))}
-              className={`px-3 py-1.5 rounded-full font-semibold border transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                filters.involvementLevel === 'automated_claim'
-                  ? 'bg-purple-800 text-white border-purple-800 shadow-sm'
-                  : 'bg-purple-50/70 text-purple-900 border-purple-200 hover:bg-purple-100'
-              }`}
-            >
-              🟣 Automated Claim Protocols
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilters(prev => ({ ...prev, involvementLevel: 'external_self_apply' }))}
-              className={`px-3 py-1.5 rounded-full font-semibold border transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                filters.involvementLevel === 'external_self_apply'
-                  ? 'bg-blue-800 text-white border-blue-800 shadow-sm'
-                  : 'bg-blue-50/70 text-blue-900 border-blue-200 hover:bg-blue-100'
-              }`}
-            >
-              🌐 External Self-Apply
-            </button>
-          </div>
+              <CardContent className="p-5 space-y-4">
+                {/* 6 Multi-Select Dropdown Facets */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  <FacetMultiSelect
+                    label="Application Status"
+                    options={[
+                      { value: "accepting_applications", label: "Accepting applications" },
+                      { value: "planned", label: "Planned" },
+                      { value: "closed_ongoing", label: "Closed, ongoing" },
+                      { value: "closed_historical", label: "Closed, historical" },
+                    ]}
+                    selectedValues={advancedFilters.statuses}
+                    onChange={(vals) => setAdvancedFilters((prev) => ({ ...prev, statuses: vals }))}
+                  />
+
+                  <FacetMultiSelect
+                    label="Country / Region"
+                    options={availableCountries.filter((c) => c !== "all").map((c) => ({
+                      value: c,
+                      label: c,
+                    }))}
+                    selectedValues={advancedFilters.countries}
+                    onChange={(vals) => setAdvancedFilters((prev) => ({ ...prev, countries: vals }))}
+                  />
+
+                  <FacetMultiSelect
+                    label="Distribution Model"
+                    options={[
+                      { value: "guaranteed_recurrent", label: "Guaranteed Monthly" },
+                      { value: "daily_claim_protocol", label: "Daily Claim Protocol" },
+                      { value: "lottery_raffle", label: "Lottery / Raffle" },
+                    ]}
+                    selectedValues={advancedFilters.distributionTypes}
+                    onChange={(vals) => setAdvancedFilters((prev) => ({ ...prev, distributionTypes: vals }))}
+                  />
+
+                  <FacetMultiSelect
+                    label="Delivery Rail"
+                    options={[
+                      { value: "direct_deposit", label: "Direct Deposit / ACH" },
+                      { value: "prepaid_card", label: "Prepaid Card" },
+                      { value: "crypto_wallet", label: "Crypto Wallet" },
+                      { value: "mobile_money", label: "Mobile Money" },
+                    ]}
+                    selectedValues={advancedFilters.payoutRails}
+                    onChange={(vals) => setAdvancedFilters((prev) => ({ ...prev, payoutRails: vals }))}
+                  />
+
+                  <FacetMultiSelect
+                    label="Funding Source"
+                    options={[
+                      { value: "municipal_government", label: "Municipal Government" },
+                      { value: "state_federal", label: "State / Federal" },
+                      { value: "philanthropic_grant", label: "Philanthropic Grant" },
+                      { value: "protocol_yield", label: "Protocol Yield" },
+                      { value: "community_crowdfund", label: "Crowdfunded" },
+                    ]}
+                    selectedValues={advancedFilters.fundingSources}
+                    onChange={(vals) => setAdvancedFilters((prev) => ({ ...prev, fundingSources: vals }))}
+                  />
+
+                  <FacetMultiSelect
+                    label="Involvement Level"
+                    options={[
+                      { value: "managed_application", label: "Managed Application" },
+                      { value: "automated_claim", label: "Automated Claim" },
+                      { value: "external_self_apply", label: "External Self-Apply" },
+                    ]}
+                    selectedValues={advancedFilters.involvementLevels}
+                    onChange={(vals) => setAdvancedFilters((prev) => ({ ...prev, involvementLevels: vals }))}
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-100">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="include-unverified"
+                      checked={advancedFilters.includeUnverified}
+                      onCheckedChange={(checked) =>
+                        setAdvancedFilters((prev) => ({ ...prev, includeUnverified: checked }))
+                      }
+                    />
+                    <Label htmlFor="include-unverified" className="text-xs text-gray-700 cursor-pointer">
+                      Include unverified / community-submitted programs
+                    </Label>
+                  </div>
+
+                  {activeFilterChips.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllAdvancedFilters}
+                      className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 h-7"
+                    >
+                      Clear All Selected ({activeFilterChips.length})
+                    </Button>
+                  )}
+                </div>
+
+                {/* Active Filter Chips with 'x' to remove */}
+                {activeFilterChips.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-gray-100">
+                    <span className="text-[11px] font-bold text-gray-400 mr-1 uppercase">
+                      Active filters:
+                    </span>
+                    {activeFilterChips.map((chip) => (
+                      <span
+                        key={chip.id}
+                        className="inline-flex items-center gap-1 bg-green-50 border border-green-200 text-green-900 text-xs px-2.5 py-1 rounded-full font-medium shadow-2xs"
+                      >
+                        <span>
+                          <strong className="text-green-950">{chip.category}:</strong> {chip.label}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeChip(chip)}
+                          className="w-4 h-4 rounded-full inline-flex items-center justify-center text-green-700 hover:bg-green-200 hover:text-green-950 transition-colors ml-0.5 cursor-pointer"
+                          title={`Remove ${chip.label}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* ========================================================================= */}
           {/* USER STATUS / PERSONALIZATION CALLOUT BANNERS */}
@@ -450,34 +827,34 @@ export default function Programs() {
                     </p>
                   </div>
                 </div>
-                <Link to="/login" className="flex-shrink-0">
-                  <Button className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs h-9 shadow-sm px-4">
-                    Log In / Sign Up &rarr;
+                <Link to="/login?view=signup&redirectTo=/Programs" className="flex-shrink-0">
+                  <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs px-4">
+                    Sign In / Register &rarr;
                   </Button>
                 </Link>
               </CardContent>
             </Card>
           )}
 
-          {/* Condition 2: Authenticated Users Without a Completed Profile (Prompt to Fill Out Form) */}
+          {/* Condition 2: Authorized Users With Incomplete Profile */}
           {isAuthorized && !hasCompletedProfile && (
-            <Card className="border-amber-200 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 shadow-sm overflow-hidden animate-in fade-in duration-200">
+            <Card className="border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 shadow-sm overflow-hidden animate-in fade-in duration-200">
               <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5 text-center sm:text-left">
-                  <div className="w-10 h-10 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center flex-shrink-0 text-amber-800 shadow-inner">
-                    <FileText className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-emerald-800 shadow-inner">
+                    <Lock className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-amber-950">
-                      Fill out our form for a personalized view
+                    <h4 className="text-sm font-bold text-emerald-950">
+                      Fill out our form for a personalized view of your eligible UBI programs.
                     </h4>
-                    <p className="text-xs text-amber-800 mt-0.5">
-                      Tell us your location, household size, and income to automatically sort programs based on best fit.
+                    <p className="text-xs text-emerald-700 mt-0.5">
+                      Tell us your location, household size, and income to calculate exact matches and rank programs by fit.
                     </p>
                   </div>
                 </div>
                 <Link to="/My-Report" className="flex-shrink-0">
-                  <Button className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs h-9 shadow-sm px-4">
+                  <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs px-4">
                     Fill Out Eligibility Form &rarr;
                   </Button>
                 </Link>
@@ -485,205 +862,31 @@ export default function Programs() {
             </Card>
           )}
 
-          {/* Condition 3: Form Data Exists (Active Personalized View & Best Fit Indicator) */}
-          {hasCompletedProfile && (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-50/90 border border-emerald-200 rounded-xl px-4 py-3 text-xs text-emerald-900 shadow-sm animate-in fade-in duration-200">
-              <div className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-3.5 h-3.5" />
+          {/* Condition 3: Authorized Users With Completed Profile (Link to Personalized View) */}
+          {isAuthorized && hasCompletedProfile && (
+            <Card className="border-emerald-200 bg-emerald-50/70 shadow-sm overflow-hidden animate-in fade-in duration-200">
+              <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-3 text-center sm:text-left">
+                  <div className="w-9 h-9 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-emerald-800">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-700" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-emerald-950">
+                      Profile Active: Showing Programs Ranked by Best Fit for You
+                    </h4>
+                    <p className="text-xs text-emerald-700 mt-0.5">
+                      Programs matching your location and demographic answers are prioritized at the top.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-bold text-emerald-950">Personalized View Active: </span>
-                  <span>
-                    Sorted based on best fit for your profile in {userProfile.municipality ? `${userProfile.municipality}, ` : ''}{userProfile.state ? `${userProfile.state}, ` : ''}{userProfile.country || 'your location'}.
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
-                <Link to="/My-Report" className="text-emerald-800 hover:text-emerald-950 font-bold underline whitespace-nowrap">
-                  View Full Report &rarr;
-                </Link>
-              </div>
-            </div>
-          )}
-            
-          {/* Search Keyword Box (Always Available) */}
-          <div className="space-y-3">
-            <Card className="shadow-sm border-gray-200">
-              <CardHeader className="py-3">
-                <div 
-                  className="flex justify-between items-center cursor-pointer"
-                  onClick={() => setShowSearch(!showSearch)}
-                >
-                  <CardTitle className="flex items-center gap-2 text-sm text-green-900 font-bold">
-                    <Search className="w-4 h-4 text-green-700" />
-                    Search Keyword
-                  </CardTitle>
-                  <Button variant="ghost" size="sm" className="text-xs">
-                    {showSearch ? "Hide" : "Show"}
+                <Link to="/My-Report" className="flex-shrink-0">
+                  <Button size="sm" variant="outline" className="border-emerald-600 text-emerald-800 hover:bg-emerald-100 text-xs font-semibold">
+                    View Personalized Report &rarr;
                   </Button>
-                </div>
-              </CardHeader>
-              {showSearch && (
-                <CardContent className="pt-0">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search by program name, city, or organization..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </CardContent>
-              )}
+                </Link>
+              </CardContent>
             </Card>
-
-            {/* Advanced Facet Filters (ONLY shown for authorized users) */}
-            {isAuthorized && (
-              <Card className="shadow-sm border-gray-200">
-                <CardHeader className="py-3">
-                  <div 
-                    className="flex justify-between items-center cursor-pointer"
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    <CardTitle className="flex items-center gap-2 text-sm text-green-900 font-bold">
-                      <Filter className="w-4 h-4 text-green-700" />
-                      Advanced Facet Filters
-                    </CardTitle>
-                    <Button variant="ghost" size="sm" className="text-xs">
-                      {showFilters ? "Hide" : "Show Filters"}
-                    </Button>
-                  </div>
-                </CardHeader>
-                {showFilters && (
-                  <CardContent className="pt-0">
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
-                        
-                        {/* Involvement Level */}
-                        <div>
-                          <Label className="text-green-900 font-semibold mb-1 block">Involvement Level</Label>
-                          <Select
-                            value={filters.involvementLevel}
-                            onValueChange={(value) => setFilters({ ...filters, involvementLevel: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Involvement level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Types</SelectItem>
-                              <SelectItem value="managed_application">🛡️ Managed Applications</SelectItem>
-                              <SelectItem value="automated_claim">🟣 Automated Claim Protocols</SelectItem>
-                              <SelectItem value="external_self_apply">🌐 External Self-Apply</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Country */}
-                        <div>
-                          <Label className="text-green-900 font-semibold mb-1 block">Country</Label>
-                          <Select
-                            value={filters.country}
-                            onValueChange={(value) => setFilters({ ...filters, country: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select country" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Countries</SelectItem>
-                              {availableCountries.map(country => (
-                                <SelectItem key={country} value={country}>
-                                  {country === "all" ? "All Countries" : 
-                                    country.charAt(0).toUpperCase() + country.slice(1)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Capability 4: Distribution Model */}
-                        <div>
-                          <Label className="text-green-900 font-semibold mb-1 block">Distribution Model</Label>
-                          <Select
-                            value={filters.distributionType}
-                            onValueChange={(value) => setFilters({ ...filters, distributionType: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Distribution model" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Models</SelectItem>
-                              <SelectItem value="guaranteed_recurrent">Guaranteed Monthly</SelectItem>
-                              <SelectItem value="daily_claim_protocol">Daily Claim Protocol</SelectItem>
-                              <SelectItem value="lottery_raffle">Lottery / Raffle</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Capability 4: Payout Rail */}
-                        <div>
-                          <Label className="text-green-900 font-semibold mb-1 block">Payout Delivery Rail</Label>
-                          <Select
-                            value={filters.payoutRail}
-                            onValueChange={(value) => setFilters({ ...filters, payoutRail: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Delivery rail" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Delivery Rails</SelectItem>
-                              <SelectItem value="direct_deposit">Bank Direct Deposit / ACH</SelectItem>
-                              <SelectItem value="prepaid_card">Prepaid Visa / Mastercard</SelectItem>
-                              <SelectItem value="crypto_wallet">Crypto / Smart Contract</SelectItem>
-                              <SelectItem value="mobile_money">Mobile Money (M-Pesa)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Capability 4: Funding Source */}
-                        <div>
-                          <Label className="text-green-900 font-semibold mb-1 block">Funding Source</Label>
-                          <Select
-                            value={filters.fundingSource}
-                            onValueChange={(value) => setFilters({ ...filters, fundingSource: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Funding source" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Funding Sources</SelectItem>
-                              <SelectItem value="municipal_government">Municipal / City Government</SelectItem>
-                              <SelectItem value="state_federal">State / Federal Budget</SelectItem>
-                              <SelectItem value="philanthropic_grant">Philanthropic Grant</SelectItem>
-                              <SelectItem value="protocol_yield">Protocol Treasury / Yield</SelectItem>
-                              <SelectItem value="community_crowdfund">Community Crowdfunded</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                      </div>
-
-                      <Separator />
-
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="include-unverified"
-                          checked={filters.includeUnverified}
-                          onCheckedChange={(checked) => 
-                            setFilters(prev => ({ ...prev, includeUnverified: checked }))
-                          }
-                        />
-                        <Label htmlFor="include-unverified" className="text-xs text-gray-700 cursor-pointer">
-                          Include unverified / community-submitted programs
-                        </Label>
-                      </div>
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-            )}
-          </div>
+          )}
 
           {/* Main Content Area: Map View vs List View */}
           {viewMode === "map" ? (
@@ -718,66 +921,70 @@ export default function Programs() {
                   </CardDescription>
                 </div>
 
-                {/* Sort selector & Clear button */}
-                <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
-                    <span className="font-semibold">Sort:</span>
+                {/* Search and Sort controls */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Input
+                      type="text"
+                      placeholder="Search by name, org, or city..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 text-xs h-9 bg-gray-50/50"
+                    />
+                  </div>
+
+                  <div className="w-full sm:w-48">
                     <Select value={sortField} onValueChange={setSortField}>
-                      <SelectTrigger className="h-8 text-xs w-40 bg-white">
-                        <SelectValue />
+                      <SelectTrigger className="text-xs h-9 bg-white">
+                        <SelectValue placeholder="Sort order" />
                       </SelectTrigger>
                       <SelectContent>
                         {hasCompletedProfile && (
-                          <SelectItem value="best_fit">✨ Best Fit Score</SelectItem>
+                          <SelectItem value="best_fit">⭐ Best Fit for Me</SelectItem>
                         )}
                         <SelectItem value="name">Alphabetical (A-Z)</SelectItem>
-                        <SelectItem value="amount">Highest Monthly Amount</SelectItem>
+                        <SelectItem value="amount">Monthly Value ($)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {(searchTerm || filters.country !== "all" || filters.distributionType !== "all" || filters.payoutRail !== "all" || filters.fundingSource !== "all" || filters.includeUnverified) && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={clearFilters}
-                      className="text-xs text-green-700 hover:text-green-800 hover:bg-green-50 h-8"
-                    >
-                      Clear Filters
-                    </Button>
-                  )}
                 </div>
               </CardHeader>
+              
               <CardContent>
                 {loading ? (
                   <div className="space-y-4">
-                    {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="p-6 bg-white rounded-xl border border-gray-100 shadow-sm animate-pulse space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-2 w-2/3">
-                            <div className="h-5 bg-gray-200 rounded w-1/2" />
-                            <div className="h-4 bg-gray-100 rounded w-1/3" />
-                          </div>
-                          <div className="h-10 bg-green-50 rounded-xl w-32" />
-                        </div>
-                        <div className="flex gap-2">
-                          <div className="h-6 bg-gray-100 rounded-full w-24" />
-                          <div className="h-6 bg-gray-100 rounded-full w-28" />
-                        </div>
-                        <div className="h-10 bg-gray-50 rounded w-full" />
-                      </div>
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-32 bg-gray-50 rounded-xl animate-pulse" />
                     ))}
+                  </div>
+                ) : sortedPrograms.length === 0 ? (
+                  <div className="text-center py-16 px-4">
+                    <FileCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <h3 className="text-lg font-bold text-green-900 mb-2">No programs found</h3>
+                    <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+                      No programs matched your current filter criteria. Try selecting another status pill or resetting your search.
+                    </p>
+                    <Button 
+                      variant="outline"
+                      onClick={clearAllFilters}
+                      className="border-green-600 text-green-700 hover:bg-green-50"
+                    >
+                      Reset All Filters
+                    </Button>
                   </div>
                 ) : (
                   <ProgramList 
                     programs={sortedPrograms}
-                    filters={filters}
+                    filters={{
+                      status: filterMode === "quick" ? quickFilter : "all",
+                      ...advancedFilters
+                    }}
                     favoritePrograms={favoritePrograms}
                     onToggleFavorite={toggleFavorite}
                     userEmail={user?.email}
                     isAdmin={user?.role === 'admin' || user?.role === 'owner'}
-                    onClearFilters={clearFilters}
+                    onClearFilters={clearAllFilters}
                   />
                 )}
               </CardContent>
