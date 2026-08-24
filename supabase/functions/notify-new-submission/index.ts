@@ -207,18 +207,20 @@ serve(async (req: Request) => {
     const appOrigin = Deno.env.get("APP_URL") || "https://www.ubifinder.org";
 
     // 1. AWS SES REST API credentials
-    const awsAccessKeyId = Deno.env.get("AWS_ACCESS_KEY_ID") || "";
-    const awsSecretAccessKey = Deno.env.get("AWS_SECRET_ACCESS_KEY") || "";
-    const awsRegion = Deno.env.get("AWS_REGION") || Deno.env.get("SES_REGION") || "us-east-1";
+    const awsAccessKeyId = (Deno.env.get("AWS_ACCESS_KEY_ID") || "").trim();
+    const awsSecretAccessKey = (Deno.env.get("AWS_SECRET_ACCESS_KEY") || "").trim();
+    const awsRegion = (Deno.env.get("AWS_REGION") || Deno.env.get("SES_REGION") || "us-east-1").trim();
 
     // 2. SMTP Credentials (reusing Supabase Auth SMTP or SES SMTP variables)
-    const smtpHost = Deno.env.get("SES_SMTP_HOST") || Deno.env.get("SMTP_HOST") || `email-smtp.${awsRegion}.amazonaws.com`;
-    const smtpPort = Number(Deno.env.get("SES_SMTP_PORT") || Deno.env.get("SMTP_PORT") || 587);
-    const smtpUser = Deno.env.get("SES_SMTP_USER") || Deno.env.get("SMTP_USER") || Deno.env.get("SMTP_USERNAME") || "";
-    const smtpPass = Deno.env.get("SES_SMTP_PASSWORD") || Deno.env.get("SMTP_PASS") || Deno.env.get("SMTP_PASSWORD") || "";
+    const rawSmtpHost = Deno.env.get("SES_SMTP_HOST") || Deno.env.get("SMTP_HOST") || `email-smtp.${awsRegion}.amazonaws.com`;
+    const smtpHost = rawSmtpHost.trim();
+    const smtpPort = Number((Deno.env.get("SES_SMTP_PORT") || Deno.env.get("SMTP_PORT") || "587").trim());
+    const smtpUser = (Deno.env.get("SES_SMTP_USER") || Deno.env.get("SMTP_USER") || Deno.env.get("SMTP_USERNAME") || "").trim();
+    const smtpPass = (Deno.env.get("SES_SMTP_PASSWORD") || Deno.env.get("SMTP_PASS") || Deno.env.get("SMTP_PASSWORD") || "").trim();
 
     // Sender identity (must be verified in Amazon SES)
-    const fromEmail = Deno.env.get("SES_FROM_EMAIL") || Deno.env.get("SMTP_ADMIN_EMAIL") || Deno.env.get("SMTP_SENDER_NAME") || "UBI Finder <notifications@ubifinder.org>";
+    const rawFromEmail = Deno.env.get("SES_FROM_EMAIL") || Deno.env.get("SMTP_ADMIN_EMAIL") || Deno.env.get("SMTP_SENDER_NAME") || "UBI Finder <notifications@ubifinder.org>";
+    const fromEmail = rawFromEmail.trim();
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
