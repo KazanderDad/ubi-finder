@@ -62,7 +62,7 @@ async function sendViaAwsSesApi(params: {
   toEmail: string;
   subject: string;
   htmlBody: string;
-}): Promise<boolean> {
+}): Promise<{ ok: boolean; error?: string; messageId?: string }> {
   const { accessKeyId, secretAccessKey, region, fromEmail, toEmail, subject, htmlBody } = params;
   const host = `email.${region}.amazonaws.com`;
   const endpoint = `https://${host}/v2/email/outbound-emails`;
@@ -113,26 +113,30 @@ async function sendViaAwsSesApi(params: {
 
   const authorizationHeader = `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Host: host,
-      "X-Amz-Date": amzDate,
-      Authorization: authorizationHeader,
-    },
-    body: payload,
-  });
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Host: host,
+        "X-Amz-Date": amzDate,
+        Authorization: authorizationHeader,
+      },
+      body: payload,
+    });
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error(`AWS SES API error (${res.status}):`, errorText);
-    return false;
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`AWS SES API error (${res.status}):`, errorText);
+      return { ok: false, error: `HTTP ${res.status}: ${errorText}` };
+    }
+
+    const result = await res.json();
+    console.log(`Email dispatched via AWS SES REST API to ${toEmail}. MessageId: ${result.MessageId || "ok"}`);
+    return { ok: true, messageId: result.MessageId };
+  } catch (err: any) {
+    return { ok: false, error: err.message || String(err) };
   }
-
-  const result = await res.json();
-  console.log(`Email dispatched via AWS SES REST API to ${toEmail}. MessageId: ${result.MessageId || "ok"}`);
-  return true;
 }
 
 // ----------------------------------------------------------------------------
@@ -147,23 +151,37 @@ async function sendViaSmtp(params: {
   toEmail: string;
   subject: string;
   htmlBody: string;
-}): Promise<boolean> {
+}): Promise<{ ok: boolean; error?: string }> {
   const { host, port, user, pass, fromEmail, toEmail, subject, htmlBody } = params;
+
+  // Clean raw email address for SMTP envelope
+  const cleanFrom = fromEmail.includes("<")
+    ? fromEmail.match(/<([^>]+)>/)?.[1] || fromEmail
+    : fromEmail;
 
   try {
     const client = new SmtpClient();
     
-    // Connect with TLS on 465 or STARTTLS on 587
-    await client.connect({
-      hostname: host,
-      port: port,
-      username: user,
-      password: pass,
-    });
+    // Connect with TLS on 465 or STARTTLS on 587/2587
+    if (port === 465) {
+      await client.connectTLS({
+        hostname: host,
+        port: port,
+        username: user,
+        password: pass,
+      });
+    } else {
+      await client.connect({
+        hostname: host,
+        port: port,
+        username: user,
+        password: pass,
+      });
+    }
 
     await client.send({
-      from: fromEmail,
-      to: toEmail,
+      from: cleanFrom.trim(),
+      to: toEmail.trim(),
       subject: subject,
       content: htmlBody,
       html: htmlBody,
@@ -171,10 +189,10 @@ async function sendViaSmtp(params: {
 
     await client.close();
     console.log(`Email dispatched via SES SMTP to ${toEmail}`);
-    return true;
-  } catch (err) {
+    return { ok: true };
+  } catch (err: any) {
     console.error(`SES SMTP dispatch error to ${toEmail}:`, err);
-    return false;
+    return { ok: false, error: err.message || String(err) };
   }
 }
 
@@ -194,10 +212,10 @@ serve(async (req: Request) => {
     const awsRegion = Deno.env.get("AWS_REGION") || Deno.env.get("SES_REGION") || "us-east-1";
 
     // 2. SMTP Credentials (reusing Supabase Auth SMTP or SES SMTP variables)
-    const smtpHost = Deno.env.get("SMTP_HOST") || Deno.env.get("SES_SMTP_HOST") || `email-smtp.${awsRegion}.amazonaws.com`;
-    const smtpPort = Number(Deno.env.get("SMTP_PORT") || Deno.env.get("SES_SMTP_PORT") || 587);
-    const smtpUser = Deno.env.get("SMTP_USER") || Deno.env.get("SES_SMTP_USER") || Deno.env.get("SMTP_USERNAME") || "";
-    const smtpPass = Deno.env.get("SMTP_PASS") || Deno.env.get("SES_SMTP_PASSWORD") || Deno.env.get("SMTP_PASSWORD") || "";
+    const smtpHost = Deno.env.get("SES_SMTP_HOST") || Deno.env.get("SMTP_HOST") || `email-smtp.${awsRegion}.amazonaws.com`;
+    const smtpPort = Number(Deno.env.get("SES_SMTP_PORT") || Deno.env.get("SMTP_PORT") || 587);
+    const smtpUser = Deno.env.get("SES_SMTP_USER") || Deno.env.get("SMTP_USER") || Deno.env.get("SMTP_USERNAME") || "";
+    const smtpPass = Deno.env.get("SES_SMTP_PASSWORD") || Deno.env.get("SMTP_PASS") || Deno.env.get("SMTP_PASSWORD") || "";
 
     // Sender identity (must be verified in Amazon SES)
     const fromEmail = Deno.env.get("SES_FROM_EMAIL") || Deno.env.get("SMTP_ADMIN_EMAIL") || Deno.env.get("SMTP_SENDER_NAME") || "UBI Finder <notifications@ubifinder.org>";
@@ -226,8 +244,8 @@ serve(async (req: Request) => {
     }
 
     const adminEmails = (admins || [])
-      .map((a) => a.email)
-      .filter((email): email is string => Boolean(email && email.includes("@")));
+      .map((a) => ({ email: a.email, role: a.role, name: a.full_name }))
+      .filter((a): a is { email: string; role: string; name: string } => Boolean(a.email && a.email.includes("@")));
 
     console.log(`Found ${adminEmails.length} admin/owner recipients:`, adminEmails);
 
@@ -291,56 +309,78 @@ serve(async (req: Request) => {
     `;
 
     let emailsSent = 0;
-    let methodUsed = "none";
+    const dispatchResults: Array<{ recipient: string; role: string; method: string; success: boolean; error?: string }> = [];
 
     const hasAwsApiKeys = Boolean(awsAccessKeyId && awsSecretAccessKey);
     const hasSmtpCredentials = Boolean(smtpUser && smtpPass);
 
-    for (const email of adminEmails) {
+    for (const recipient of adminEmails) {
       let sent = false;
+      let usedMethod = "none";
+      let errorMsg: string | undefined;
 
       // Method 1: AWS SES REST API (Primary)
       if (hasAwsApiKeys) {
-        sent = await sendViaAwsSesApi({
+        const apiRes = await sendViaAwsSesApi({
           accessKeyId: awsAccessKeyId,
           secretAccessKey: awsSecretAccessKey,
           region: awsRegion,
           fromEmail: fromEmail,
-          toEmail: email,
+          toEmail: recipient.email,
           subject: emailSubject,
           htmlBody: emailHtml,
         });
-        if (sent) methodUsed = "aws_ses_api";
+        if (apiRes.ok) {
+          sent = true;
+          usedMethod = "aws_ses_api";
+        } else {
+          errorMsg = `AWS API Error: ${apiRes.error}`;
+        }
       }
 
       // Method 2: SES SMTP / Auth SMTP (Fallback)
       if (!sent && hasSmtpCredentials) {
-        sent = await sendViaSmtp({
+        const smtpRes = await sendViaSmtp({
           host: smtpHost,
           port: smtpPort,
           user: smtpUser,
           pass: smtpPass,
           fromEmail: fromEmail,
-          toEmail: email,
+          toEmail: recipient.email,
           subject: emailSubject,
           htmlBody: emailHtml,
         });
-        if (sent) methodUsed = "ses_smtp";
+        if (smtpRes.ok) {
+          sent = true;
+          usedMethod = "ses_smtp";
+          errorMsg = undefined;
+        } else {
+          errorMsg = (errorMsg ? `${errorMsg}; ` : "") + `SMTP Error: ${smtpRes.error}`;
+        }
       }
 
       if (sent) {
         emailsSent++;
       }
+
+      dispatchResults.push({
+        recipient: recipient.email,
+        role: recipient.role,
+        method: usedMethod,
+        success: sent,
+        error: errorMsg,
+      });
     }
 
-    console.log(`[Dispatch Summary] Sent ${emailsSent}/${adminEmails.length} emails using method: ${methodUsed}. Review link: ${reviewUrl}`);
+    console.log(`[Dispatch Summary] Sent ${emailsSent}/${adminEmails.length} emails. Results:`, dispatchResults);
 
     return new Response(
       JSON.stringify({
         success: true,
         recipients_count: adminEmails.length,
+        recipients: adminEmails.map((a) => ({ email: a.email, role: a.role })),
         emails_sent: emailsSent,
-        dispatch_method: methodUsed,
+        dispatch_results: dispatchResults,
         review_url: reviewUrl,
       }),
       {
