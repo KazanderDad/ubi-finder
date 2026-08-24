@@ -6,7 +6,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
+import nodemailer from "npm:nodemailer@6.9.16";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -140,7 +140,7 @@ async function sendViaAwsSesApi(params: {
 }
 
 // ----------------------------------------------------------------------------
-// SES SMTP / Shared Supabase Auth SMTP Dispatcher (Fallback)
+// SES SMTP / Shared Supabase Auth SMTP Dispatcher via Nodemailer
 // ----------------------------------------------------------------------------
 async function sendViaSmtp(params: {
   host: string;
@@ -154,40 +154,27 @@ async function sendViaSmtp(params: {
 }): Promise<{ ok: boolean; error?: string }> {
   const { host, port, user, pass, fromEmail, toEmail, subject, htmlBody } = params;
 
-  // Clean raw email address for SMTP envelope
-  const cleanFrom = fromEmail.includes("<")
-    ? fromEmail.match(/<([^>]+)>/)?.[1] || fromEmail
-    : fromEmail;
-
   try {
-    const client = new SmtpClient();
-    
-    // Connect with TLS on 465 or STARTTLS on 587/2587
-    if (port === 465) {
-      await client.connectTLS({
-        hostname: host,
-        port: port,
-        username: user,
-        password: pass,
-      });
-    } else {
-      await client.connect({
-        hostname: host,
-        port: port,
-        username: user,
-        password: pass,
-      });
-    }
+    const transporter = nodemailer.createTransport({
+      host: host,
+      port: port,
+      secure: port === 465, // true for 465, false for 587
+      auth: {
+        user: user,
+        pass: pass,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
 
-    await client.send({
-      from: cleanFrom.trim(),
-      to: toEmail.trim(),
+    await transporter.sendMail({
+      from: fromEmail,
+      to: toEmail,
       subject: subject,
-      content: htmlBody,
       html: htmlBody,
     });
 
-    await client.close();
     console.log(`Email dispatched via SES SMTP to ${toEmail}`);
     return { ok: true };
   } catch (err: any) {
