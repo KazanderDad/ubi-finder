@@ -19,3 +19,13 @@
 - **summary:** Replaced the partial JavaScript project with repository-wide `checkJs`; added Leaflet declarations; documented flexible pass-through contracts for legacy shared UI primitives; repaired all application diagnostics, including undefined legacy Base44 calls and missing imports; added lint, typecheck, coverage, and build steps to application CI.
 - **validation:** `npm run typecheck` passed with zero diagnostics in the canonical worktree; `npm run lint` passed; `npm run build` passed with the existing bundle-size warning; the same checks passed in the internal scratch dependency mirror used to avoid repeated external-volume package I/O.
 - **follow-ups:** Task #10 must add the governed coverage command referenced by CI. Existing bundle splitting remains tracked separately in issue #6.
+
+## 2026-09-01T18:15:00Z
+
+- **agent:** Codex
+- **branch:** `codex/repository-engineering-baseline`
+- **head:** `563b028`
+- **issue:** [#10 Govern unit coverage and local browser acceptance](https://github.com/ubi-labs/ubi-finder/issues/10)
+- **summary:** Added Vitest coverage governance for matching, match-delta, program-status, and shared utility behavior; extracted the catalog status classifier into a deterministic core module; added a Chromium Playwright harness with local-only fixture setup for public discovery, eligibility persistence, authentication, dashboard, and report paths. The harness consumes an allocated Supabase runtime and refuses hosted URLs.
+- **validation:** `npm run lint`; `npm run typecheck`; `npm run test:coverage` (40 tests; 99.61% statements, 87.34% branches, 100% functions, 99.59% lines); `npx playwright test --config playwright.config.js --list` (3 Chromium tests); `git diff --check`.
+- **follow-ups:** Execute the three browser scenarios after Task #11 establishes the collision-free local Supabase port family and the coordinator grants an exact-head lease.

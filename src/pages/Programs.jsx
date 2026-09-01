@@ -51,6 +51,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PageHeader from "@/components/ui/page-header";
 import { Helmet } from "react-helmet-async";
 import { evaluateEligibility, isProfileComplete } from "@/lib/matchingEngine";
+import { matchesProgramStatus } from "@/lib/programStatus";
 
 // Multi-select facet dropdown component
 function FacetMultiSelect({ label, options, selectedValues = [], onChange }) {
@@ -121,38 +122,6 @@ function FacetMultiSelect({ label, options, selectedValues = [], onChange }) {
     </div>
   );
 }
-
-// Program status matcher
-export const matchesProgramStatus = (program, statusKey) => {
-  const appStatus = (program.application_status || "").toLowerCase();
-  const progStatus = (program.status || "").toLowerCase();
-  const payoutStatus = (program.payout_status || "").toLowerCase();
-
-  const isPlanned = progStatus === "planned" || appStatus.includes("planned") || progStatus === "upcoming";
-  const isHistorical = progStatus === "closed" || progStatus === "completed" || appStatus.includes("pilot completed") || payoutStatus.includes("completed");
-  const isClosedOngoing = !isHistorical && (progStatus === "active_closed" || appStatus.includes("no longer accepting") || appStatus.includes("referral") || (payoutStatus.includes("ongoing") && appStatus.includes("no longer")));
-  const isAccepting = !isPlanned && !isHistorical && !isClosedOngoing && (
-    progStatus === "active_open" ||
-    appStatus.includes("accepting") ||
-    progStatus === "active" ||
-    program.distribution_type === "daily_claim_protocol" ||
-    program.distribution_type === "lottery_raffle"
-  );
-
-  switch (statusKey) {
-    case "accepting_applications":
-      return isAccepting;
-    case "planned":
-      return isPlanned;
-    case "closed_ongoing":
-      return isClosedOngoing;
-    case "closed_historical":
-      return isHistorical;
-    case "all":
-    default:
-      return true;
-  }
-};
 
 export default function Programs() {
   const [programs, setPrograms] = useState([]);

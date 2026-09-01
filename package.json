@@ -8,10 +8,14 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite --mode local-supabase",
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./tsconfig.json",
+    "test:unit": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:acceptance:local": "playwright test --config playwright.config.js",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -85,11 +89,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@playwright/test": "^1.62.1",
     "@types/leaflet": "^1.9.20",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^4.1.11",
     "autoprefixer": "^10.4.20",
     "baseline-browser-mapping": "^2.8.32",
     "eslint": "^9.19.0",
@@ -101,6 +107,7 @@
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
-    "vite": "^6.1.0"
+    "vite": "^6.1.0",
+    "vitest": "^4.1.11"
   }
 }

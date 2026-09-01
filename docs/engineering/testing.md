@@ -14,3 +14,10 @@ The required pull-request application checks are `npm run lint`, `npm run typech
 Coverage is a ratchet, not a proxy for correctness. Statements, branches, functions, and lines must each remain at or above 80% for the configured core modules. Add new deterministic domain modules to the governed set when they become part of matching, eligibility, status classification, or persisted match behavior.
 
 The local acceptance command never starts or resets shared Supabase infrastructure. Acquire a coordinator lease, provide the runtime environment, run the harness, and release the lease. CI may start and stop its own isolated runtime.
+
+The harness requires `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and
+`SUPABASE_SERVICE_ROLE_KEY` from that allocated local runtime. Its setup rejects
+non-local Supabase URLs, creates one deterministic confirmed user and profile,
+and removes the user during teardown. Browser coverage includes the public
+home/catalog/detail path, eligibility draft persistence, password
+authentication, the protected dashboard, and the personalized report.
