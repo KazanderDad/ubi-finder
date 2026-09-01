@@ -286,23 +286,9 @@ export default function Login() {
 
               {view !== 'forgot_password' && (
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label htmlFor="password" className="block text-xs font-semibold text-gray-700">
-                      Password <span className="text-gray-400 font-normal">(Optional)</span>
-                    </label>
-                    {view === 'sign_in' && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSearchParams({ view: 'forgot' });
-                          setMessage(null);
-                        }}
-                        className="text-xs text-green-700 hover:text-green-800 font-semibold transition-colors"
-                      >
-                        Forgot password?
-                      </button>
-                    )}
-                  </div>
+                  <label htmlFor="password" className="block text-xs font-semibold text-gray-700 mb-1">
+                    Password <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
                   <div className="relative">
                     <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
                     <Input
@@ -346,39 +332,72 @@ export default function Login() {
             <div className="mt-6 pt-5 border-t border-gray-100 text-center text-xs text-gray-600 space-y-2">
               {view === 'forgot_password' ? (
                 <button
+                  type="button"
                   onClick={() => {
                     setSearchParams({});
                     setMessage(null);
                   }}
-                  className="text-green-700 hover:text-green-800 font-semibold transition-colors"
+                  className="text-green-700 hover:text-green-800 font-semibold transition-colors cursor-pointer"
                 >
                   &larr; Back to sign in
                 </button>
               ) : view === 'sign_in' ? (
-                <div>
-                  Don't have an account?{' '}
-                  <button
-                    onClick={() => {
-                      setSearchParams({ view: 'signup' });
-                      setMessage(null);
-                    }}
-                    className="text-green-700 hover:text-green-800 font-bold hover:underline ml-1"
-                  >
-                    Sign up
-                  </button>
+                <div className="space-y-2">
+                  <div>
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchParams({ view: 'signup' });
+                        setMessage(null);
+                      }}
+                      className="text-green-700 hover:text-green-800 font-bold hover:underline ml-1 cursor-pointer"
+                    >
+                      Sign up
+                    </button>
+                  </div>
+                  <div className="text-gray-500">
+                    Forgot your password?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchParams({ view: 'forgot' });
+                        setMessage(null);
+                      }}
+                      className="text-green-700 hover:text-green-800 font-bold hover:underline ml-1 cursor-pointer"
+                    >
+                      Reset it here
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div>
-                  Already have an account?{' '}
-                  <button
-                    onClick={() => {
-                      setSearchParams({});
-                      setMessage(null);
-                    }}
-                    className="text-green-700 hover:text-green-800 font-bold hover:underline ml-1"
-                  >
-                    Sign in
-                  </button>
+                <div className="space-y-2">
+                  <div>
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchParams({});
+                        setMessage(null);
+                      }}
+                      className="text-green-700 hover:text-green-800 font-bold hover:underline ml-1 cursor-pointer"
+                    >
+                      Sign in
+                    </button>
+                  </div>
+                  <div className="text-gray-500">
+                    Forgot your password?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchParams({ view: 'forgot' });
+                        setMessage(null);
+                      }}
+                      className="text-green-700 hover:text-green-800 font-bold hover:underline ml-1 cursor-pointer"
+                    >
+                      Reset it here
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
