@@ -478,6 +478,42 @@ export default function ProgramDetailsPage() {
     return getIncomeRange(userProfile.income_range) <= program.max_household_income_usd;
   };
 
+  const renderMatchStatus = (isMatch, matchText, mismatchText) => {
+    if (userProfile) {
+      return isMatch ? (
+        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+          <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[2.5]" />
+          <span>{matchText}</span>
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-1.5 text-xs text-rose-800 bg-rose-100/80 border border-rose-200 px-3 py-1 rounded-full font-bold">
+          <X className="w-3.5 h-3.5 text-rose-700 stroke-[2.5]" />
+          <span>{mismatchText}</span>
+        </span>
+      );
+    }
+
+    if (user) {
+      return (
+        <Link 
+          to="/My-Report" 
+          className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800 font-semibold hover:underline bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 transition-colors"
+        >
+          <span>Fill out our form to check match</span> &rarr;
+        </Link>
+      );
+    }
+
+    return (
+      <Link 
+        to={`/login?redirectTo=${encodeURIComponent(window.location.pathname + window.location.search)}`} 
+        className="text-xs text-gray-500 hover:text-emerald-700 font-medium hover:underline"
+      >
+        Log in to check match
+      </Link>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -919,21 +955,7 @@ export default function ProgramDetailsPage() {
 
                         {/* Col 3: Personal match */}
                         <div className="md:col-span-3 md:text-right">
-                          {userProfile ? (
-                            checkLocationRequirement() ? (
-                              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-3 py-1 rounded-full font-bold">
-                                <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[2.5]" />
-                                <span>Matches Location</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 text-xs text-rose-800 bg-rose-100/80 border border-rose-200 px-3 py-1 rounded-full font-bold">
-                                <X className="w-3.5 h-3.5 text-rose-700 stroke-[2.5]" />
-                                <span>Region Mismatch</span>
-                              </span>
-                            )
-                          ) : (
-                            <span className="text-xs text-gray-400 font-medium">Log in to check match</span>
-                          )}
+                          {renderMatchStatus(checkLocationRequirement(), "Matches Location", "Region Mismatch")}
                         </div>
                       </div>
 
@@ -957,21 +979,7 @@ export default function ProgramDetailsPage() {
 
                         {/* Col 3: Personal match */}
                         <div className="md:col-span-3 md:text-right">
-                          {userProfile ? (
-                            checkIncomeRequirement() ? (
-                              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-3 py-1 rounded-full font-bold">
-                                <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[2.5]" />
-                                <span>Within Limit</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 text-xs text-rose-800 bg-rose-100/80 border border-rose-200 px-3 py-1 rounded-full font-bold">
-                                <X className="w-3.5 h-3.5 text-rose-700 stroke-[2.5]" />
-                                <span>Exceeds Limit</span>
-                              </span>
-                            )
-                          ) : (
-                            <span className="text-xs text-gray-400 font-medium">Log in to check match</span>
-                          )}
+                          {renderMatchStatus(checkIncomeRequirement(), "Within Limit", "Exceeds Limit")}
                         </div>
                       </div>
 
@@ -999,21 +1007,7 @@ export default function ProgramDetailsPage() {
 
                         {/* Col 3: Personal match */}
                         <div className="md:col-span-3 md:text-right">
-                          {userProfile ? (
-                            checkAgeRequirement() ? (
-                              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-3 py-1 rounded-full font-bold">
-                                <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[2.5]" />
-                                <span>Age Eligible</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 text-xs text-rose-800 bg-rose-100/80 border border-rose-200 px-3 py-1 rounded-full font-bold">
-                                <X className="w-3.5 h-3.5 text-rose-700 stroke-[2.5]" />
-                                <span>Age Mismatch</span>
-                              </span>
-                            )
-                          ) : (
-                            <span className="text-xs text-gray-400 font-medium">Log in to check match</span>
-                          )}
+                          {renderMatchStatus(checkAgeRequirement(), "Age Eligible", "Age Mismatch")}
                         </div>
                       </div>
 
@@ -1041,21 +1035,7 @@ export default function ProgramDetailsPage() {
 
                         {/* Col 3: Personal match */}
                         <div className="md:col-span-3 md:text-right">
-                          {userProfile ? (
-                            checkGenderRequirement() ? (
-                              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-3 py-1 rounded-full font-bold">
-                                <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[2.5]" />
-                                <span>Matches Gender</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 text-xs text-rose-800 bg-rose-100/80 border border-rose-200 px-3 py-1 rounded-full font-bold">
-                                <X className="w-3.5 h-3.5 text-rose-700 stroke-[2.5]" />
-                                <span>Gender Mismatch</span>
-                              </span>
-                            )
-                          ) : (
-                            <span className="text-xs text-gray-400 font-medium">Log in to check match</span>
-                          )}
+                          {renderMatchStatus(checkGenderRequirement(), "Matches Gender", "Gender Mismatch")}
                         </div>
                       </div>
 
@@ -1170,7 +1150,7 @@ export default function ProgramDetailsPage() {
           {/* Right column - Quick facts summary & Related blog posts */}
           <div className="space-y-6">
             {/* Quick summary card with prominent apply CTA (4a desktop) */}
-            <Card className="shadow-lg border-green-100 bg-white/95 backdrop-blur-sm sticky top-24">
+            <Card className="shadow-lg border-green-100 bg-white/95 backdrop-blur-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-bold text-green-950">Program Summary</CardTitle>
               </CardHeader>
