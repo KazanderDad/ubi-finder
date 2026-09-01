@@ -8,7 +8,7 @@ Thank you for your interest in contributing to UBI Finder! Together, we can make
 
 1. **Fork and Clone:**
    ```bash
-   git clone https://github.com/KazanderDad/ubi-finder.git
+   git clone https://github.com/ubi-labs/ubi-finder.git
    cd ubi-finder
    ```
 

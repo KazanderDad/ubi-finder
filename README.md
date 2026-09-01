@@ -76,7 +76,7 @@ Traditional welfare programs are often burdened with bureaucratic friction, stig
 
 ```bash
 # Clone the repository
-git clone https://github.com/KazanderDad/ubi-finder.git
+git clone https://github.com/ubi-labs/ubi-finder.git
 cd ubi-finder
 
 # Install dependencies
