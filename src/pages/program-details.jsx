@@ -25,11 +25,142 @@ import {
   XCircle,
   Lock,
   Share2,
-  Check
+  Check,
+  Zap, 
+  ShieldCheck, 
+  CheckCheck,
+  Star,
+  Send,
+  Ban,
+  Compass,
+  CheckCircle2,
+  ChevronDown,
+  Sparkles,
+  HelpCircle
 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import ManagedApplicationModal from "@/components/ManagedApplicationModal";
-import { Zap, ShieldCheck, CheckCheck } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+
+export function isAutoParticipationProgram(program) {
+  if (!program) return false;
+  if (program.is_auto_participation || program.involvement_level === 'auto_participation') return true;
+
+  const name = (program.name || '').toLowerCase();
+  const desc = (program.description || '').toLowerCase();
+  const org = (program.organization || '').toLowerCase();
+
+  const autoKeywords = [
+    'alaska permanent',
+    'permanent fund',
+    'macao wealth',
+    'wealth partaking',
+    'citizen account',
+    'rodzina 800+',
+    '800+',
+    'gyeonggi youth basic income',
+    'maricá',
+    'saquarema',
+    'arariboia',
+    'digital euro'
+  ];
+
+  if (autoKeywords.some(kw => name.includes(kw) || org.includes(kw))) {
+    return true;
+  }
+
+  if (program.distribution_type === 'statutory_dividend' || 
+      (program.application_status && /automatic|universal|statutory/i.test(program.application_status))) {
+    return true;
+  }
+
+  return false;
+}
+
+const APPLICATION_PARTICIPATION_OPTIONS = [
+  {
+    value: 'interested',
+    label: "I'm interested",
+    shortLabel: "Interested",
+    icon: Star,
+    iconColor: "text-amber-500",
+    badgeClass: "bg-amber-50 text-amber-900 border-amber-300",
+    description: "Tracking this program for updates and future rounds."
+  },
+  {
+    value: 'applied',
+    label: "I've applied",
+    shortLabel: "Applied",
+    icon: Send,
+    iconColor: "text-blue-500",
+    badgeClass: "bg-blue-50 text-blue-900 border-blue-300",
+    description: "Submitted an application and awaiting decision / lottery results."
+  },
+  {
+    value: 'rejected',
+    label: "I applied but was rejected",
+    shortLabel: "Applied, Rejected",
+    icon: XCircle,
+    iconColor: "text-rose-500",
+    badgeClass: "bg-rose-50 text-rose-900 border-rose-300",
+    description: "Applied previously but did not qualify or was not selected."
+  },
+  {
+    value: 'participant',
+    label: "I'm part of this program",
+    shortLabel: "Active Participant",
+    icon: CheckCircle2,
+    iconColor: "text-emerald-600",
+    badgeClass: "bg-emerald-50 text-emerald-900 border-emerald-300",
+    description: "Currently enrolled and receiving basic income payments."
+  }
+];
+
+const AUTO_PARTICIPATION_OPTIONS = [
+  {
+    value: 'not_resident',
+    label: "I don't live in the area and not planning to move there",
+    shortLabel: "Non-Resident",
+    icon: Ban,
+    iconColor: "text-gray-500",
+    badgeClass: "bg-gray-100 text-gray-800 border-gray-300",
+    description: "Outside the statutory jurisdiction with no relocation plans."
+  },
+  {
+    value: 'considering_move',
+    label: "I consider moving there to qualify for this",
+    shortLabel: "Considering Relocating",
+    icon: Compass,
+    iconColor: "text-indigo-500",
+    badgeClass: "bg-indigo-50 text-indigo-900 border-indigo-300",
+    description: "Evaluating moving to the qualifying region or municipality."
+  },
+  {
+    value: 'local_not_qualified',
+    label: "I live in the area but don't (yet) qualify for this",
+    shortLabel: "Local, Not Yet Qualified",
+    icon: MapPin,
+    iconColor: "text-amber-500",
+    badgeClass: "bg-amber-50 text-amber-900 border-amber-300",
+    description: "Resident in the area working toward residency or age criteria."
+  },
+  {
+    value: 'participant',
+    label: "I'm part of this program",
+    shortLabel: "Active Participant",
+    icon: CheckCircle2,
+    iconColor: "text-emerald-600",
+    badgeClass: "bg-emerald-50 text-emerald-900 border-emerald-300",
+    description: "Eligible resident currently receiving dividend / statutory payouts."
+  }
+];
 
 export default function ProgramDetailsPage() {
   const location = useLocation();
@@ -171,10 +302,22 @@ export default function ProgramDetailsPage() {
     }
   };
 
-  const handleToggleSelfApplied = async () => {
-    if (!user?.id) return;
+  const isAutoProgram = isAutoParticipationProgram(program);
+  const participationOptions = isAutoProgram ? AUTO_PARTICIPATION_OPTIONS : APPLICATION_PARTICIPATION_OPTIONS;
+  
+  // Current active participation option
+  const activeParticipationOption = participationOptions.find(
+    opt => opt.value === selfApp?.participation_status || (selfApp?.has_applied && opt.value === 'applied')
+  );
+
+  const handleSetParticipationStatus = async (statusValue) => {
+    if (!user?.id) {
+      navigate(`/login?view=signup&redirectTo=/program-details?id=${programId}`);
+      return;
+    }
     try {
-      if (selfApp?.has_applied) {
+      if (selfApp?.participation_status === statusValue || (!selfApp?.participation_status && selfApp?.has_applied && statusValue === 'applied')) {
+        // Clear participation status
         await supabase
           .from('user_self_applications')
           .delete()
@@ -182,14 +325,16 @@ export default function ProgramDetailsPage() {
           .eq('program_id', parseInt(programId));
         setSelfApp(null);
       } else {
+        // Set / update participation status
         const { data, error } = await supabase
           .from('user_self_applications')
           .upsert([{
             user_id: user.id,
             program_id: parseInt(programId),
-            has_applied: true,
+            has_applied: statusValue === 'applied' || statusValue === 'participant',
+            participation_status: statusValue,
             applied_date: new Date().toISOString()
-          }])
+          }], { onConflict: 'user_id,program_id' })
           .select()
           .single();
         if (!error && data) {
@@ -197,7 +342,7 @@ export default function ProgramDetailsPage() {
         }
       }
     } catch (e) {
-      console.error("Error toggling self application status:", e);
+      console.error("Error updating participation status:", e);
     }
   };
 
@@ -567,30 +712,99 @@ export default function ProgramDetailsPage() {
                           )
                         )}
 
-                        {(!program.involvement_level || program.involvement_level === 'external_self_apply') && (
-                          <div className="flex items-center gap-2">
-                            {user && (
+                        {/* Participation Level Selector for all users */}
+                        <div className="flex items-center gap-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
                               <Button
-                                variant={selfApp?.has_applied ? "secondary" : "outline"}
-                                size="sm"
-                                onClick={handleToggleSelfApplied}
-                                className={selfApp?.has_applied ? "bg-green-100 text-green-800 border-green-300 text-xs font-semibold" : "text-xs border-gray-300 text-gray-700"}
-                              >
-                                {selfApp?.has_applied ? `✅ Applied on ${new Date(selfApp.applied_date).toLocaleDateString()}` : "Mark as: I applied"}
-                              </Button>
-                            )}
-                            {(program.apply_url || program.website) && (
-                              <Button 
-                                onClick={() => window.open(program.apply_url || program.website, '_blank')}
                                 variant="outline"
-                                className="border-green-700 text-green-700 hover:bg-green-50 shadow-sm text-xs font-semibold"
+                                size="sm"
+                                className={`text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                                  activeParticipationOption 
+                                    ? activeParticipationOption.badgeClass
+                                    : "border-green-300 text-green-900 bg-green-50/50 hover:bg-green-100"
+                                }`}
                               >
-                                <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                                Official Portal ↗
+                                {activeParticipationOption ? (
+                                  <>
+                                    <activeParticipationOption.icon className={`w-3.5 h-3.5 ${activeParticipationOption.iconColor}`} />
+                                    <span>{activeParticipationOption.shortLabel}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="w-3.5 h-3.5 text-green-700" />
+                                    <span>Participation Status</span>
+                                  </>
+                                )}
+                                <ChevronDown className="w-3.5 h-3.5 opacity-60 ml-0.5" />
                               </Button>
-                            )}
-                          </div>
-                        )}
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-80 p-2 shadow-xl border-gray-200 bg-white rounded-xl z-50">
+                              <DropdownMenuLabel className="text-xs font-bold text-gray-900 px-2 py-1">
+                                {isAutoProgram ? "Residency & Auto-Participation" : "Your Participation Status"}
+                              </DropdownMenuLabel>
+                              <p className="text-[11px] text-gray-500 px-2 pb-2 leading-tight">
+                                {isAutoProgram 
+                                  ? "Track your eligibility and residency status for this universal/statutory program:"
+                                  : "Record your application progress for this guaranteed income initiative:"}
+                              </p>
+                              <DropdownMenuSeparator />
+                              <div className="space-y-1 py-1">
+                                {participationOptions.map((opt) => {
+                                  const isSelected = activeParticipationOption?.value === opt.value;
+                                  const IconComponent = opt.icon;
+                                  return (
+                                    <DropdownMenuItem
+                                      key={opt.value}
+                                      onClick={() => handleSetParticipationStatus(opt.value)}
+                                      className={`p-2.5 rounded-lg cursor-pointer flex items-start gap-2.5 transition-colors ${
+                                        isSelected ? "bg-green-50/90 border border-green-200" : "hover:bg-gray-50"
+                                      }`}
+                                    >
+                                      <div className={`p-1.5 rounded-md mt-0.5 ${isSelected ? "bg-green-100" : "bg-gray-100"}`}>
+                                        <IconComponent className={`w-4 h-4 ${opt.iconColor}`} />
+                                      </div>
+                                      <div className="flex-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className={`text-xs font-bold ${isSelected ? "text-green-950 font-extrabold" : "text-gray-800"}`}>
+                                            {opt.label}
+                                          </span>
+                                          {isSelected && <Check className="w-3.5 h-3.5 text-green-700 stroke-[3]" />}
+                                        </div>
+                                        <p className="text-[11px] text-gray-500 leading-snug mt-0.5">
+                                          {opt.description}
+                                        </p>
+                                      </div>
+                                    </DropdownMenuItem>
+                                  );
+                                })}
+                              </div>
+                              {activeParticipationOption && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleSetParticipationStatus(activeParticipationOption.value)}
+                                    className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 p-2 rounded-lg cursor-pointer flex items-center justify-center font-semibold"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5 mr-1.5" />
+                                    Clear Participation Status
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+
+                          {(program.apply_url || program.website) && (
+                            <Button 
+                              onClick={() => window.open(program.apply_url || program.website, '_blank')}
+                              variant="outline"
+                              className="border-green-700 text-green-700 hover:bg-green-50 shadow-sm text-xs font-semibold"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                              Official Portal ↗
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                     
