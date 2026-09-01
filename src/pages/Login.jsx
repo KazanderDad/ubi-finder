@@ -7,10 +7,43 @@ import { Leaf, User, Mail, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { Helmet } from 'react-helmet-async';
+import { useToast } from '@/components/ui/use-toast';
+
+function getActionDescription(path) {
+  if (!path) return null;
+  const clean = path.split('?')[0].toLowerCase();
+  
+  if (clean.includes('/submit-program') || clean.includes('/submitprogram')) {
+    return 'propose or add a project';
+  }
+  if (clean.includes('/my-programs') || clean.includes('/manage-program')) {
+    return 'manage your basic income programs';
+  }
+  if (clean.includes('/my-report') || clean.includes('/myreport')) {
+    return 'view and save your personalized UBI report';
+  }
+  if (clean.includes('/community')) {
+    return 'join the community discussion';
+  }
+  if (clean.includes('/dashboard')) {
+    return 'access your personalized dashboard';
+  }
+  if (clean.includes('/profile') || clean.includes('/editprofile')) {
+    return 'access your profile';
+  }
+  if (clean.includes('/claim') || clean.includes('/gooddollar') || clean.includes('/fundloop') || clean.includes('/circles')) {
+    return 'claim your basic income distribution';
+  }
+  if (clean.includes('/admin')) {
+    return 'access the administration panel';
+  }
+  return 'continue to this page';
+}
 
 export default function Login() {
   const { isAuthenticated, isLoadingAuth } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
   
   const viewParam = searchParams.get('view');
   const [view, setView] = useState(viewParam === 'signup' ? 'sign_up' : 'sign_in');
@@ -19,6 +52,11 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+
+  const redirectParam = searchParams.get('redirectTo') || searchParams.get('returnTo');
+  const defaultRedirect = redirectParam || '/Dashboard';
+  const actionDescription = getActionDescription(redirectParam);
+  const toastShownRef = React.useRef(false);
 
   // Sync view state when query params change (e.g. clicking Header "Sign In" vs "Get Started")
   useEffect(() => {
@@ -32,8 +70,16 @@ export default function Login() {
     setMessage(null);
   }, [viewParam]);
 
-  const redirectParam = searchParams.get('redirectTo') || searchParams.get('returnTo');
-  const defaultRedirect = redirectParam || '/Dashboard';
+  // Trigger friendly toast when arriving with a redirect action
+  useEffect(() => {
+    if (redirectParam && actionDescription && !toastShownRef.current) {
+      toastShownRef.current = true;
+      toast({
+        title: "Please Sign In",
+        description: `Please sign in before you ${actionDescription}.`,
+      });
+    }
+  }, [redirectParam, actionDescription, toast]);
 
   if (isLoadingAuth) {
     return (
@@ -192,6 +238,12 @@ export default function Login() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <Card className="shadow-xl border-green-100 bg-white/95 backdrop-blur-sm">
           <CardContent className="p-6 sm:p-8">
+            {actionDescription && (
+              <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-xs text-emerald-950 font-medium animate-in fade-in slide-in-from-top-1 duration-200 shadow-xs">
+                <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span>Please sign in before you {actionDescription}.</span>
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               
               {/* "What should we call you?" - only on signup */}

@@ -158,7 +158,7 @@ export default function Home() {
             {!isAuthenticated && (
               <div className="mt-6 text-center">
                 <Link to="/Programs" className="text-sm font-medium text-green-600 hover:text-green-800 hover:underline">
-                  Skip this, go direct to the Programs listing &rarr;
+                  Skip this, go direct to the UBI Programs &rarr;
                 </Link>
               </div>
             )}

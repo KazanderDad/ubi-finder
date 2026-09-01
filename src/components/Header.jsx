@@ -403,7 +403,7 @@ export default function Header() {
                 to={user ? "/Submit-Program" : "/login?view=signup&redirectTo=/Submit-Program"}
                 className="inline-flex items-center gap-1 bg-white/15 hover:bg-white/25 text-white font-semibold px-2.5 py-1 rounded-lg border border-white/20 transition-all text-xs whitespace-nowrap shadow-xs"
               >
-                Submit a Project &rarr;
+                Propose or Add a Project &rarr;
               </Link>
             </div>
           </div>
@@ -463,7 +463,7 @@ export default function Header() {
               onClick={() => setEligibilityModalOpen(false)}
               className="text-sm font-medium text-green-600 hover:text-green-800 hover:underline"
             >
-              Skip this, go direct to the Programs listing
+              Skip this, go direct to the UBI Programs &rarr;
             </Link>
           </div>
         </DialogContent>

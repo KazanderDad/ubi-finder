@@ -27,6 +27,7 @@ import ProgramList from "../components/dashboard/ProgramList";
 import ProgramsMap from "../components/ProgramsMap";
 import { Link } from 'react-router-dom';
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/ui/page-header";
 import { Helmet } from "react-helmet-async";
 import { evaluateEligibility, isProfileComplete } from "@/lib/matchingEngine";
