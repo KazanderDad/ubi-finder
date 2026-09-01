@@ -19,7 +19,11 @@ import {
   ChevronDown,
   X,
   SlidersHorizontal,
-  FileCheck
+  FileCheck,
+  GraduationCap,
+  FlaskConical,
+  Globe,
+  BookOpen
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -146,10 +150,14 @@ export default function Programs() {
   // Quick select status filter (Default: "accepting_applications")
   const [quickFilter, setQuickFilter] = useState("accepting_applications");
 
+  // Source filter: 'all' | 'stanford' | 'community'
+  const [sourceFilter, setSourceFilter] = useState("all");
+
   // Advanced multi-select facet filters
   const [advancedFilters, setAdvancedFilters] = useState({
     statuses: [],
     countries: [],
+    sources: [],
     distributionTypes: [],
     payoutRails: [],
     fundingSources: [],
@@ -273,9 +281,11 @@ export default function Programs() {
 
   const clearAllFilters = () => {
     setQuickFilter("accepting_applications");
+    setSourceFilter("all");
     setAdvancedFilters({
       statuses: [],
       countries: [],
+      sources: [],
       distributionTypes: [],
       payoutRails: [],
       fundingSources: [],
@@ -290,6 +300,7 @@ export default function Programs() {
     setAdvancedFilters({
       statuses: [],
       countries: [],
+      sources: [],
       distributionTypes: [],
       payoutRails: [],
       fundingSources: [],
@@ -333,6 +344,17 @@ export default function Programs() {
     }
 
     if (filterMode === "quick") {
+      // Source filter (Stanford Basic Income Lab vs Community Submissions)
+      if (sourceFilter === "stanford") {
+        if (program.data_source !== "stanford_basic_income_lab" && !program.stanford_experiment_id) {
+          return false;
+        }
+      } else if (sourceFilter === "community") {
+        if (program.data_source === "stanford_basic_income_lab" || program.stanford_experiment_id) {
+          return false;
+        }
+      }
+
       // Quick Select Mode: Either/Or
       if (!matchesProgramStatus(program, quickFilter)) {
         return false;
@@ -342,6 +364,17 @@ export default function Programs() {
       // Advanced Filters Multi-Select Mode
       if (!advancedFilters.includeUnverified && !program.verified) {
         return false;
+      }
+
+      // Source multi-select
+      if (advancedFilters.sources && advancedFilters.sources.length > 0) {
+        const isStanford = program.data_source === "stanford_basic_income_lab" || !!program.stanford_experiment_id;
+        const matchesSource = advancedFilters.sources.some(s => {
+          if (s === "stanford") return isStanford;
+          if (s === "community") return !isStanford;
+          return true;
+        });
+        if (!matchesSource) return false;
       }
 
       // Statuses multi-select
@@ -419,6 +452,22 @@ export default function Programs() {
   // Active chips generator for Advanced Filters mode
   const activeFilterChips = [];
   if (filterMode === "advanced") {
+    if (advancedFilters.sources && advancedFilters.sources.length > 0) {
+      const sourceLabels = {
+        stanford: "Stanford Basic Income Lab",
+        community: "Community Submissions",
+      };
+      advancedFilters.sources.forEach((s) => {
+        activeFilterChips.push({
+          id: `source-${s}`,
+          facet: "sources",
+          value: s,
+          category: "Source",
+          label: sourceLabels[s] || s,
+        });
+      });
+    }
+
     const statusLabels = {
       accepting_applications: "Accepting applications",
       planned: "Planned",
@@ -641,6 +690,48 @@ export default function Programs() {
                 </div>
               </div>
 
+              {/* Source Filter Pills Bar */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100/90">
+                <span className="text-xs font-semibold text-gray-500 mr-1 flex items-center gap-1">
+                  <BookOpen className="w-3.5 h-3.5 text-gray-400" /> Source:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSourceFilter("all")}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                    sourceFilter === "all"
+                      ? "bg-slate-800 text-white shadow-xs ring-1 ring-slate-800"
+                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                  }`}
+                >
+                  All Sources ({programs.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSourceFilter("stanford")}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    sourceFilter === "stanford"
+                      ? "bg-red-800 text-white shadow-xs ring-1 ring-red-800"
+                      : "bg-white text-red-900 hover:bg-red-50 border border-red-200"
+                  }`}
+                >
+                  <GraduationCap className="w-3.5 h-3.5 text-red-600" />
+                  Stanford Basic Income Lab ({programs.filter(p => p.data_source === 'stanford_basic_income_lab' || p.stanford_experiment_id).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSourceFilter("community")}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    sourceFilter === "community"
+                      ? "bg-emerald-800 text-white shadow-xs ring-1 ring-emerald-800"
+                      : "bg-white text-emerald-900 hover:bg-emerald-50 border border-emerald-200"
+                  }`}
+                >
+                  <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                  Community Submissions ({programs.filter(p => p.data_source !== 'stanford_basic_income_lab' && !p.stanford_experiment_id).length})
+                </button>
+              </div>
+
               {/* Inconspicuous small link to switch to advanced filters */}
               <div className="flex justify-start pt-1">
                 <button
@@ -679,8 +770,18 @@ export default function Programs() {
               </CardHeader>
 
               <CardContent className="p-5 space-y-4">
-                {/* 6 Multi-Select Dropdown Facets */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                {/* 7 Multi-Select Dropdown Facets */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2.5">
+                  <FacetMultiSelect
+                    label="Source / Origin"
+                    options={[
+                      { value: "stanford", label: "Stanford Basic Income Lab" },
+                      { value: "community", label: "Community Submissions" },
+                    ]}
+                    selectedValues={advancedFilters.sources}
+                    onChange={(vals) => setAdvancedFilters((prev) => ({ ...prev, sources: vals }))}
+                  />
+
                   <FacetMultiSelect
                     label="Application Status"
                     options={[

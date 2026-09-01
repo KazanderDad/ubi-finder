@@ -19,7 +19,10 @@ import {
   CheckCircle2,
   MapPin,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  GraduationCap,
+  FlaskConical,
+  Users
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -224,6 +227,35 @@ export default function ProgramList({ programs, onToggleFavorite, favoriteProgra
                         <Sparkles className="w-3 h-3 text-white" />
                         {program.matchScore}% Match {program.matchScore >= 85 ? '• Best Fit' : ''}
                       </Badge>
+                    )}
+
+                    {/* Data Source Badge (Stanford Lab vs Community) */}
+                    {program.data_source === 'stanford_basic_income_lab' || program.stanford_experiment_id ? (
+                      <Badge className="bg-red-50 text-red-900 border-red-200 font-semibold flex items-center gap-1 text-[11px]">
+                        <GraduationCap className="w-3 h-3 text-red-700" />
+                        Stanford Basic Income Lab
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-slate-50 text-slate-700 border-slate-200 font-normal flex items-center gap-1 text-[11px]">
+                        <Globe className="w-3 h-3 text-slate-500" />
+                        Community Submission
+                      </Badge>
+                    )}
+
+                    {/* RCT Study Badge */}
+                    {program.is_rct && (
+                      <Badge className="bg-blue-50 text-blue-900 border-blue-200 font-semibold flex items-center gap-1 text-[11px]">
+                        <FlaskConical className="w-3 h-3 text-blue-700" />
+                        RCT Study
+                      </Badge>
+                    )}
+
+                    {/* Total Participants */}
+                    {program.total_participants && (
+                      <div className="inline-flex items-center gap-1 text-xs text-gray-700 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200">
+                        <Users className="w-3 h-3 text-gray-500" />
+                        <span>{program.total_participants} Participants</span>
+                      </div>
                     )}
 
                     {/* Project Involvement Level Badge */}
