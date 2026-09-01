@@ -24,8 +24,20 @@ import {
   FlaskConical,
   Globe,
   BookOpen,
-  Activity
+  Activity,
+  Table as TableIcon,
+  LayoutGrid,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Star,
+  ExternalLink,
+  ShieldCheck,
+  Zap,
+  MapPin,
+  Sparkles
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ProgramList from "../components/dashboard/ProgramList";
@@ -143,7 +155,18 @@ export default function Programs() {
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("list"); // 'list' | 'map'
+  const [viewMode, setViewMode] = useState("card"); // 'card' | 'table' | 'map'
+  const [tableSortColumn, setTableSortColumn] = useState('name');
+  const [tableSortDirection, setTableSortDirection] = useState('asc'); // 'asc' | 'desc'
+
+  const handleTableSort = (columnKey) => {
+    if (tableSortColumn === columnKey) {
+      setTableSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setTableSortColumn(columnKey);
+      setTableSortDirection('asc');
+    }
+  };
 
   // Filter Mode: "quick" (default) or "advanced" (either/or)
   const [filterMode, setFilterMode] = useState("quick");
@@ -546,8 +569,37 @@ export default function Programs() {
     closed_historical: statusBasePrograms.filter((p) => matchesProgramStatus(p, "closed_historical")).length,
   };
 
-  // 3. Sort Programs (Default to Best Fit when profile data exists)
+  // 3. Sort Programs (Dynamic by viewMode)
   const sortedPrograms = [...filteredPrograms].sort((a, b) => {
+    if (viewMode === 'table') {
+      let diff = 0;
+      if (tableSortColumn === 'name') {
+        diff = (a.name || '').localeCompare(b.name || '');
+      } else if (tableSortColumn === 'organization') {
+        diff = (a.organization || '').localeCompare(b.organization || '');
+      } else if (tableSortColumn === 'location') {
+        const locA = (a.municipalities?.[0] || a.required_states?.[0] || a.available_regions?.[0] || '');
+        const locB = (b.municipalities?.[0] || b.required_states?.[0] || b.available_regions?.[0] || '');
+        diff = locA.localeCompare(locB);
+      } else if (tableSortColumn === 'amount') {
+        diff = Number(a.monthly_amount_usd || 0) - Number(b.monthly_amount_usd || 0);
+      } else if (tableSortColumn === 'status') {
+        const stA = (a.application_status || a.status || '');
+        const stB = (b.application_status || b.status || '');
+        diff = stA.localeCompare(stB);
+      } else if (tableSortColumn === 'matchScore') {
+        diff = Number(a.matchScore || 0) - Number(b.matchScore || 0);
+      } else if (tableSortColumn === 'source') {
+        const srcA = a.data_source || '';
+        const srcB = b.data_source || '';
+        diff = srcA.localeCompare(srcB);
+      } else {
+        diff = (a.name || '').localeCompare(b.name || '');
+      }
+      return tableSortDirection === 'asc' ? diff : -diff;
+    }
+
+    // Default card & map mode sorting
     if (sortField === 'best_fit' && hasCompletedProfile) {
       const scoreA = a.matchScore ?? 0;
       const scoreB = b.matchScore ?? 0;
@@ -565,7 +617,7 @@ export default function Programs() {
       return amountB - amountA;
     }
 
-    return a.name.localeCompare(b.name);
+    return (a.name || '').localeCompare(b.name || '');
   });
 
   // Active chips generator for Advanced Filters mode
@@ -846,18 +898,29 @@ export default function Programs() {
                   Showing <strong className="text-green-950 font-bold text-sm">{sortedPrograms.length}</strong> of {programs.length} programs
                 </div>
 
-                {/* Right: List View / Map View Switcher */}
+                {/* Right: Table View / Card View / Map View Switcher */}
                 <div className="bg-gray-100 p-1 rounded-xl flex items-center border border-gray-200 self-end sm:self-auto">
                   <button
-                    onClick={() => setViewMode("list")}
+                    onClick={() => setViewMode("table")}
                     className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                      viewMode === "list" 
+                      viewMode === "table" 
                         ? "bg-white text-green-950 shadow-sm" 
                         : "text-gray-600 hover:text-gray-900"
                     }`}
                   >
-                    <ListIcon className="w-3.5 h-3.5" />
-                    List View
+                    <TableIcon className="w-3.5 h-3.5" />
+                    Table View
+                  </button>
+                  <button
+                    onClick={() => setViewMode("card")}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      viewMode === "card" 
+                        ? "bg-white text-green-950 shadow-sm" 
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    Card View
                   </button>
                   <button
                     onClick={() => setViewMode("map")}
@@ -1119,7 +1182,7 @@ export default function Programs() {
             </Card>
           )}
 
-          {/* Main Content Area: Map View vs List View */}
+          {/* Main Content Area: Map View vs Card View vs Table View */}
           {viewMode === "map" ? (
             <Card className="shadow-lg border-green-100 bg-white/95 overflow-hidden">
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4">
@@ -1135,6 +1198,351 @@ export default function Programs() {
               </CardHeader>
               <CardContent className="p-0 sm:p-6 sm:pt-0">
                 <ProgramsMap programs={sortedPrograms} />
+              </CardContent>
+            </Card>
+          ) : viewMode === "table" ? (
+            <Card className="shadow-lg border-green-100 bg-white/95 overflow-hidden">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
+                <div>
+                  <CardTitle className="text-2xl text-green-950 font-bold flex items-center gap-2">
+                    <TableIcon className="w-5 h-5 text-green-700" />
+                    Programs Directory Table
+                  </CardTitle>
+                  <CardDescription className="text-sm text-gray-500 mt-1">
+                    Showing <span className="font-semibold text-green-800">{sortedPrograms.length}</span> of {programs.length} programs in a condensed row view. Click any column header to sort.
+                  </CardDescription>
+                </div>
+
+                {/* Search control */}
+                <div className="flex items-center gap-3">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Input
+                      type="text"
+                      placeholder="Search by name, org, or city..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 text-xs h-9 bg-gray-50/50"
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-0">
+                {loading ? (
+                  <div className="p-6 space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="h-12 bg-gray-50 rounded-lg animate-pulse" />
+                    ))}
+                  </div>
+                ) : sortedPrograms.length === 0 ? (
+                  <div className="text-center py-16 px-4">
+                    <FileCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <h3 className="text-lg font-bold text-green-900 mb-2">No programs found</h3>
+                    <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+                      No programs matched your current filter criteria. Try selecting another status pill or resetting your search.
+                    </p>
+                    <Button 
+                      variant="outline"
+                      onClick={clearAllFilters}
+                      className="border-green-600 text-green-700 hover:bg-green-50"
+                    >
+                      Reset All Filters
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-gray-50/80 border-y border-gray-200">
+                          {/* Favorite Star header */}
+                          <th className="w-10 px-3 py-3 text-center">
+                            <span className="sr-only">Favorite</span>
+                          </th>
+
+                          {/* Program Name & Org */}
+                          <th 
+                            onClick={() => handleTableSort('name')}
+                            className="px-4 py-3 text-xs font-bold text-gray-700 cursor-pointer select-none hover:bg-gray-100 transition-colors uppercase tracking-wider min-w-[240px]"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span>Program & Organization</span>
+                              {tableSortColumn === 'name' ? (
+                                tableSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" /> : <ArrowDown className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" />
+                              ) : (
+                                <ArrowUpDown className="w-3 h-3 text-gray-400 opacity-60" />
+                              )}
+                            </div>
+                          </th>
+
+                          {/* Origin / Source */}
+                          <th 
+                            onClick={() => handleTableSort('source')}
+                            className="px-3 py-3 text-xs font-bold text-gray-700 cursor-pointer select-none hover:bg-gray-100 transition-colors uppercase tracking-wider min-w-[130px]"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span>Source</span>
+                              {tableSortColumn === 'source' ? (
+                                tableSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" /> : <ArrowDown className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" />
+                              ) : (
+                                <ArrowUpDown className="w-3 h-3 text-gray-400 opacity-60" />
+                              )}
+                            </div>
+                          </th>
+
+                          {/* Location */}
+                          <th 
+                            onClick={() => handleTableSort('location')}
+                            className="px-3 py-3 text-xs font-bold text-gray-700 cursor-pointer select-none hover:bg-gray-100 transition-colors uppercase tracking-wider min-w-[150px]"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span>Location</span>
+                              {tableSortColumn === 'location' ? (
+                                tableSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" /> : <ArrowDown className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" />
+                              ) : (
+                                <ArrowUpDown className="w-3 h-3 text-gray-400 opacity-60" />
+                              )}
+                            </div>
+                          </th>
+
+                          {/* Monthly Payout */}
+                          <th 
+                            onClick={() => handleTableSort('amount')}
+                            className="px-3 py-3 text-xs font-bold text-gray-700 cursor-pointer select-none hover:bg-gray-100 transition-colors uppercase tracking-wider text-right min-w-[120px]"
+                          >
+                            <div className="flex items-center justify-end gap-1.5">
+                              <span>Payout</span>
+                              {tableSortColumn === 'amount' ? (
+                                tableSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" /> : <ArrowDown className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" />
+                              ) : (
+                                <ArrowUpDown className="w-3 h-3 text-gray-400 opacity-60" />
+                              )}
+                            </div>
+                          </th>
+
+                          {/* Status */}
+                          <th 
+                            onClick={() => handleTableSort('status')}
+                            className="px-3 py-3 text-xs font-bold text-gray-700 cursor-pointer select-none hover:bg-gray-100 transition-colors uppercase tracking-wider min-w-[140px]"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span>Status</span>
+                              {tableSortColumn === 'status' ? (
+                                tableSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" /> : <ArrowDown className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" />
+                              ) : (
+                                <ArrowUpDown className="w-3 h-3 text-gray-400 opacity-60" />
+                              )}
+                            </div>
+                          </th>
+
+                          {/* Targeting */}
+                          <th className="px-3 py-3 text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[160px]">
+                            Eligibility / Focus
+                          </th>
+
+                          {/* Match Score (if active profile) */}
+                          {hasCompletedProfile && (
+                            <th 
+                              onClick={() => handleTableSort('matchScore')}
+                              className="px-3 py-3 text-xs font-bold text-gray-700 cursor-pointer select-none hover:bg-gray-100 transition-colors uppercase tracking-wider text-center min-w-[100px]"
+                            >
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span>Fit Score</span>
+                                {tableSortColumn === 'matchScore' ? (
+                                  tableSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" /> : <ArrowDown className="w-3.5 h-3.5 text-green-700 stroke-[2.5]" />
+                                ) : (
+                                  <ArrowUpDown className="w-3 h-3 text-gray-400 opacity-60" />
+                                )}
+                              </div>
+                            </th>
+                          )}
+
+                          {/* Actions */}
+                          <th className="px-4 py-3 text-xs font-bold text-gray-700 uppercase tracking-wider text-right min-w-[110px]">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 bg-white">
+                        {sortedPrograms.map((program) => {
+                          const isFavorite = favoritePrograms.includes(program.program_id);
+                          const isStanford = program.data_source === "stanford_basic_income_lab" || !!program.stanford_experiment_id;
+                          const isOpen = matchesProgramStatus(program, "accepting_applications");
+                          const isPlanned = matchesProgramStatus(program, "planned");
+                          const isClosedOngoing = matchesProgramStatus(program, "closed_ongoing");
+                          
+                          const locationText = program.municipalities?.[0]
+                            ? `${program.municipalities[0]}${program.required_states?.[0] ? `, ${program.required_states[0]}` : program.available_regions?.[0] ? `, ${program.available_regions[0]}` : ''}`
+                            : (program.required_states?.[0] || program.available_regions?.[0] || "Global");
+
+                          return (
+                            <tr 
+                              key={program.program_id || program.id}
+                              className="hover:bg-green-50/40 transition-colors group"
+                            >
+                              {/* Favorite Star */}
+                              <td className="px-3 py-3 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleFavorite(program.program_id)}
+                                  className="text-gray-300 hover:text-amber-500 transition-colors cursor-pointer"
+                                  title={isFavorite ? "Remove from favorites" : "Save to favorites"}
+                                >
+                                  <Star className={`w-4 h-4 ${isFavorite ? "fill-amber-400 text-amber-500" : ""}`} />
+                                </button>
+                              </td>
+
+                              {/* Name & Org */}
+                              <td className="px-4 py-3">
+                                <Link 
+                                  to={`/program-details?id=${program.program_id}`}
+                                  className="font-bold text-gray-900 group-hover:text-green-800 transition-colors block text-xs leading-snug line-clamp-1"
+                                  title={program.name}
+                                >
+                                  {program.name}
+                                </Link>
+                                <span className="text-[11px] text-gray-500 block truncate max-w-[260px] mt-0.5">
+                                  {program.organization}
+                                </span>
+                              </td>
+
+                              {/* Source */}
+                              <td className="px-3 py-3">
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  {isStanford ? (
+                                    <Badge className="bg-red-50 text-red-800 border-red-200 text-[10px] font-semibold py-0 px-1.5 shadow-2xs">
+                                      <GraduationCap className="w-2.5 h-2.5 mr-1 text-red-600" />
+                                      Stanford
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 text-[10px] font-semibold py-0 px-1.5 shadow-2xs">
+                                      <Globe className="w-2.5 h-2.5 mr-1 text-emerald-600" />
+                                      Community
+                                    </Badge>
+                                  )}
+                                  {program.is_rct && (
+                                    <Badge className="bg-purple-50 text-purple-800 border-purple-200 text-[10px] font-semibold py-0 px-1.5 shadow-2xs">
+                                      RCT
+                                    </Badge>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Location */}
+                              <td className="px-3 py-3">
+                                <div className="flex items-center gap-1 text-xs text-gray-700">
+                                  <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                  <span className="truncate max-w-[140px]" title={locationText}>
+                                    {locationText}
+                                  </span>
+                                </div>
+                              </td>
+
+                              {/* Payout Amount */}
+                              <td className="px-3 py-3 text-right">
+                                <span className="font-extrabold text-xs text-green-950 block">
+                                  {program.monthly_amount_usd ? `$${Number(program.monthly_amount_usd).toLocaleString()}` : 'Variable'}
+                                </span>
+                                <span className="text-[10px] text-gray-500 block truncate max-w-[100px] ml-auto">
+                                  {program.amount_description || '/ mo'}
+                                </span>
+                              </td>
+
+                              {/* Status */}
+                              <td className="px-3 py-3">
+                                {isOpen ? (
+                                  <Badge className="bg-emerald-100 text-emerald-900 border-emerald-200 text-[10px] font-semibold py-0 px-1.5">
+                                    Open, ongoing
+                                  </Badge>
+                                ) : isPlanned ? (
+                                  <Badge className="bg-blue-100 text-blue-900 border-blue-200 text-[10px] font-semibold py-0 px-1.5">
+                                    Planned
+                                  </Badge>
+                                ) : isClosedOngoing ? (
+                                  <Badge className="bg-purple-100 text-purple-900 border-purple-200 text-[10px] font-semibold py-0 px-1.5">
+                                    Closed, ongoing
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-gray-100 text-gray-700 border-gray-200 text-[10px] font-medium py-0 px-1.5">
+                                    Closed, historical
+                                  </Badge>
+                                )}
+                              </td>
+
+                              {/* Eligibility / Focus */}
+                              <td className="px-3 py-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {program.gender_requirement && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-pink-50 text-pink-700 rounded font-medium border border-pink-200">
+                                      {program.gender_requirement === 'female' ? 'Women' : program.gender_requirement}
+                                    </span>
+                                  )}
+                                  {(program.min_age || program.max_age) && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-medium border border-blue-200">
+                                      {program.min_age && program.max_age ? `Age ${program.min_age}-${program.max_age}` : program.min_age ? `Age ${program.min_age}+` : `Under ${program.max_age}`}
+                                    </span>
+                                  )}
+                                  {program.max_household_income_usd && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded font-medium border border-amber-200">
+                                      &lt; ${(program.max_household_income_usd / 1000).toFixed(0)}k
+                                    </span>
+                                  )}
+                                  {!program.gender_requirement && !program.min_age && !program.max_age && !program.max_household_income_usd && (
+                                    <span className="text-[10px] text-gray-400">
+                                      {program.targeting_details ? program.targeting_details.substring(0, 30) + '...' : 'Universal / Regional'}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Fit Score */}
+                              {hasCompletedProfile && (
+                                <td className="px-3 py-3 text-center">
+                                  {program.matchScore !== undefined ? (
+                                    <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                                      program.matchScore >= 80 ? "bg-emerald-100 text-emerald-900 border border-emerald-300" :
+                                      program.matchScore >= 50 ? "bg-amber-100 text-amber-900 border border-amber-300" :
+                                      "bg-gray-100 text-gray-700 border border-gray-200"
+                                    }`}>
+                                      {program.matchScore}%
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-300">—</span>
+                                  )}
+                                </td>
+                              )}
+
+                              {/* Action Buttons */}
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {(program.website || program.apply_url) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => window.open(program.apply_url || program.website, '_blank')}
+                                      className="p-1 text-gray-400 hover:text-green-800 transition-colors cursor-pointer"
+                                      title="Open Official Website / Portal"
+                                    >
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  <Link to={`/program-details?id=${program.program_id}`}>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="border-green-700 text-green-700 hover:bg-green-50 text-[11px] h-7 px-2 font-semibold cursor-pointer"
+                                    >
+                                      Details &rarr;
+                                    </Button>
+                                  </Link>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (
