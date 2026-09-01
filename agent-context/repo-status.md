@@ -25,7 +25,7 @@ Assessment date: 2026-09-01
 | Build | Pass — `npm run build` is the only application check enforced by CI and the latest GitHub run for `main` succeeded. |
 | CI coverage | Partial — [#9](https://github.com/ubi-labs/ubi-finder/issues/9) adds lint, typecheck, governed coverage, and build gates; the coverage command is completed by [#10](https://github.com/ubi-labs/ubi-finder/issues/10) and migration validation by [#11](https://github.com/ubi-labs/ubi-finder/issues/11). |
 | Supabase edge-function access criterion | Not applicable — this is a single frontend, not an MCP or multi-frontend platform; `CONTRIBUTING.md` explicitly permits direct Supabase client access subject to RLS. |
-| Supabase migration source | Partial — canonical `supabase/` migrations and seed are duplicated byte-for-byte under `src/supabase/`, creating drift risk. |
+| Supabase migration source | Root `supabase/` is canonical; the byte-identical `src/supabase/` mirror is removed on the engineering-baseline branch. |
 | Supabase PR migration validation | Missing — pull requests do not run a migration dry-run or local database validation. |
 | Supabase dev delivery | Not applicable — the repository has no `dev` branch or documented dev Supabase environment. |
 | Supabase production delivery | Pass — changes under canonical migrations/functions on `main` trigger production migration and Edge Function deployment; the latest relevant run succeeded on 2026-08-23. |

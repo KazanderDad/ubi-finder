@@ -13,6 +13,8 @@ dist
 .env.test.local
 .env.production.local
 !.env.example
+!.env.local-supabase.example
+!.env.remote-supabase.example
 
 # Logs
 npm-debug.log*
@@ -40,3 +42,6 @@ supabase/.temp
 /*.py
 .vercel
 .env*
+!.env.example
+!.env.local-supabase.example
+!.env.remote-supabase.example

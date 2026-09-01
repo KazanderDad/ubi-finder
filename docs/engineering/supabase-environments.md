@@ -7,6 +7,12 @@ The root `supabase/` directory is the only migration, seed, function, and local 
 - `local-supabase`: uses `.env.local-supabase.local` and an allocated local Supabase runtime.
 - `remote-supabase`: uses `.env.remote-supabase.local` for an explicitly selected hosted project.
 
+The coordinator-reserved UBI Finder family is `6032x`: shadow database
+`60320`, API `60321`, database `60322`, Studio `60323`, Inbucket `60324`,
+reserved SMTP/POP3 `60325`/`60326`, analytics `60327`, and pooler `60329`.
+These ports distinguish UBI Finder from other repositories sharing the local
+Docker host; they do not authorize starting a stack without a lease.
+
 Copy the corresponding tracked `.example` file, populate its public URL and anon key, and never commit the `.local` file. The application fails at startup when either variable is absent; it does not infer a hosted project or substitute a placeholder key.
 
 ## Database validation and delivery

@@ -29,3 +29,13 @@
 - **summary:** Added Vitest coverage governance for matching, match-delta, program-status, and shared utility behavior; extracted the catalog status classifier into a deterministic core module; added a Chromium Playwright harness with local-only fixture setup for public discovery, eligibility persistence, authentication, dashboard, and report paths. The harness consumes an allocated Supabase runtime and refuses hosted URLs.
 - **validation:** `npm run lint`; `npm run typecheck`; `npm run test:coverage` (40 tests; 99.61% statements, 87.34% branches, 100% functions, 99.59% lines); `npx playwright test --config playwright.config.js --list` (3 Chromium tests); `git diff --check`.
 - **follow-ups:** Execute the three browser scenarios after Task #11 establishes the collision-free local Supabase port family and the coordinator grants an exact-head lease.
+
+## 2026-09-01T18:25:00Z
+
+- **agent:** Codex
+- **branch:** `codex/repository-engineering-baseline`
+- **head:** `d0182eddfea813b2a9cf0782dbe901fc6cd65612`
+- **issue:** [#11 Normalize and validate the Supabase delivery contract](https://github.com/ubi-labs/ubi-finder/issues/11)
+- **summary:** Made root `supabase/` the sole database source; removed the byte-identical application migration mirror and tracked hosted fallback; added explicit local/remote Vite modes and examples; made missing browser configuration fail clearly; assigned the coordinator-reserved `6032x` local port family; pinned production and PR validation to Supabase CLI 2.116.0; removed the production project fallback; added clean reset, seed, and database-lint PR validation; repaired the deferred program-status enum comparison exposed by the first isolated replay.
+- **validation:** `diff -qr supabase src/supabase` established migration/seed identity before deletion; `npm run lint`; `npm run typecheck`; production build with explicit non-secret CI placeholders; `git diff --check`; coordinator confirmed no host/Docker bindings on ports 60320–60329 and reserved the family for `ubi-finder`.
+- **follow-ups:** Runtime reset, seed, database lint, and browser acceptance remain queued behind shared stack capacity. The exact committed checkout must be copied to a Colima-visible `/Users/botmaster/...` path before the coordinator can grant the bounded lease.
