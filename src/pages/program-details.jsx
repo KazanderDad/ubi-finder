@@ -40,6 +40,9 @@ import {
 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import ManagedApplicationModal from "@/components/ManagedApplicationModal";
+import DonationEncouragementModal from "@/components/DonationEncouragementModal";
+import SupporterGateModal from "@/components/SupporterGateModal";
+import { recordUsageAction } from "@/lib/supporterPoints";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -175,6 +178,10 @@ export default function ProgramDetailsPage() {
   const [canManage, setCanManage] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Supporter points & donation states
+  const [supporterEncouragementOpen, setSupporterEncouragementOpen] = useState(false);
+  const [supporterGated, setSupporterGated] = useState(false);
+
   // Involvement states
   const [managedApp, setManagedApp] = useState(null);
   const [selfApp, setSelfApp] = useState(null);
@@ -216,6 +223,14 @@ export default function ProgramDetailsPage() {
           role: profile?.role || 'user'
         };
         setUser(userData);
+      }
+
+      // Record supporter points action for viewing program details
+      const supporterStatus = await recordUsageAction('PROGRAM_DETAILS_VIEW', userData);
+      if (supporterStatus.isGated) {
+        setSupporterGated(true);
+      } else if (supporterStatus.shouldEncourage) {
+        setSupporterEncouragementOpen(true);
       }
       
       // 2. Load program data
@@ -1279,6 +1294,20 @@ export default function ProgramDetailsPage() {
         onSuccess={(newApp) => {
           setManagedApp(newApp);
         }}
+      />
+
+      {/* Volunteer Community Support Encouragement Modal (1-time gentle notice) */}
+      <DonationEncouragementModal
+        isOpen={supporterEncouragementOpen}
+        onClose={() => setSupporterEncouragementOpen(false)}
+        user={user}
+      />
+
+      {/* Volunteer Community Supporter Gate (Full Program Criteria Access) */}
+      <SupporterGateModal
+        isOpen={supporterGated}
+        user={user}
+        featureName="full program details"
       />
     </div>
   );

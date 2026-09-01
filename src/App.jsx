@@ -32,6 +32,7 @@ import FundLoopClaim from './pages/claim/FundLoopClaim';
 import CirclesClaim from './pages/claim/CirclesClaim';
 import ServicesPage from './pages/Services';
 import EcosystemPage from './pages/Ecosystem';
+import DonateSuccess from './pages/DonateSuccess';
 import AdminSubmissions from './pages/admin/AdminSubmissions';
 import AdminUsers from './pages/admin/AdminUsers';
 import Header from './components/Header';
@@ -104,6 +105,8 @@ const AuthenticatedApp = () => {
       <Route path="/services" element={<ServicesPage />} />
       <Route path="/Ecosystem" element={<EcosystemPage />} />
       <Route path="/ecosystem" element={<EcosystemPage />} />
+      <Route path="/donate/success" element={<DonateSuccess />} />
+      <Route path="/Donate/Success" element={<DonateSuccess />} />
 
       {/* Authenticated-Only Protected Routes */}
       <Route element={<ProtectedRoute />}>

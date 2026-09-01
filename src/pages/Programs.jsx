@@ -42,6 +42,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ProgramList from "../components/dashboard/ProgramList";
 import ProgramsMap from "../components/ProgramsMap";
+import DonationEncouragementModal from "@/components/DonationEncouragementModal";
+import SupporterGateModal from "@/components/SupporterGateModal";
+import { recordUsageAction } from "@/lib/supporterPoints";
 import { Link } from 'react-router-dom';
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -158,6 +161,20 @@ export default function Programs() {
   const [viewMode, setViewMode] = useState("card"); // 'card' | 'table' | 'map'
   const [tableSortColumn, setTableSortColumn] = useState('name');
   const [tableSortDirection, setTableSortDirection] = useState('asc'); // 'asc' | 'desc'
+
+  // Supporter points states
+  const [supporterEncouragementOpen, setSupporterEncouragementOpen] = useState(false);
+  const [supporterGated, setSupporterGated] = useState(false);
+
+  const handleSwitchToMapView = async () => {
+    setViewMode("map");
+    const status = await recordUsageAction('MAP_VIEW', user);
+    if (status.isGated) {
+      setSupporterGated(true);
+    } else if (status.shouldEncourage) {
+      setSupporterEncouragementOpen(true);
+    }
+  };
 
   const handleTableSort = (columnKey) => {
     if (tableSortColumn === columnKey) {
@@ -924,7 +941,7 @@ export default function Programs() {
                     Card View
                   </button>
                   <button
-                    onClick={() => setViewMode("map")}
+                    onClick={handleSwitchToMapView}
                     className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                       viewMode === "map" 
                         ? "bg-white text-green-950 shadow-sm" 
@@ -1634,6 +1651,20 @@ export default function Programs() {
 
         </div>
       </div>
+
+      {/* Volunteer Community Support Encouragement Modal (1-time gentle notice) */}
+      <DonationEncouragementModal
+        isOpen={supporterEncouragementOpen}
+        onClose={() => setSupporterEncouragementOpen(false)}
+        user={user}
+      />
+
+      {/* Volunteer Community Supporter Gate (Interactive Map Access) */}
+      <SupporterGateModal
+        isOpen={supporterGated}
+        user={user}
+        featureName="the global interactive map"
+      />
     </>
   );
 }
