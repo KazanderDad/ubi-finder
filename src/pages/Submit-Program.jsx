@@ -30,8 +30,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, Save, Plus, X, LockKeyhole, Link2, Globe } from "lucide-react";
+import { 
+  ChevronLeft, 
+  Save, 
+  Plus, 
+  X, 
+  LockKeyhole, 
+  Link2, 
+  Globe, 
+  Search, 
+  CheckCircle2, 
+  AlertCircle, 
+  Info, 
+  Sparkles, 
+  UserCheck 
+} from "lucide-react";
 
 const COUNTRIES = [
   "United States",
@@ -85,6 +101,10 @@ export default function SubmitProgramPage() {
   const [loginAlertOpen, setLoginAlertOpen] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   
+  // Confirmation gate: User must acknowledge checking the database before editing form
+  const [hasSearchedConfirmation, setHasSearchedConfirmation] = useState(false);
+  const [acknowledgmentChecked, setAcknowledgmentChecked] = useState(false);
+
   // Custom field toggles
   const [isOtherCurrency, setIsOtherCurrency] = useState(false);
   const [isOtherPaymentMethod, setIsOtherPaymentMethod] = useState(false);
@@ -97,6 +117,7 @@ export default function SubmitProgramPage() {
   const [formData, setFormData] = useState({
     name: "",
     organization: "",
+    submission_role: "know_of", // "know_of" | "involved"
     description: "",
     gender_requirement: "",
     min_age: null,
@@ -454,35 +475,156 @@ export default function SubmitProgramPage() {
           </Button>
         </div>
 
-        <Card className="shadow-lg border-green-100">
-          <CardHeader>
-            <CardTitle className="text-2xl text-green-800 font-extrabold">Submit New UBI Program</CardTitle>
-            <CardDescription>
-              Help us grow our database by submitting a new UBI program. All submissions will be reviewed for accuracy before posting. Please review the Programs listing first to avoid duplicate entries.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
+        {!hasSearchedConfirmation ? (
+          /* Pre-Submission Database Search Confirmation Screen */
+          <Card className="shadow-lg border-emerald-200 bg-white">
+            <CardHeader className="bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 border-b border-emerald-100/80 pb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-800 shadow-inner">
+                  <Search className="w-5 h-5" />
+                </div>
                 <div>
-                  <Label className="font-semibold">Program Name</Label>
-                  <Input
-                    required
-                    value={formData.name}
-                    onChange={(e) => handleChange("name", e.target.value)}
-                    placeholder="Enter program name"
-                  />
+                  <CardTitle className="text-xl text-green-950 font-bold">
+                    Check Database Before Submitting
+                  </CardTitle>
+                  <CardDescription className="text-xs text-emerald-800 mt-0.5">
+                    Help us prevent duplicate entries in our global catalog.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6 sm:p-8 space-y-6">
+              <div className="p-4 bg-gray-50/90 rounded-2xl border border-gray-200/70 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-emerald-700 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs text-gray-700 space-y-2 leading-relaxed">
+                    <p>
+                      UBI Finder currently tracks over <strong>270+ basic income initiatives</strong> across 30+ countries, incorporating research data from the Stanford Basic Income Lab and ongoing community contributions.
+                    </p>
+                    <p>
+                      Please verify that the program you want to add is not already listed in our directory. If your program is already listed but requires updates or corrections, you can manage or report details from its listing page.
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <Label className="font-semibold">Organization</Label>
-                  <Input
-                    required
-                    value={formData.organization}
-                    onChange={(e) => handleChange("organization", e.target.value)}
-                    placeholder="Organization or municipal entity running the program"
-                  />
+                <div className="pt-2 flex justify-start">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/Programs")}
+                    className="border-emerald-600 text-emerald-800 hover:bg-emerald-50 text-xs font-semibold h-8 cursor-pointer"
+                  >
+                    <Search className="w-3.5 h-3.5 mr-1.5 text-emerald-700" />
+                    Search the Programs Directory &rarr;
+                  </Button>
                 </div>
+              </div>
+
+              {/* Acknowledgment Checkbox */}
+              <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200/80">
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <Checkbox
+                    id="search-acknowledgment"
+                    checked={acknowledgmentChecked}
+                    onCheckedChange={(checked) => setAcknowledgmentChecked(!!checked)}
+                    className="mt-0.5 data-[state=checked]:bg-emerald-700 data-[state=checked]:border-emerald-700"
+                  />
+                  <div className="space-y-1">
+                    <span className="text-xs sm:text-sm font-bold text-gray-900 leading-snug block">
+                      I have searched through the database and didn't find my program
+                    </span>
+                    <span className="text-[11px] text-gray-500 block leading-tight">
+                      Confirming this ensures our catalog remains clean, accurate, and duplicate-free.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  onClick={() => setHasSearchedConfirmation(true)}
+                  disabled={!acknowledgmentChecked}
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-6 h-10 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Continue to Submission Form &rarr;
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          /* Main Submission Form (Unlocked after acknowledgment) */
+          <Card className="shadow-lg border-green-100">
+            <CardHeader>
+              <CardTitle className="text-2xl text-green-800 font-extrabold">Submit New UBI Program</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-gray-600 leading-relaxed mt-1">
+                Help us grow our database by submitting a new UBI program. All submissions will be reviewed for accuracy before posting. Many fields are optional, we encourage you to populate what you know and to not guess if you don't have the answer.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-4">
+                  
+                  {/* Connection / Submitter Role Radio Options */}
+                  <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/80 space-y-3">
+                    <Label className="text-xs sm:text-sm font-bold text-emerald-950 flex items-center gap-2">
+                      <UserCheck className="w-4 h-4 text-emerald-700" />
+                      What is your connection to this program?
+                    </Label>
+                    <RadioGroup
+                      value={formData.submission_role}
+                      onValueChange={(val) => handleChange("submission_role", val)}
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1"
+                    >
+                      <div 
+                        onClick={() => handleChange("submission_role", "know_of")}
+                        className={`flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                          formData.submission_role === "know_of"
+                            ? "bg-white border-emerald-600 shadow-xs ring-1 ring-emerald-600"
+                            : "bg-white/60 border-gray-200 hover:bg-white"
+                        }`}
+                      >
+                        <RadioGroupItem value="know_of" id="role-know-of" />
+                        <Label htmlFor="role-know-of" className="text-xs font-semibold text-gray-800 cursor-pointer">
+                          I'm submitting a program I know of
+                        </Label>
+                      </div>
+
+                      <div 
+                        onClick={() => handleChange("submission_role", "involved")}
+                        className={`flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                          formData.submission_role === "involved"
+                            ? "bg-white border-emerald-600 shadow-xs ring-1 ring-emerald-600"
+                            : "bg-white/60 border-gray-200 hover:bg-white"
+                        }`}
+                      >
+                        <RadioGroupItem value="involved" id="role-involved" />
+                        <Label htmlFor="role-involved" className="text-xs font-semibold text-gray-800 cursor-pointer">
+                          I'm submitting a program that I'm involved with
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div>
+                    <Label className="font-semibold">Program Name</Label>
+                    <Input
+                      required
+                      value={formData.name}
+                      onChange={(e) => handleChange("name", e.target.value)}
+                      placeholder="Enter program name"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="font-semibold">Organization</Label>
+                    <Input
+                      required
+                      value={formData.organization}
+                      onChange={(e) => handleChange("organization", e.target.value)}
+                      placeholder="Organization or municipal entity running the program"
+                    />
+                  </div>
 
                 {/* Primary Website & Additional Links */}
                 <div className="space-y-3 p-4 bg-gray-50/80 rounded-2xl border border-gray-200/70">
@@ -938,6 +1080,7 @@ export default function SubmitProgramPage() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         <AlertDialog open={loginAlertOpen} onOpenChange={setLoginAlertOpen}>
           <AlertDialogContent>
