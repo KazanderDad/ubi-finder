@@ -299,13 +299,21 @@ export default function ServicesPage() {
               <div className="text-center py-8">
                 <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Inquiry Received!</h3>
-                <p className="text-gray-600 text-sm">Thank you for reaching out. The Firebelly technical team will review your requirements and respond within 24 hours.</p>
-                <Button 
-                  onClick={() => setSuccess(false)}
-                  className="mt-6 bg-green-700 hover:bg-green-800"
-                >
-                  Send Another Message
-                </Button>
+                <p className="text-gray-600 text-sm max-w-md mx-auto">
+                  Thank you for reaching out. The Firebelly technical team will review your requirements and respond promptly.
+                </p>
+                <div className="mt-6 flex items-center justify-center">
+                  <a 
+                    href="https://calendly.com/meet-noak/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold bg-green-700 hover:bg-green-800 text-white shadow-md transition-all cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Book a meeting with us
+                    <ExternalLink className="w-3.5 h-3.5 opacity-80 ml-0.5" />
+                  </a>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
