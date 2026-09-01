@@ -23,6 +23,7 @@
   - [Running the App](#running-the-app)
 - [Project Structure](#project-structure)
 - [Available Scripts](#available-scripts)
+- [Repository & Roadmap](#repository--roadmap)
 - [Target User Groups](#target-user-groups)
 - [Contributing](#contributing)
 - [License](#license)
@@ -175,6 +176,16 @@ ubi-finder/
 - `npm run build` — Compiles production-ready bundle to `/dist`.
 - `npm run preview` — Locally tests the built production files.
 - `npm run lint` — Runs ESLint checks.
+
+---
+
+## 🗺️ Repository & Roadmap
+
+- **Canonical repository:** [ubi-labs/ubi-finder](https://github.com/ubi-labs/ubi-finder)
+- **Issues:** [ubi-labs/ubi-finder/issues](https://github.com/ubi-labs/ubi-finder/issues)
+- **Active roadmap:** [UBI Finder Project](https://github.com/orgs/ubi-labs/projects/1)
+
+Use `ubi-labs/ubi-finder` for clones, links, automation, and new issue references.
 
 ---
 

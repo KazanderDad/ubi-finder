@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing to UBI Finder! Together, we can make universal basic income opportunities transparent, verifiable, and accessible to everyone.
 
+Use the [canonical repository](https://github.com/ubi-labs/ubi-finder), its [issue queue](https://github.com/ubi-labs/ubi-finder/issues), and the [UBI Finder Project](https://github.com/orgs/ubi-labs/projects/1) for active work.
+
 ---
 
 ## 🛠️ Development Workflow
@@ -42,7 +44,7 @@ Thank you for your interest in contributing to UBI Finder! Together, we can make
    Use clear and conventional commit messages (e.g. `feat: add filter for regional grants`, `fix: handle null gender requirement in matching engine`).
 
 8. **Submit a Pull Request:**
-   Open a pull request describing the change, motivation, and any verification steps performed.
+   Open a pull request against [`ubi-labs/ubi-finder`](https://github.com/ubi-labs/ubi-finder/pulls) describing the change, motivation, linked issue, and verification steps performed.
 
 ---
 
