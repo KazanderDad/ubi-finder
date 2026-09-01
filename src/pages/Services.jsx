@@ -264,6 +264,19 @@ export default function ServicesPage() {
             </Card>
 
           </div>
+
+          {/* External Portfolio Link */}
+          <div className="mt-8 text-center">
+            <a
+              href="https://firebelly.xyz/portfolio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-700 hover:text-green-800 hover:underline transition-colors cursor-pointer"
+            >
+              See our full list of projects
+              <ExternalLink className="w-4 h-4 ml-0.5" />
+            </a>
+          </div>
         </div>
 
         {/* Services Grid */}
