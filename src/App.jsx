@@ -14,7 +14,6 @@ import About from './pages/About';
 import Programs from './pages/Programs';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
-import SubmitProgram from './pages/SubmitProgram';
 import SubmitProgramPage from './pages/Submit-Program';
 import ManageProgramPage from './pages/Manage-Program';
 import MyProgramsPage from './pages/My-Programs';
@@ -163,4 +162,3 @@ function App() {
 }
 
 export default App
-
