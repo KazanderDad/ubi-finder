@@ -1,6 +1,8 @@
-# UBI Finder — Product & Technical Backlog
+# UBI Finder — Product & Technical Ideas
 
-This backlog outlines high-priority capabilities identified from our institutional schema analysis, slated for subsequent implementation phases.
+This is target-state reference material, not an active backlog. Work becomes active only when it is represented by a vetted issue in the [UBI Finder Project](https://github.com/orgs/ubi-labs/projects/1).
+
+The ideas below were inferred from an earlier institutional schema analysis and have not been approved for implementation.
 
 ---
 

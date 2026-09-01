@@ -23,22 +23,27 @@ Use the [canonical repository](https://github.com/ubi-labs/ubi-finder), its [iss
 
 3. **Install Dependencies:**
    ```bash
-   npm install
+   npm ci
    ```
 
 4. **Configure Environment:**
-   Copy `.env.example` to `.env` and configure your local or remote Supabase credentials.
+   Copy `.env.local-supabase.example` to `.env.local-supabase.local`, or copy `.env.remote-supabase.example` to `.env.remote-supabase.local`, and populate both public Supabase variables.
 
 5. **Start Dev Server:**
    ```bash
-   npm run dev
+   npm run dev:local
    ```
 
-6. **Verify Build & Types:**
-   Before pushing, verify that the production build completes without errors:
+6. **Run Required Checks:**
+   Before pushing, run the same application contract enforced by CI:
    ```bash
+   npm run lint
+   npm run typecheck
+   npm run test:coverage
    npm run build
    ```
+
+   Run `npm run test:acceptance:local` for route, authentication, eligibility, program discovery, report, or Supabase-backed flow changes. Acquire a local-Supabase coordinator lease before using the shared runtime.
 
 7. **Commit & Push:**
    Use clear and conventional commit messages (e.g. `feat: add filter for regional grants`, `fix: handle null gender requirement in matching engine`).
