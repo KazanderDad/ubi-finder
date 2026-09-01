@@ -215,7 +215,11 @@ export default function ProgramDetailsPage() {
     
     setAuthLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
-      email: authEmail,
+      email: authEmail.trim(),
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: window.location.href,
+      }
     });
     setAuthLoading(false);
     
@@ -223,7 +227,7 @@ export default function ProgramDetailsPage() {
       setAuthErrorMsg(error.message);
     } else {
       setAuthStep("otp");
-      setAuthSuccessMsg("Verification code sent to your email.");
+      setAuthSuccessMsg("Verification email sent! Enter your 6-digit code below, or click the direct magic link in your email to unlock access instantly.");
     }
   };
 
@@ -901,7 +905,7 @@ export default function ProgramDetailsPage() {
                         <Lock className="w-12 h-12 text-green-600 mx-auto mb-4" />
                         <h3 className="text-2xl font-bold text-gray-900 mb-2">Unlock Full Details</h3>
                         <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                          Enter your email to instantly view payout amounts, direct application links, and your personalized eligibility report.
+                          Enter your email to instantly view payout amounts, direct application links, and your personalized eligibility report. No purchase necessary.
                         </p>
                         
                         {authStep === 'email' ? (

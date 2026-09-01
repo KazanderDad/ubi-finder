@@ -238,6 +238,11 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Custom magic link and OTP verification template
+[auth.email.template.magic_link]
+subject = "Your UBI Finder Verification Code & Access Link"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

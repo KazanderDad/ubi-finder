@@ -427,6 +427,57 @@ export default function Programs() {
     }
   });
 
+  // Dynamic Source Counts Calculation (respects active search and other filters)
+  const sourceBasePrograms = scoredPrograms.filter((program) => {
+    if (program.internal_status === "deleted") return false;
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      const matchName = program.name?.toLowerCase().includes(q);
+      const matchDesc = program.description?.toLowerCase().includes(q);
+      const matchOrg = program.organization?.toLowerCase().includes(q);
+      if (!matchName && !matchDesc && !matchOrg) return false;
+    }
+
+    if (filterMode === "quick") {
+      if (!matchesProgramStatus(program, quickFilter)) return false;
+      return true;
+    } else {
+      if (!advancedFilters.includeUnverified && !program.verified) return false;
+      if (advancedFilters.statuses.length > 0) {
+        if (!advancedFilters.statuses.some((st) => matchesProgramStatus(program, st))) return false;
+      }
+      if (advancedFilters.countries.length > 0) {
+        const programRegions = program.available_regions || [];
+        const matchesAnyCountry = advancedFilters.countries.some((c) =>
+          c === "Global"
+            ? programRegions.some((r) => /^(global|worldwide|international|all)$/i.test(r)) || programRegions.length === 0
+            : programRegions.includes(c)
+        );
+        if (!matchesAnyCountry) return false;
+      }
+      if (advancedFilters.distributionTypes.length > 0) {
+        if (!advancedFilters.distributionTypes.includes(program.distribution_type)) return false;
+      }
+      if (advancedFilters.payoutRails.length > 0) {
+        if (!advancedFilters.payoutRails.includes(program.payout_rail)) return false;
+      }
+      if (advancedFilters.fundingSources.length > 0) {
+        if (!advancedFilters.fundingSources.includes(program.funding_source)) return false;
+      }
+      if (advancedFilters.involvementLevels.length > 0) {
+        const progInvolvement = program.involvement_level || "external_self_apply";
+        if (!advancedFilters.involvementLevels.includes(progInvolvement)) return false;
+      }
+      return true;
+    }
+  });
+
+  const sourceCounts = {
+    all: sourceBasePrograms.length,
+    stanford: sourceBasePrograms.filter((p) => p.data_source === "stanford_basic_income_lab" || p.stanford_experiment_id).length,
+    community: sourceBasePrograms.filter((p) => p.data_source !== "stanford_basic_income_lab" && !p.stanford_experiment_id).length,
+  };
+
   // 3. Sort Programs (Default to Best Fit when profile data exists)
   const sortedPrograms = [...filteredPrograms].sort((a, b) => {
     if (sortField === 'best_fit' && hasCompletedProfile) {
@@ -704,7 +755,7 @@ export default function Programs() {
                       : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
                   }`}
                 >
-                  All Sources ({programs.length})
+                  All Sources ({sourceCounts.all})
                 </button>
                 <button
                   type="button"
@@ -716,7 +767,7 @@ export default function Programs() {
                   }`}
                 >
                   <GraduationCap className="w-3.5 h-3.5 text-red-600" />
-                  Stanford Basic Income Lab ({programs.filter(p => p.data_source === 'stanford_basic_income_lab' || p.stanford_experiment_id).length})
+                  Stanford Basic Income Lab ({sourceCounts.stanford})
                 </button>
                 <button
                   type="button"
@@ -728,7 +779,7 @@ export default function Programs() {
                   }`}
                 >
                   <Globe className="w-3.5 h-3.5 text-emerald-600" />
-                  Community Submissions ({programs.filter(p => p.data_source !== 'stanford_basic_income_lab' && !p.stanford_experiment_id).length})
+                  Community Submissions ({sourceCounts.community})
                 </button>
               </div>
 
