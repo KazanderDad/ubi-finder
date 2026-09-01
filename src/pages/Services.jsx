@@ -119,10 +119,12 @@ export default function ServicesPage() {
           {/* 7a: "Book a call" CTA in Hero */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <a 
-              href="mailto:contact@firebelly.xyz?subject=UBI%20Program%20Consultation%20Inquiry" 
+              href="https://calendly.com/meet-noak/" 
+              target="_blank" 
+              rel="noopener noreferrer"
               className="w-full sm:w-auto"
             >
-              <Button size="lg" className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white font-semibold py-6 px-8 shadow-lg flex items-center justify-center gap-2">
+              <Button size="lg" className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white font-semibold py-6 px-8 shadow-lg flex items-center justify-center gap-2 cursor-pointer">
                 <Calendar className="w-5 h-5" />
                 Book a 30-Min Strategy Call
               </Button>
@@ -133,7 +135,7 @@ export default function ServicesPage() {
               onClick={() => {
                 document.getElementById('intake-form')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="w-full sm:w-auto border-gray-300 hover:bg-gray-100 py-6 px-6"
+              className="w-full sm:w-auto border-gray-300 hover:bg-gray-100 py-6 px-6 cursor-pointer"
             >
               Send Inquiry Form &rarr;
             </Button>
