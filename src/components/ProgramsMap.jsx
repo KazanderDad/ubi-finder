@@ -219,11 +219,16 @@ export default function ProgramsMap({ programs }) {
                       {program.organization}
                     </p>
 
-                    <div className="flex items-center gap-1 text-xs text-emerald-800 font-bold bg-emerald-50 p-2 rounded-lg border border-emerald-100">
-                      <span>${monthlyUsd.toLocaleString()} USD</span>
-                      <span className="text-[10px] font-normal text-gray-600">
-                        ({program.amount_description || `${program.currency}`})
-                      </span>
+                    <div className="flex flex-col gap-0.5 text-xs text-emerald-800 font-bold bg-emerald-50 p-2 rounded-lg border border-emerald-100">
+                      <div className="flex items-center gap-1">
+                        <span>${monthlyUsd.toLocaleString()} USD</span>
+                        <span className="text-[10px] text-gray-500 font-normal">/ mo</span>
+                      </div>
+                      {program.amount_description && (
+                        <span className="text-[10px] font-normal text-gray-600 leading-tight mt-0.5 block">
+                          {program.amount_description}
+                        </span>
+                      )}
                     </div>
 
                     {program.municipalities && program.municipalities.length > 0 && !program.municipalities.includes('Global') && (

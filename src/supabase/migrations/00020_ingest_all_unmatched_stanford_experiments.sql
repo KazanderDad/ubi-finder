@@ -1,17 +1,14 @@
 -- Migration 00020: Ingest all qualified Stanford experiments
 DELETE FROM public.programs WHERE program_id >= 100;
 
--- Migration 00019: Ingest and qualify all remaining Stanford Basic Income Lab experiments into public.programs
-
 -- 1. Fix handle_new_program_submission to use submitter_email
-
 
 CREATE OR REPLACE FUNCTION public.handle_new_program_submission()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS 33517
 BEGIN
   IF NEW.verified = FALSE OR NEW.status = 'pending_approval' THEN
     INSERT INTO public.admin_notifications (type, title, message, program_id, submitter_id)
@@ -25,8 +22,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$;
-
+33517;
 
 INSERT INTO public.programs (
     program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
@@ -37,6 +33,47 @@ INSERT INTO public.programs (
 )
 SELECT
     101,
+    'Alaska Permanent Dividend Fund',
+    'Alaska Dept of Revenue',
+    'Alaska Permanent Dividend Fund is a guaranteed basic income initiative in N/A, organized by Alaska Dept of Revenue. Implemented during January 1982 -. Enrolled 667,047 participants. Data documented by the Stanford Basic Income Lab.',
+    93,
+    'USD',
+    '1114 USD (2021) (yearly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'active_open'::public.program_status,
+    'Ongoing',
+    'Ongoing monthly distributions',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['N/A'],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '667,047',
+    'N/A',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Alaska Permanent Dividend Fund' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Alaska Permanent Dividend Fund'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    102,
     'Embrace Mothers',
     'City of Birmingham',
     'Embrace Mothers is a guaranteed basic income initiative in Birmingham, AL, organized by City of Birmingham. Implemented during March 2022 - February 2023. Enrolled 110 participants. Data documented by the Stanford Basic Income Lab.',
@@ -52,7 +89,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Alabama'],
+    ARRAY[]::TEXT[],
     ARRAY['Birmingham'],
     18,
     NULL,
@@ -77,7 +114,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    102,
+    103,
     'Returning Home Career Grant',
     'Rubicon Programs',
     'Returning Home Career Grant is a guaranteed basic income initiative in Alameda and Contra Costa Counties, CA, organized by Rubicon Programs. Implemented during May 2021 - May 2022. Enrolled 25 participants. Data documented by the Stanford Basic Income Lab.',
@@ -93,7 +130,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Alameda and Contra Costa Counties'],
     NULL,
     NULL,
@@ -118,7 +155,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    103,
+    104,
     'Community-Based Roads to Prosperity',
     'United Way Bay Area',
     'Community-Based Roads to Prosperity is a guaranteed basic income initiative in Alameda County, CA, organized by United Way Bay Area. Implemented during 8/1/2024 - 1/1/2025. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -134,7 +171,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Alameda County'],
     NULL,
     NULL,
@@ -159,7 +196,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    104,
+    105,
     'NET Growth Movement',
     'Bay Area Community Services',
     'NET Growth Movement is a guaranteed basic income initiative in Alameda County, CA, organized by Bay Area Community Services. Implemented during 1/1/2023 - 12/31/2025. Enrolled 67 participants. Data documented by the Stanford Basic Income Lab.',
@@ -175,7 +212,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Alameda County'],
     18,
     24,
@@ -200,7 +237,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    105,
+    106,
     'Coco Go BIG',
     'Comment Studio',
     'Coco Go BIG is a guaranteed basic income initiative in Antioch, CA, organized by Comment Studio. Implemented during 1/15/2024 - 6/15/2024. Enrolled 30 participants. Data documented by the Stanford Basic Income Lab.',
@@ -216,7 +253,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['94509, 94531', 'Antioch'],
     18,
     24,
@@ -241,7 +278,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    106,
+    107,
     'Rise Up Alameda',
     'City of Alameda',
     'Rise Up Alameda is a guaranteed basic income initiative in Alameda, CA, organized by City of Alameda. Implemented during 12/15/2023 - 12/15/2025. Enrolled 150 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -257,7 +294,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['94501 and 94502 zip codes', 'Alameda'],
     18,
     NULL,
@@ -282,7 +319,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    107,
+    108,
     'ELEVATE Concord: Family Economic Equity Pilot',
     'Monument Impact',
     'ELEVATE Concord: Family Economic Equity Pilot is a guaranteed basic income initiative in Concord, CA, organized by Monument Impact. Implemented during 11/6/2023 - 10/31/2024. Enrolled 120 participants. Data documented by the Stanford Basic Income Lab.',
@@ -298,7 +335,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Concord'],
     NULL,
     12,
@@ -323,7 +360,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    108,
+    109,
     'Immigrant Families Recovery Program: Coachella''s UBI Recovery Program',
     'Mission Asset Fund (MAF)',
     'Immigrant Families Recovery Program: Coachella''s UBI Recovery Program is a guaranteed basic income initiative in Coachella, CA, organized by Mission Asset Fund (MAF). Implemented during October 2022 - 2024. Enrolled 140 participants. Data documented by the Stanford Basic Income Lab.',
@@ -339,7 +376,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Coachella'],
     18,
     NULL,
@@ -364,10 +401,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    109,
+    110,
     'Compton Pledge',
-    'Fund for Guaranteed Income (F4GI) & City of Compton',
-    'Compton Pledge is a guaranteed basic income initiative in Compton, CA, organized by City of Compton. Implemented during December 2020 - November 2022. Enrolled 800 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Jain Family Institute (JFI).',
+    'City of Compton',
+    'Compton Pledge is a guaranteed basic income initiative in Compton, CA, organized by City of Compton. Implemented during December 2020 - November 2022. Enrolled 800 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     100,
     'USD',
     '300, 400 and 600 USD (bi-weekly or quarterly)',
@@ -380,7 +417,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Compton'],
     NULL,
     NULL,
@@ -391,7 +428,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Compton Pledge' LIMIT 1),
-    'https://comptonpledge.org/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Compton Pledge'
@@ -405,7 +442,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    110,
+    111,
     'Family Income for Empowerment Program',
     'Jewish Family Service of San Diego',
     'Family Income for Empowerment Program is a guaranteed basic income initiative in County of San Diego, CA, organized by Jewish Family Service of San Diego. Implemented during 7/1/2023 - 12/31/2026. Enrolled 485 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -421,7 +458,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['County of San Diego'],
     NULL,
     18,
@@ -454,7 +491,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    111,
+    112,
     'City of El Monte Guaranteed Income Program',
     'City of El Monte',
     'City of El Monte Guaranteed Income Program is a guaranteed basic income initiative in El Monte, CA, organized by City of El Monte. Enrolled 125 participants. Data documented by the Stanford Basic Income Lab.',
@@ -470,7 +507,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['El Monte'],
     NULL,
     NULL,
@@ -495,7 +532,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    112,
+    113,
     'Advancing Fresno County Guaranteed Income',
     'Fresno EOC',
     'Advancing Fresno County Guaranteed Income is a guaranteed basic income initiative in Fresno, CA, organized by Fresno EOC. Implemented during 7/1/2024 - July 2025. Enrolled 150 participants. Data documented by the Stanford Basic Income Lab.',
@@ -511,7 +548,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Zipcodes 93706 and 93234', 'Fresno'],
     18,
     45,
@@ -536,7 +573,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    113,
+    114,
     'HIP (Humboldt Income Program)',
     'McKinleyville Family Resource Center (McKinleyville Community Collaborative)',
     'HIP (Humboldt Income Program) is a guaranteed basic income initiative in Humboldt County, CA, organized by McKinleyville Family Resource Center (McKinleyville Community Collaborative). Implemented during 1/25/2024 - 11/25/2025. Enrolled 150 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -552,7 +589,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Humboldt County'],
     NULL,
     28,
@@ -579,7 +616,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    114,
+    115,
     'Breathe: LA County''s Guaranteed Income Program',
     'Strength Based Community Change',
     'Breathe: LA County''s Guaranteed Income Program is a guaranteed basic income initiative in LA County, CA, organized by Strength Based Community Change. Implemented during June 2022 - July 2025. Enrolled 1000 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -595,7 +632,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California', 'Louisiana'],
+    ARRAY[]::TEXT[],
     ARRAY['LA County'],
     NULL,
     NULL,
@@ -620,7 +657,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    115,
+    116,
     'LA County Breathe - Former Foster Youth Expansion 1',
     'Strength Based Community Change',
     'LA County Breathe - Former Foster Youth Expansion 1 is a guaranteed basic income initiative in LA County, CA, organized by Strength Based Community Change. Implemented during 2023-8/31/2025. Enrolled 200 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -636,7 +673,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California', 'Louisiana'],
+    ARRAY[]::TEXT[],
     ARRAY['LA County'],
     21,
     24,
@@ -661,7 +698,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    116,
+    117,
     'LA County Breathe - Former Foster Youth Expansion 2',
     'Strength Based Community Change',
     'LA County Breathe - Former Foster Youth Expansion 2 is a guaranteed basic income initiative in LA County, CA, organized by Strength Based Community Change. Implemented during 2024-4/30/2026. Enrolled 2000 participants. Data documented by the Stanford Basic Income Lab.',
@@ -677,7 +714,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California', 'Louisiana'],
+    ARRAY[]::TEXT[],
     ARRAY['LA County'],
     18,
     21,
@@ -702,7 +739,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    117,
+    118,
     'TAYportunity Guaranteed Income Program',
     'LA County DPSS',
     'TAYportunity Guaranteed Income Program is a guaranteed basic income initiative in LA County, CA, organized by LA County DPSS. Implemented during 8/1/2022 - 8/1/2025. Enrolled 300 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -718,7 +755,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California', 'Louisiana'],
+    ARRAY[]::TEXT[],
     ARRAY['LA County'],
     18,
     24,
@@ -743,7 +780,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    118,
+    119,
+    'Long Beach Guaranteed Income Pilot Program',
+    'City of Long Beach',
+    'Long Beach Guaranteed Income Pilot Program is a guaranteed basic income initiative in Long Beach, CA, organized by City of Long Beach. Implemented during 3/1/2024 - 2/1/2025. Enrolled 200 participants. Data documented by the Stanford Basic Income Lab.',
+    500,
+    'USD',
+    '$500 (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['90802, 90804, 90805,90806, and 90810 zipcodes', 'Long Beach'],
+    NULL,
+    NULL,
+    NULL,
+    40000,
+    '200',
+    'Households with dependent children and gross household income (before taxes) of 100% or less of the federal poverty level. This number depends on how many individuals are in your household/family unit. Long Beach residents in the 90802, 90804, 908095,90806, and 90810 zipcode.',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Long Beach Guaranteed Income Pilot Program' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Long Beach Guaranteed Income Pilot Program'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    120,
     'Long Beach Pledge (Cohort 1)',
     'City of Long Beach',
     'Long Beach Pledge (Cohort 1) is a guaranteed basic income initiative in Long Beach, CA, organized by City of Long Beach. Implemented during November 2022 - October 2023. Enrolled 250 participants. Data documented by the Stanford Basic Income Lab.',
@@ -759,7 +837,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['90813 Zip code', 'Long Beach'],
     NULL,
     NULL,
@@ -784,10 +862,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    119,
+    121,
     'BIG:LEAP (Basic Income Guaranteed: L.A. Economic Assistance Pilot)',
-    'City of Los Angeles Community Investment for Families Department',
-    'BIG:LEAP (Basic Income Guaranteed: L.A. Economic Assistance Pilot) is a guaranteed basic income initiative in Los Angeles, CA, organized by City of Los Angeles. Implemented during January 2022 - March 2023. Enrolled 3204 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Center for Guaranteed Income Research (UPenn).',
+    'City of Los Angeles',
+    'BIG:LEAP (Basic Income Guaranteed: L.A. Economic Assistance Pilot) is a guaranteed basic income initiative in Los Angeles, CA, organized by City of Los Angeles. Implemented during January 2022 - March 2023. Enrolled 3204 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     1000,
     'USD',
     '1000 USD (monthly)',
@@ -800,7 +878,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Los Angeles'],
     18,
     45,
@@ -811,7 +889,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'BIG:LEAP (Basic Income Guaranteed: L.A. Economic Assistance Pilot)' LIMIT 1),
-    'https://bigleap.lacity.gov/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'BIG:LEAP (Basic Income Guaranteed: L.A. Economic Assistance Pilot)'
@@ -825,7 +903,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    120,
+    122,
     'Family Goal Fund',
     'LIFT',
     'Family Goal Fund is a guaranteed basic income initiative in Los Angeles, CA, organized by LIFT. Implemented during January 2018 -. Enrolled 800+ participants. Data documented by the Stanford Basic Income Lab.',
@@ -841,7 +919,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Los Angeles'],
     NULL,
     NULL,
@@ -866,7 +944,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    121,
+    123,
     'BOOST: Building Outstanding Opportunities for Students to Thrive',
     'Foundation for the Los Angeles Community Colleges',
     'BOOST: Building Outstanding Opportunities for Students to Thrive is a guaranteed basic income initiative in Students of East LA College, LA Southwest College, LA City College, and/or LA Trade-Tech College, organized by Foundation for the Los Angeles Community Colleges. Implemented during 11/25/2024 - 10/15/2025. Enrolled 251 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -882,7 +960,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Louisiana', 'Oregon'],
+    ARRAY[]::TEXT[],
     ARRAY['Students of East LA College'],
     NULL,
     NULL,
@@ -907,7 +985,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    122,
+    124,
     'Pregnancy Assistance Income with Dignity (P.A.I.D.)',
     'National Council of Jewish Women | Los Angeles (NCJW|LA)',
     'Pregnancy Assistance Income with Dignity (P.A.I.D.) is a guaranteed basic income initiative in Los Angeles County, organized by National Council of Jewish Women | Los Angeles (NCJW|LA). Implemented during 4/8/2024 - 3/1/2026. Enrolled 180 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -948,7 +1026,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    123,
+    125,
     'NCJWLA Guaranteed Income Project',
     'National Council of Jewish Women-LA',
     'NCJWLA Guaranteed Income Project is a guaranteed basic income initiative in Los Angeles, CA, organized by National Council of Jewish Women-LA. Implemented during July 2021 - July 2022. Enrolled 12 participants. Data documented by the Stanford Basic Income Lab.',
@@ -964,7 +1042,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Los Angeles'],
     NULL,
     NULL,
@@ -989,7 +1067,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    124,
+    126,
     'Miracle Money',
     'Miracle Messages',
     'Miracle Money is a guaranteed basic income initiative in Los Angeles, San Francisco, and Oakland, CA, organized by Miracle Messages. Implemented during May 2022 - July 2024. Enrolled 103 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1005,7 +1083,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Los Angeles'],
     NULL,
     NULL,
@@ -1030,7 +1108,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    125,
+    127,
     'MOMentum',
     'Marin Community Foundation',
     'MOMentum is a guaranteed basic income initiative in Marin County, CA, organized by Marin Community Foundation. Implemented during June 2021 - May 2023. Enrolled 125 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1046,7 +1124,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Marin County'],
     NULL,
     18,
@@ -1071,7 +1149,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    126,
+    128,
     'Alas',
     'Ventures',
     'Alas is a guaranteed basic income initiative in Monterey Bay Area, CA, organized by Ventures. Implemented during 2022 -. Enrolled 60+ participants. Data documented by the Stanford Basic Income Lab.',
@@ -1087,7 +1165,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Monterey Bay Area'],
     NULL,
     NULL,
@@ -1112,7 +1190,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    127,
+    129,
     'Elevate MV',
     'City of Mountain View',
     'Elevate MV is a guaranteed basic income initiative in Mountain View, CA, organized by City of Mountain View. Implemented during November 2022 - October 2023. Enrolled 166 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1128,7 +1206,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Mountain View'],
     NULL,
     NULL,
@@ -1153,7 +1231,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    128,
+    130,
     'Miracle Money  - Thriving Community Fund (TCF) expansion',
     'Miracle Messages',
     'Miracle Money  - Thriving Community Fund (TCF) expansion is a guaranteed basic income initiative in Multiple communities in CA, organized by Miracle Messages. Implemented during 2025 -. Enrolled 110 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1169,7 +1247,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California', 'Indiana'],
+    ARRAY[]::TEXT[],
     ARRAY['Multiple communities in CA'],
     NULL,
     NULL,
@@ -1194,10 +1272,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    129,
+    131,
     'Abundant Birth Project',
-    'Expecting Justice & San Francisco Department of Public Health',
-    'Abundant Birth Project is a guaranteed basic income initiative in San Francisco, CA, organized by Expecting Justice. Implemented during 6/1/2021- 1/30/2024. Enrolled 150 participants. Data documented by the Stanford Basic Income Lab. Evaluation conducted by University of California, San Francisco (UCSF).',
+    'Expecting Justice',
+    'Abundant Birth Project is a guaranteed basic income initiative in San Francisco, CA, organized by Expecting Justice. Implemented during 6/1/2021- 1/30/2024. Enrolled 150 participants. Data documented by the Stanford Basic Income Lab.',
     1000,
     'USD',
     '1000 USD (monthly)',
@@ -1210,7 +1288,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco'],
     18,
     45,
@@ -1221,7 +1299,7 @@ SELECT
     FALSE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Abundant Birth Project' LIMIT 1),
-    'https://abundantbirthproject.org/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Abundant Birth Project'
@@ -1235,10 +1313,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    130,
+    132,
     'California Abundant Birth Project',
-    'Expecting Justice & San Francisco Department of Public Health',
-    'California Abundant Birth Project is a guaranteed basic income initiative in Alameda County, CA, organized by Expecting Justice. Implemented during 1/29/2024 - 4/30/2026. Enrolled 950 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by University of California, San Francisco (UCSF).',
+    'Expecting Justice',
+    'California Abundant Birth Project is a guaranteed basic income initiative in Alameda County, CA, organized by Expecting Justice. Implemented during 1/29/2024 - 4/30/2026. Enrolled 950 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     600,
     'USD',
     '600-1,000 USD depending on county (monthly)',
@@ -1251,7 +1329,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Alameda County'],
     18,
     45,
@@ -1262,7 +1340,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'California Abundant Birth Project' LIMIT 1),
-    'https://abundantbirthproject.org/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'California Abundant Birth Project'
@@ -1276,10 +1354,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    131,
+    133,
     'California Abundant Birth Project — Contra Costa County, CA',
-    'Expecting Justice & San Francisco Department of Public Health',
-    'California Abundant Birth Project is a guaranteed basic income initiative in Contra Costa County, CA, organized by Expecting Justice. Implemented during 1/29/2024 - 4/30/2026. Enrolled 950 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by University of California, San Francisco (UCSF).',
+    'Expecting Justice',
+    'California Abundant Birth Project is a guaranteed basic income initiative in Contra Costa County, CA, organized by Expecting Justice. Implemented during 1/29/2024 - 4/30/2026. Enrolled 950 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     600,
     'USD',
     '600-1,000 USD depending on county (monthly)',
@@ -1292,7 +1370,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Contra Costa County'],
     18,
     45,
@@ -1302,8 +1380,8 @@ SELECT
     'Live in Alameda, Contra Costa, Los Angeles, Riverside, or San Francisco counties Be 8-27 weeks pregnant  Have household income under the following for your county:  Alameda: $128,017 Contra Costa: $132,360 Los Angeles: $106,911 Riverside: $81,581 San Francisco: $156,995 And identify with one or more of the following risk factors for preterm birth:  Are Black or African American Have had a previous preterm birth (live birth before 37 weeks) Have preexisting hypertension (includes preeclampsia, before this pregnancy) Have preexisting diabetes (before this pregnancy) Have sickle cell anemia (SCA) Not be currently participating in another guaranteed income program.',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'California Abundant Birth Project' LIMIT 1),
-    'https://abundantbirthproject.org/',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'California Abundant Birth Project — Contra Costa County, CA' LIMIT 1),
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'California Abundant Birth Project — Contra Costa County, CA'
@@ -1317,10 +1395,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    132,
+    134,
     'California Abundant Birth Project — Los Angeles County, CA',
-    'Expecting Justice & San Francisco Department of Public Health',
-    'California Abundant Birth Project is a guaranteed basic income initiative in Los Angeles County, CA, organized by Expecting Justice. Implemented during 1/29/2024 - 4/30/2026. Enrolled 950 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by University of California, San Francisco (UCSF).',
+    'Expecting Justice',
+    'California Abundant Birth Project is a guaranteed basic income initiative in Los Angeles County, CA, organized by Expecting Justice. Implemented during 1/29/2024 - 4/30/2026. Enrolled 950 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     600,
     'USD',
     '600-1,000 USD depending on county (monthly)',
@@ -1333,7 +1411,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Los Angeles County'],
     18,
     45,
@@ -1343,8 +1421,8 @@ SELECT
     'Live in Alameda, Contra Costa, Los Angeles, Riverside, or San Francisco counties Be 8-27 weeks pregnant  Have household income under the following for your county:  Alameda: $128,017 Contra Costa: $132,360 Los Angeles: $106,911 Riverside: $81,581 San Francisco: $156,995 And identify with one or more of the following risk factors for preterm birth:  Are Black or African American Have had a previous preterm birth (live birth before 37 weeks) Have preexisting hypertension (includes preeclampsia, before this pregnancy) Have preexisting diabetes (before this pregnancy) Have sickle cell anemia (SCA) Not be currently participating in another guaranteed income program.',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'California Abundant Birth Project' LIMIT 1),
-    'https://abundantbirthproject.org/',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'California Abundant Birth Project — Los Angeles County, CA' LIMIT 1),
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'California Abundant Birth Project — Los Angeles County, CA'
@@ -1358,10 +1436,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    133,
+    135,
     'California Abundant Birth Project — Riverside County',
-    'Expecting Justice & San Francisco Department of Public Health',
-    'California Abundant Birth Project is a guaranteed basic income initiative in Riverside County, organized by Expecting Justice. Implemented during 1/29/2024 - 4/30/2026. Enrolled 950 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by University of California, San Francisco (UCSF).',
+    'Expecting Justice',
+    'California Abundant Birth Project is a guaranteed basic income initiative in Riverside County, organized by Expecting Justice. Implemented during 1/29/2024 - 4/30/2026. Enrolled 950 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     600,
     'USD',
     '600-1,000 USD depending on county (monthly)',
@@ -1384,8 +1462,8 @@ SELECT
     'Live in Alameda, Contra Costa, Los Angeles, Riverside, or San Francisco counties Be 8-27 weeks pregnant  Have household income under the following for your county:  Alameda: $128,017 Contra Costa: $132,360 Los Angeles: $106,911 Riverside: $81,581 San Francisco: $156,995 And identify with one or more of the following risk factors for preterm birth:  Are Black or African American Have had a previous preterm birth (live birth before 37 weeks) Have preexisting hypertension (includes preeclampsia, before this pregnancy) Have preexisting diabetes (before this pregnancy) Have sickle cell anemia (SCA) Not be currently participating in another guaranteed income program.',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'California Abundant Birth Project' LIMIT 1),
-    'https://abundantbirthproject.org/',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'California Abundant Birth Project — Riverside County' LIMIT 1),
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'California Abundant Birth Project — Riverside County'
@@ -1399,7 +1477,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    134,
+    136,
     'Restorative Reentry Fund',
     'UpTogether',
     'Restorative Reentry Fund is a guaranteed basic income initiative in Oakland, CA, organized by UpTogether. Implemented during 2/1/2023 - 9/1/2024. Enrolled 38 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1415,7 +1493,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Oakland'],
     NULL,
     NULL,
@@ -1440,7 +1518,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    135,
+    137,
     'Oakland Resilient Families',
     'UpTogether',
     'Oakland Resilient Families is a guaranteed basic income initiative in Oakland, CA, organized by UpTogether. Implemented during June 2021 - June 2024. Enrolled 600 (2 cohorts) participants. Data documented by the Stanford Basic Income Lab.',
@@ -1456,7 +1534,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Oakland', 'East Oakland'],
     NULL,
     50,
@@ -1482,7 +1560,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    136,
+    138,
     'Miracle Money — Oakland, San Francisco, and Los Angeles, CA',
     'Miracle Messages',
     'Miracle Money is a guaranteed basic income initiative in Oakland, San Francisco, and Los Angeles, CA, organized by Miracle Messages. Implemented during May 2022 - July 2024. Enrolled 103 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1498,7 +1576,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Oakland'],
     NULL,
     NULL,
@@ -1508,7 +1586,7 @@ SELECT
     'Unhoused individuals who expressed interest in the Miracle Friends program',
     FALSE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Miracle Money' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Miracle Money — Oakland, San Francisco, and Los Angeles, CA' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -1523,7 +1601,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    137,
+    139,
     'Palm Springs'' Universal Basic Income pilot',
     'DAP Health',
     'Palm Springs'' Universal Basic Income pilot is a guaranteed basic income initiative in Palm Springs, CA, organized by DAP Health. Implemented during 2022 to May 2025. Enrolled 14 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1539,7 +1617,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Palm Springs'],
     NULL,
     NULL,
@@ -1564,7 +1642,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    138,
+    140,
     'City of Pomona Household Universal Grants Pilot Program (Pomona HUG)',
     'City of Pomona',
     'City of Pomona Household Universal Grants Pilot Program (Pomona HUG) is a guaranteed basic income initiative in Pomona, CA, organized by City of Pomona. Implemented during Aug 2024 - Dec 2025. Enrolled 600 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1580,7 +1658,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Pomona'],
     18,
     NULL,
@@ -1605,7 +1683,89 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    139,
+    141,
+    'Inland SoCal United Way (ISCUW) Guaranteed Income Pilot Program',
+    'Inland Southern California United Way',
+    'Inland SoCal United Way (ISCUW) Guaranteed Income Pilot Program is a guaranteed basic income initiative in Riverside County, San Bernardino County, CA, organized by Inland Southern California United Way. Implemented during 1/25/2024 - 3/25/2027. Enrolled 620 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
+    600,
+    'USD',
+    '$600 Pregnant; $750 FFY (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'active_open'::public.program_status,
+    'Ongoing',
+    'Ongoing monthly distributions',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Riverside County'],
+    18,
+    24,
+    'female'::public.program_gender_requirement,
+    NULL,
+    '620',
+    'Pregnant People in Riverside County; those aging out of extended foster care at 21 in Riverside or San Bernardino Counties',
+    TRUE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Inland SoCal United Way (ISCUW) Guaranteed Income Pilot Program' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Inland SoCal United Way (ISCUW) Guaranteed Income Pilot Program'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    142,
+    'Creative Growth Fellowship',
+    'City of Sacramento',
+    'Creative Growth Fellowship is a guaranteed basic income initiative in Sacramento, CA, organized by City of Sacramento. Implemented during 9/1/2025 - 8/31/2026. Enrolled 200 participants. Data documented by the Stanford Basic Income Lab.',
+    850,
+    'USD',
+    '$850 (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'active_open'::public.program_status,
+    'Ongoing',
+    'Ongoing monthly distributions',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Sacramento'],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '200',
+    'Artists living in the City of Sacramento',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Creative Growth Fellowship' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Creative Growth Fellowship'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    143,
     'United Way California Capital Region (UWCCR) Guaranteed Income Program Cohort 1',
     'United Way California Capital Region',
     'United Way California Capital Region (UWCCR) Guaranteed Income Program Cohort 1 is a guaranteed basic income initiative in Sacramento, CA, organized by United Way California Capital Region. Implemented during 6/1/2021 - 5/31/2023. Enrolled 100 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -1621,7 +1781,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Sacramento'],
     NULL,
     NULL,
@@ -1646,7 +1806,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    140,
+    144,
     'United Way California Capital Region (UWCCR) Guaranteed Income Program Cohort 2',
     'United Way California Capital Region',
     'United Way California Capital Region (UWCCR) Guaranteed Income Program Cohort 2 is a guaranteed basic income initiative in Sacramento, CA, organized by United Way California Capital Region. Implemented during 7/1/2023 - 6/30/2024. Enrolled 80 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -1662,7 +1822,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Sacramento'],
     NULL,
     NULL,
@@ -1687,7 +1847,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    141,
+    145,
     'United Way California Capital Region (UWCCR) Guaranteed Income Program Cohort 3',
     'United Way California Capital Region',
     'United Way California Capital Region (UWCCR) Guaranteed Income Program Cohort 3 is a guaranteed basic income initiative in Sacramento, CA, organized by United Way California Capital Region. Implemented during 1/1/2024 - 12/31/2024. Enrolled 130 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -1703,7 +1863,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Sacramento'],
     NULL,
     NULL,
@@ -1728,7 +1888,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    142,
+    146,
     'Collegiate Guaranteed Income Program',
     'United Way California Capital Region (UWCCR)',
     'Collegiate Guaranteed Income Program is a guaranteed basic income initiative in Sacramento and Davis, CA, organized by United Way California Capital Region (UWCCR). Implemented during May 2024 - June 2026. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1744,7 +1904,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Sacramento and Davis'],
     18,
     24,
@@ -1769,7 +1929,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    143,
+    147,
     'Family First Economic Support Pilot',
     'Sacramento County Division of Child',
     'Family First Economic Support Pilot is a guaranteed basic income initiative in Sacramento County, CA, organized by Sacramento County Division of Child. Implemented during 2023 -. Enrolled 200 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1785,7 +1945,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Sacramento County', 'Zip codes 95815, 95821, 95823, 95825, 95828​​​ and 95838'],
     NULL,
     NULL,
@@ -1810,7 +1970,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    144,
+    148,
     'Black Women''s Resilience Project',
     'Café X',
     'Black Women''s Resilience Project is a guaranteed basic income initiative in San Diego, CA, organized by Café X. Implemented during 3/1/2022 - 3/1/2025. Enrolled 150 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1826,7 +1986,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Diego'],
     NULL,
     NULL,
@@ -1851,7 +2011,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    145,
+    149,
     'San Diego for Every Child',
     'San Diego for Every Child',
     'San Diego for Every Child is a guaranteed basic income initiative in San Diego, CA, organized by San Diego for Every Child. Implemented during March 2022 - March 2024. Enrolled 150 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -1867,7 +2027,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Encanto, Paradise Hills, National City, San Ysidro', 'San Diego'],
     18,
     NULL,
@@ -1892,7 +2052,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    146,
+    150,
     'It All Adds Up pilot (Bay Area Thriving Families study)',
     'Compass Family Services',
     'It All Adds Up pilot (Bay Area Thriving Families study) is a guaranteed basic income initiative in San Francisco, CA, organized by Compass Family Services. Implemented during 11/1/2023 -. Enrolled 450 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -1908,7 +2068,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco'],
     NULL,
     NULL,
@@ -1933,7 +2093,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    147,
+    151,
     'San Francisco''s Guaranteed Income Pilot for Artists (GIPA)',
     'Yerba Buena Center for the Arts (YBCA)',
     'San Francisco''s Guaranteed Income Pilot for Artists (GIPA) is a guaranteed basic income initiative in San Francisco, CA, organized by Yerba Buena Center for the Arts (YBCA). Implemented during 5/1/2021 - 11/1/2022. Enrolled 130 participants. Data documented by the Stanford Basic Income Lab.',
@@ -1949,7 +2109,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco'],
     NULL,
     NULL,
@@ -1974,7 +2134,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    148,
+    152,
     'BEEM: The Black Economic Equity Movement Project',
     'University of California',
     'BEEM: The Black Economic Equity Movement Project is a guaranteed basic income initiative in San Francisco & Oakland, CA, organized by University of California. Implemented during 11/14/2022 - 8/1/2024. Enrolled 300 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -1990,7 +2150,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['LIHTC qualified Census tracts', 'San Francisco & Oakland'],
     18,
     24,
@@ -2015,7 +2175,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    149,
+    153,
     'Cash Transfers and Rapid Re-Housing',
     'Abode Services',
     'Cash Transfers and Rapid Re-Housing is a guaranteed basic income initiative in San Francisco Bay Area, CA, organized by Abode Services. Implemented during Feb 2023 - Dec 2027. Enrolled 990 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -2031,7 +2191,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco Bay Area'],
     NULL,
     NULL,
@@ -2056,7 +2216,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    150,
+    154,
     'Project Empower',
     'Tahirih',
     'Project Empower is a guaranteed basic income initiative in San Francisco Bay Area, CA, organized by Tahirih. Implemented during 2/1/2023 - 7/1/2023. Enrolled 10 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2072,7 +2232,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco Bay Area'],
     NULL,
     NULL,
@@ -2097,7 +2257,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    151,
+    155,
     'San Francisco Housing Stability Fund',
     'Tipping Point Community',
     'San Francisco Housing Stability Fund is a guaranteed basic income initiative in San Francisco Bay Area, CA, organized by Tipping Point Community. Implemented during September 2021 - August 2022. Enrolled 30 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2113,7 +2273,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco Bay Area'],
     NULL,
     NULL,
@@ -2138,7 +2298,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    152,
+    156,
     'The Trust Youth Initiative San Francisco',
     'Point Source Youth',
     'The Trust Youth Initiative San Francisco is a guaranteed basic income initiative in San Francisco, CA, organized by Point Source Youth. Implemented during 8/1/2023 - 7/31/2025. Enrolled 45 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2154,7 +2314,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco'],
     18,
     24,
@@ -2179,7 +2339,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    153,
+    157,
     'Creative Communities Coalition Coalition for Guaranteed Income (CCCGI)',
     'Yerba Buena Center for the Arts (YBCA)',
     'Creative Communities Coalition Coalition for Guaranteed Income (CCCGI) is a guaranteed basic income initiative in San Francisco, CA, organized by Yerba Buena Center for the Arts (YBCA). Implemented during June 2022 - 2024. Enrolled 60 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2195,7 +2355,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco'],
     NULL,
     NULL,
@@ -2220,7 +2380,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    154,
+    158,
     'Foundations for the Future',
     'San Francisco Human Services Agency (SFHSA)',
     'Foundations for the Future is a guaranteed basic income initiative in San Francisco, CA, organized by San Francisco Human Services Agency (SFHSA). Implemented during 11/1/2023 - 5/31/2025. Enrolled 150 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2236,7 +2396,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco'],
     NULL,
     NULL,
@@ -2261,7 +2421,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    155,
+    159,
     'Compass Family Service Basic Income Pilot',
     'Compass Family Services and Wells Fargo Foundation',
     'Compass Family Service Basic Income Pilot is a guaranteed basic income initiative in San Francisco, CA, organized by Compass Family Services and Wells Fargo Foundation. Implemented during October 2021 - March 2022. Enrolled 13 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -2277,7 +2437,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco'],
     NULL,
     NULL,
@@ -2302,7 +2462,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    156,
+    160,
     'Miracle Money — San Francisco, Oakland, and Los Angeles, CA',
     'Miracle Messages',
     'Miracle Money is a guaranteed basic income initiative in San Francisco, Oakland, and Los Angeles, CA, organized by Miracle Messages. Implemented during May 2022 - July 2024. Enrolled 103 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2318,7 +2478,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Francisco'],
     NULL,
     NULL,
@@ -2328,7 +2488,7 @@ SELECT
     'Unhoused individuals who expressed interest in the Miracle Friends program',
     FALSE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Miracle Money' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Miracle Money — San Francisco, Oakland, and Los Angeles, CA' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -2343,7 +2503,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    157,
+    161,
     'Guaranteed Income Program for Domestic Violence Survivors',
     'San Mateo County',
     'Guaranteed Income Program for Domestic Violence Survivors is a guaranteed basic income initiative in San Mateo County, CA, organized by San Mateo County. Implemented during 7/1/2025 - 6/30/2026. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2359,7 +2519,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Mateo County'],
     NULL,
     NULL,
@@ -2384,7 +2544,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    158,
+    162,
     'Immigrant Families Recovery Program: San Mateo County',
     'Mission Asset Fund (MAF)',
     'Immigrant Families Recovery Program: San Mateo County is a guaranteed basic income initiative in San Mateo County, CA, organized by Mission Asset Fund (MAF). Implemented during February 2022 - December2024. Enrolled 500 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2400,7 +2560,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Mateo County'],
     NULL,
     NULL,
@@ -2425,7 +2585,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    159,
+    163,
     'San Mateo County Guaranteed Income Program for Former Foster Youth',
     'San Mateo County',
     'San Mateo County Guaranteed Income Program for Former Foster Youth is a guaranteed basic income initiative in San Mateo County, CA, organized by San Mateo County. Implemented during 1/1/2024 - 6/30/2025. Enrolled 70 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2441,7 +2601,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Mateo County'],
     18,
     24,
@@ -2466,7 +2626,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    160,
+    164,
     'San Mateo County Baby Bonus Pilot Program',
     'First 5 San Mateo County',
     'San Mateo County Baby Bonus Pilot Program is a guaranteed basic income initiative in San Mateo County, CA, organized by First 5 San Mateo County. Implemented during March 2025 -. Enrolled 400 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -2482,7 +2642,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['San Mateo County'],
     NULL,
     NULL,
@@ -2507,7 +2667,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    161,
+    165,
     'Aging With Dignity',
     'Destination Home',
     'Aging With Dignity is a guaranteed basic income initiative in Santa Clara County, CA, organized by Destination Home. Enrolled 50 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2523,7 +2683,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Santa Clara County'],
     60,
     NULL,
@@ -2548,7 +2708,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    162,
+    166,
     'GBI for Unhoused High School Students',
     'County of Santa Clara',
     'GBI for Unhoused High School Students is a guaranteed basic income initiative in Santa Clara County, CA, organized by County of Santa Clara. Enrolled 75 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -2564,7 +2724,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Santa Clara County'],
     60,
     NULL,
@@ -2589,7 +2749,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    163,
+    167,
     'GBI for Young Parents',
     'County of Santa Clara',
     'GBI for Young Parents is a guaranteed basic income initiative in Santa Clara County, CA, organized by County of Santa Clara. Enrolled 100 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -2605,7 +2765,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Santa Clara County'],
     14,
     26,
@@ -2630,7 +2790,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    164,
+    168,
     'Re-Entry Guaranteed Income',
     'Destination Home',
     'Re-Entry Guaranteed Income is a guaranteed basic income initiative in Santa Clara County, CA, organized by Destination Home. Enrolled 100 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -2646,7 +2806,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Santa Clara County'],
     NULL,
     NULL,
@@ -2671,7 +2831,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    165,
+    169,
     'Silicon Valley Guaranteed Income Project',
     'Destination: Home',
     'Silicon Valley Guaranteed Income Project is a guaranteed basic income initiative in Santa Clara County, CA, organized by Destination: Home. Implemented during 12/1/2022 - 11/1/2024. Enrolled 150 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -2687,7 +2847,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Santa Clara County'],
     NULL,
     NULL,
@@ -2712,7 +2872,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    166,
+    170,
     'Santa Clara County UBI Pilot for Former Foster Youth',
     'My Path',
     'Santa Clara County UBI Pilot for Former Foster Youth is a guaranteed basic income initiative in Santa Clara County, CA, organized by My Path. Implemented during October 2020 - July 2025. Enrolled 122 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2728,7 +2888,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Santa Clara County'],
     18,
     24,
@@ -2753,7 +2913,90 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    167,
+    171,
+    'Preserving Our Diversity (POD) Pilot #1',
+    'City of Santa Monica',
+    'Preserving Our Diversity (POD) Pilot #1 is a guaranteed basic income initiative in Santa Monica, CA, organized by City of Santa Monica. Implemented during November 2017 - December 2018. Enrolled 21 participants. Data documented by the Stanford Basic Income Lab.',
+    151,
+    'USD',
+    '151 - 813 USD (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Santa Monica'],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '21',
+    'Individuals aged 62 or older living in rent-controlled apartments since Jan 2000',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Preserving Our Diversity (POD) Pilot #1' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Preserving Our Diversity (POD) Pilot #1'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    172,
+    'Preserving Our Diversity (POD) Pilot #2',
+    'City of Santa Monica',
+    'Preserving Our Diversity (POD) Pilot #2 is a guaranteed basic income initiative in Santa Monica, CA, organized by City of Santa Monica. Implemented during November 2019 - June 2023. Enrolled 248 -  463 participants. Data documented by the Stanford Basic Income Lab.',
+    750,
+    'USD',
+    '750 USD for single person household
+1300 USD for 2 person household (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Santa Monica'],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '248 -  463',
+    'Individuals aged 65 or older who have occupied rent controlled apartments since Jan 2000 and have an annual household income equal or less than 50% area median income for LA County',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Preserving Our Diversity (POD) Pilot #2' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Preserving Our Diversity (POD) Pilot #2'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    173,
     'Pathway to Income Equity',
     'First 5 Sonoma County',
     'Pathway to Income Equity is a guaranteed basic income initiative in Sonoma County, CA, organized by First 5 Sonoma County. Implemented during 1/18/2023 - 12/18/2024. Enrolled 305 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2769,7 +3012,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Sonoma County'],
     18,
     45,
@@ -2794,7 +3037,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    168,
+    174,
     'Mothers Rising for Guaranteed Basic Income',
     'Rising Communities',
     'Mothers Rising for Guaranteed Basic Income is a guaranteed basic income initiative in South Los Angeles, CA, organized by Rising Communities. Implemented during 3/30/2024 - 3/30/2027. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2810,7 +3053,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['South Los Angeles', 'Live in Watts/Willowbrook (90002, 90059); West Athens (90044, 90047); Broadway Manchester (90003, 90061); Compton (90059, 90223, 90220, 90224, 90221, 90222).'],
     0,
     2,
@@ -2835,7 +3078,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    169,
+    175,
     'South San Francisco Guaranteed Income Program',
     'City of South San Francisco',
     'South San Francisco Guaranteed Income Program is a guaranteed basic income initiative in South San Francisco, CA, organized by City of South San Francisco. Implemented during December 2021 - November 2022. Enrolled 160 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2851,7 +3094,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['South San Francisco'],
     18,
     24,
@@ -2876,10 +3119,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    170,
+    176,
     'Stockton Economic Empowerment Demonstration (SEED)',
-    'Mayors for a Guaranteed Income & City of Stockton',
-    'Stockton Economic Empowerment Demonstration (SEED) is a guaranteed basic income initiative in Stockton , CA, organized by Reinvent Stockton Foundation. Implemented during February 2019 - February 2021. Enrolled 125 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Center for Guaranteed Income Research (UPenn), Dr. Amy Castro & Dr. Stacia West.',
+    'Reinvent Stockton Foundation',
+    'Stockton Economic Empowerment Demonstration (SEED) is a guaranteed basic income initiative in Stockton , CA, organized by Reinvent Stockton Foundation. Implemented during February 2019 - February 2021. Enrolled 125 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     500,
     'USD',
     '500 USD (monthly)',
@@ -2892,7 +3135,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Stockton'],
     NULL,
     NULL,
@@ -2903,7 +3146,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Stockton Economic Empowerment Demonstration (SEED)' LIMIT 1),
-    'https://www.stocktondemonstration.org/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Stockton Economic Empowerment Demonstration (SEED)'
@@ -2917,7 +3160,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    171,
+    177,
     'Ventura County Thrive',
     'Ventura County Health and Human Services Agency',
     'Ventura County Thrive is a guaranteed basic income initiative in Ventura County, CA, organized by Ventura County Health and Human Services Agency. Implemented during 10/10/2023 - 9/30/2025. Enrolled 150 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2933,7 +3176,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Ventura County'],
     21,
     26,
@@ -2958,7 +3201,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    172,
+    178,
     'West Hollywood Pilot for Guaranteed Income',
     'City of West Hollywood and National Council of Jewish Women-LA',
     'West Hollywood Pilot for Guaranteed Income is a guaranteed basic income initiative in West Hollywood, CA, organized by City of West Hollywood and National Council of Jewish Women-LA. Implemented during August 2022 - January 2024. Enrolled 25 participants. Data documented by the Stanford Basic Income Lab.',
@@ -2974,7 +3217,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['West Hollywood'],
     50,
     NULL,
@@ -2999,7 +3242,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    173,
+    179,
     'Yolo County Basic Income (YOBI)',
     'Yolo County Health and Human Services Agency (HHSA)',
     'Yolo County Basic Income (YOBI) is a guaranteed basic income initiative in Yolo County, CA, organized by Yolo County Health and Human Services Agency (HHSA). Implemented during 4/1/2022 - 3/31/2024. Enrolled 76 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -3015,7 +3258,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['Yolo County'],
     18,
     45,
@@ -3040,7 +3283,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    174,
+    180,
     'Miracle Money  - Dignity Fund expansion',
     'Miracle Messages',
     'Miracle Money  - Dignity Fund expansion is a guaranteed basic income initiative in California, organized by Miracle Messages. Implemented during December 2024 -. Enrolled 110 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3056,8 +3299,8 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['California'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -3081,7 +3324,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    175,
+    181,
     'Smooth Transitions',
     'iFoster',
     'Smooth Transitions is a guaranteed basic income initiative in State of California, organized by iFoster. Implemented during 11/14/2023 - 3/1/2026. Enrolled 300 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -3097,7 +3340,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['California'],
+    ARRAY[]::TEXT[],
     ARRAY['State of California'],
     18,
     24,
@@ -3122,7 +3365,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    176,
+    182,
     'Respond, Recover and Rebuild',
     'Cherokee Nation',
     'Respond, Recover and Rebuild is a guaranteed basic income initiative in Cherokee Nation, organized by Cherokee Nation. Implemented during June 2021. Enrolled 392,832 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3163,7 +3406,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    177,
+    183,
+    'Thriving Providers Project (CO)',
+    'Home Grown',
+    'Thriving Providers Project (CO) is a guaranteed basic income initiative in Alamosa, Conejos, Costilla, Denver, Eagle, Garfield, Gunnison, Mineral, Pitkin, Rio Grande, Saguache, organized by Home Grown. Enrolled 100 cash recipients; 55 consented to be part of study participants. Data documented by the Stanford Basic Income Lab.',
+    500,
+    'USD',
+    '500 USD (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'philanthropic_grant',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Alamosa'],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '100 cash recipients; 55 consented to be part of study',
+    'Home-based child care providers',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Thriving Providers Project (CO)' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Thriving Providers Project (CO)'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    184,
     'Elevate Boulder',
     'City of Boulder Housing & Human Services Department',
     'Elevate Boulder is a guaranteed basic income initiative in Boulder, CO, organized by City of Boulder Housing & Human Services Department. Implemented during 1/15/2024 - 1/31/2026. Enrolled 200 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3179,7 +3463,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Colorado'],
+    ARRAY[]::TEXT[],
     ARRAY['Boulder'],
     NULL,
     NULL,
@@ -3204,7 +3488,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    178,
+    185,
+    'Thriving Providers Project (CO) — Boulder, CO',
+    'City of Boulder',
+    'Thriving Providers Project (CO) is a guaranteed basic income initiative in Boulder, CO, organized by City of Boulder. Implemented during 1/1/2024 - 8/31/2025. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
+    501,
+    'USD',
+    '501 USD (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Boulder'],
+    18,
+    NULL,
+    NULL,
+    64000,
+    '20',
+    'Low-income (below 80% AMI) x 18 years of age or older at the time of application x City of Boulder resident x Currently providing childcare to at least one child under the age of 5 who is not their own child x Providing at least 20 hours of childcare per week x Unlicensed at the time of application, operating as a license-exempt provider under Colorado regulations (i.e., are caring for no more than four children, or two children under two, at any given time or only a single family).',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Thriving Providers Project (CO) — Boulder, CO' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Thriving Providers Project (CO) — Boulder, CO'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    186,
     'Harrison 2 - Colorado Springs',
     'UpTogether',
     'Harrison 2 - Colorado Springs is a guaranteed basic income initiative in Colorado Springs, CO, organized by UpTogether. Implemented during November 2020 - March 2023. Enrolled 95 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3220,7 +3545,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Colorado'],
+    ARRAY[]::TEXT[],
     ARRAY['Colorado Springs', 'Harrison School District 2'],
     NULL,
     NULL,
@@ -3245,7 +3570,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    179,
+    187,
     'Build With Families',
     'Gary Community Ventures',
     'Build With Families is a guaranteed basic income initiative in Greater Denver area (Jefferson, Adams, Arapaho, Denver Counties), organized by Gary Community Ventures. Implemented during 6/11/2022 - 3/1/2023. Enrolled 110 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -3286,10 +3611,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    180,
+    188,
     'Denver Basic Income Project',
-    'Denver Basic Income Project & City of Denver',
-    'Denver Basic Income Project is a guaranteed basic income initiative in Denver, CO, organized by Denver Basic Income Project. Implemented during July 2021 - December 2023. Enrolled 11 (August 2021 soft launch), 28 (July 2022 2.0) and 820 (full launch by November 2022) participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by University of Denver Center for Housing and Homelessness Research.',
+    'Denver Basic Income Project',
+    'Denver Basic Income Project is a guaranteed basic income initiative in Denver, CO, organized by Denver Basic Income Project. Implemented during July 2021 - December 2023. Enrolled 11 (August 2021 soft launch), 28 (July 2022 2.0) and 820 (full launch by November 2022) participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     542,
     'USD',
     'One third of participants will receive a one-time cash transfer of $6,500 at the beginning of the study with an additional $500 for 11 months, one third will receive 12 monthly cash transfers of $1,000, and one third will not receive a cash transfer and will serve as the control group, receiving a stipend of $50 a month. (one-time and monthly, or monthly)',
@@ -3302,7 +3627,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Colorado'],
+    ARRAY[]::TEXT[],
     ARRAY['Denver'],
     NULL,
     NULL,
@@ -3313,7 +3638,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Denver Basic Income Project' LIMIT 1),
-    'https://www.denverbasicincomeproject.org/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Denver Basic Income Project'
@@ -3327,7 +3652,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    181,
+    189,
     'The Bridge Network',
     'The Bridge Network',
     'The Bridge Network is a guaranteed basic income initiative in Denver, CO, organized by The Bridge Network. Implemented during July 2021 - June 2023. Enrolled 20 in 12 month pilot, 15 in 24 month pilot participants. Data documented by the Stanford Basic Income Lab.',
@@ -3343,7 +3668,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Colorado'],
+    ARRAY[]::TEXT[],
     ARRAY['Denver'],
     NULL,
     NULL,
@@ -3368,10 +3693,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    182,
+    190,
     'Seattle-Denver Income Maintenance Experiment (SIME/DIME)',
-    'U.S. Department of Health, Education, and Welfare & Stanford Research Institute (SRI)',
-    'Seattle-Denver Income Maintenance Experiment (SIME/DIME) is a guaranteed basic income initiative in Denver, CO, organized by Stanford Research Institute. Implemented during 1971  - 1982. Enrolled 4800 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Stanford Research Institute & Mathematica Policy Research.',
+    'Stanford Research Institute',
+    'Seattle-Denver Income Maintenance Experiment (SIME/DIME) is a guaranteed basic income initiative in Denver, CO, organized by Stanford Research Institute. Implemented during 1971  - 1982. Enrolled 4800 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     316,
     'USD',
     '316, 400 or 466 USD (monthly)',
@@ -3384,7 +3709,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Colorado'],
+    ARRAY[]::TEXT[],
     ARRAY['Denver'],
     NULL,
     NULL,
@@ -3395,7 +3720,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Seattle-Denver Income Maintenance Experiment (SIME/DIME)' LIMIT 1),
-    'https://www.irp.wisc.edu/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Seattle-Denver Income Maintenance Experiment (SIME/DIME)'
@@ -3409,7 +3734,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    183,
+    191,
     'Healthy Beginnings Project',
     'Impact Charitable',
     'Healthy Beginnings Project is a guaranteed basic income initiative in Denver, Delores and Montezuma Counties, CO, organized by Impact Charitable. Implemented during 11/30/2023 - 2/14/2025. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3425,7 +3750,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Colorado'],
+    ARRAY[]::TEXT[],
     ARRAY['Denver', '80203,  80204,  80205,  80206, 80207,  80208, 80209,  80210  80211  80212  80216  80217, 80218, 80219,  80220,  80223,  80224,  80225, 80230,  80236,  80237 80238  80239  80243  80244  80248  80249 80250  80251  80252  80256  80257  80259  80261,  80262, 80263,  80264,  80265, 80266,  80271  80273  80274 80279,  80280, 80281, 80290,  80291,  80293, 80294 80295 80299 81320,  81324, 81332,  81324, 81321, 81323, 81327, 81328, 81330, 81331, 81334, 81335'],
     18,
     45,
@@ -3450,7 +3775,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    184,
+    192,
     'San Luis Valley, Colorado',
     'UpTogether',
     'San Luis Valley, Colorado is a guaranteed basic income initiative in San Luis Valley, CO, organized by UpTogether. Implemented during December 2021 - September 2022. Enrolled 75 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3466,7 +3791,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Colorado'],
+    ARRAY[]::TEXT[],
     ARRAY['San Luis Valley'],
     NULL,
     NULL,
@@ -3491,7 +3816,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    185,
+    193,
     'Elm City Reentry Pilot',
     '4-CT',
     'Elm City Reentry Pilot is a guaranteed basic income initiative in New Haven. CT, organized by 4-CT. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3507,7 +3832,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Connecticut'],
+    ARRAY[]::TEXT[],
     ARRAY['New Haven. CT'],
     NULL,
     NULL,
@@ -3532,7 +3857,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    186,
+    194,
     'Let''s Go DMV!',
     'if',
     'Let''s Go DMV! is a guaranteed basic income initiative in Washington, DC region (including suburban Maryland and Northern Virginia), organized by if. Implemented during March 2022- December 2026. Enrolled 75 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3548,8 +3873,8 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Maryland', 'Virginia', 'Washington', 'District of Columbia'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -3573,7 +3898,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    187,
+    195,
     'Strong Families, Strong Future DC',
     'Martha’s Table',
     'Strong Families, Strong Future DC is a guaranteed basic income initiative in Washington D.C., organized by Martha’s Table. Implemented during March 2022 - February 2023. Enrolled 132 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3589,7 +3914,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Washington'],
+    ARRAY[]::TEXT[],
     ARRAY['Washington D.C.', 'Wards 5, 7, and 8'],
     NULL,
     NULL,
@@ -3614,7 +3939,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    188,
+    196,
     'Family Goal Fund — Washington DC',
     'LIFT',
     'Family Goal Fund is a guaranteed basic income initiative in Washington DC, organized by LIFT. Implemented during January 2018 -. Enrolled 800+ participants. Data documented by the Stanford Basic Income Lab.',
@@ -3630,7 +3955,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Washington', 'District of Columbia'],
+    ARRAY[]::TEXT[],
     ARRAY['Washington DC'],
     NULL,
     NULL,
@@ -3640,7 +3965,7 @@ SELECT
     'Households in the LIFT program with low-income and children 0-8 years of age',
     FALSE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Family Goal Fund' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Family Goal Fund — Washington DC' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -3655,7 +3980,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    189,
+    197,
     'Mother Up Pilot',
     'Mother''s Outreach Network',
     'Mother Up Pilot is a guaranteed basic income initiative in Washington DC, organized by Mother''s Outreach Network. Implemented during 5/1/2023 - 4/1/2026. Enrolled 50 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3671,14 +3996,14 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Washington', 'District of Columbia'],
+    ARRAY[]::TEXT[],
     ARRAY['Washington DC'],
     NULL,
     NULL,
     NULL,
     NULL,
     '50',
-    NULL,
+    '',
     FALSE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Mother Up Pilot' LIMIT 1),
@@ -3696,7 +4021,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    190,
+    198,
     'My Sister''s Place Cash Transfer Program',
     'My Sister''s Place',
     'My Sister''s Place Cash Transfer Program is a guaranteed basic income initiative in Washington DC, organized by My Sister''s Place. Implemented during 1/1/2023 - 12/1/2024. Enrolled 45 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3712,7 +4037,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Washington', 'District of Columbia'],
+    ARRAY[]::TEXT[],
     ARRAY['Washington DC'],
     NULL,
     NULL,
@@ -3737,7 +4062,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    191,
+    199,
     'Thrive East of the River',
     'Martha''s Table',
     'Thrive East of the River is a guaranteed basic income initiative in Washington DC, organized by Martha''s Table. Implemented during 7/1/2020 – 1/31/2022. Enrolled 500 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3753,7 +4078,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Washington', 'District of Columbia'],
+    ARRAY[]::TEXT[],
     ARRAY['East of the River', 'Washington DC'],
     NULL,
     NULL,
@@ -3778,7 +4103,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    192,
+    200,
     'The Delaware Healthy Mother & Infant Consortium (DHMIC)',
     'Delaware Healthy Mother & Infant Consortium',
     'The Delaware Healthy Mother & Infant Consortium (DHMIC) is a guaranteed basic income initiative in Wilmington and New Castle County, DE, organized by Delaware Healthy Mother & Infant Consortium. Implemented during 4/1/2022 - 3/1/2024. Enrolled 40 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3794,7 +4119,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Delaware'],
+    ARRAY[]::TEXT[],
     ARRAY['Wilmington and New Castle County'],
     NULL,
     NULL,
@@ -3819,7 +4144,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    193,
+    201,
     'Eastern Band of Cherokee Indians Casino Revenue Fund',
     'Eastern Band of Cherokee Indians',
     'Eastern Band of Cherokee Indians Casino Revenue Fund is a guaranteed basic income initiative in Eastern Band of Cherokee Indians, organized by Eastern Band of Cherokee Indians. Implemented during 1996 -. Enrolled 15,414 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3836,7 +4161,7 @@ SELECT
     'Ongoing monthly distributions',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -3860,7 +4185,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    194,
+    202,
     'EBCI GenWell Program',
     'Eastern Band of Cherokee Indians (EBCI)',
     'EBCI GenWell Program is a guaranteed basic income initiative in Eastern Band of Cherokee Indians, organized by Eastern Band of Cherokee Indians (EBCI). Implemented during 3/1/2025 -. Enrolled n/a participants. Data documented by the Stanford Basic Income Lab.',
@@ -3877,7 +4202,7 @@ SELECT
     'Ongoing monthly distributions',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     18,
     NULL,
     NULL,
@@ -3901,7 +4226,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    195,
+    203,
     'Just Income',
     'Community Spring',
     'Just Income is a guaranteed basic income initiative in Gainesville, FL, organized by Community Spring. Implemented during January 2022 - February 2023. Enrolled 115 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -3917,7 +4242,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Florida'],
+    ARRAY[]::TEXT[],
     ARRAY['Gainesville'],
     NULL,
     NULL,
@@ -3942,7 +4267,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    196,
+    204,
     'GI 305 Community Fund',
     'GI 305',
     'GI 305 Community Fund is a guaranteed basic income initiative in Miami, Florida, organized by GI 305. Implemented during 4/1/2024 - 3/31/2025. Enrolled 5 participants. Data documented by the Stanford Basic Income Lab.',
@@ -3958,7 +4283,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Florida'],
+    ARRAY[]::TEXT[],
     ARRAY['Miami', 'Zip codes 33125, 33127, 33128, 33135, 33136, 33142, 33147, 33150'],
     NULL,
     NULL,
@@ -3983,7 +4308,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    197,
+    205,
     'I.M.P.A.C.T. (Income Mobility Program for Atlanta Community Transformation)',
     'City of Atlanta and Urban League of Greater Atlanta',
     'I.M.P.A.C.T. (Income Mobility Program for Atlanta Community Transformation) is a guaranteed basic income initiative in Atlanta, GA, organized by City of Atlanta and Urban League of Greater Atlanta. Implemented during January 2022 - May 2023. Enrolled 300 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -3999,7 +4324,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Georgia'],
+    ARRAY[]::TEXT[],
     ARRAY['Atlanta'],
     NULL,
     NULL,
@@ -4024,10 +4349,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    198,
+    206,
     'In Her Hands - Atlanta''s Old Fourth Ward',
-    'Georgia Resilience and Opportunity (GRO) Fund & GiveDirectly',
-    'In Her Hands - Atlanta''s Old Fourth Ward is a guaranteed basic income initiative in In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward, (2) Clay, Terrell, and Randolph Counties, (3) College Park, (4) Atlanta''s Westside neighborhoods., organized by GRO Fund. Implemented during May 2022 - May 2024. Enrolled 214 participants. Data documented by the Stanford Basic Income Lab. Evaluation conducted by Center for Guaranteed Income Research (UPenn).',
+    'GRO Fund',
+    'In Her Hands - Atlanta''s Old Fourth Ward is a guaranteed basic income initiative in In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward, (2) Clay, Terrell, and Randolph Counties, (3) College Park, (4) Atlanta''s Westside neighborhoods., organized by GRO Fund. Implemented during May 2022 - May 2024. Enrolled 214 participants. Data documented by the Stanford Basic Income Lab.',
     850,
     'USD',
     '$850 (monthly)',
@@ -4040,7 +4365,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Georgia', 'Indiana'],
+    ARRAY[]::TEXT[],
     ARRAY['Old Fourth Ward', 'In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward'],
     NULL,
     NULL,
@@ -4051,7 +4376,7 @@ SELECT
     FALSE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'In Her Hands - Atlanta''s Old Fourth Ward' LIMIT 1),
-    'https://www.thegrofund.org/in-her-hands',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'In Her Hands - Atlanta''s Old Fourth Ward'
@@ -4065,10 +4390,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    199,
+    207,
     'In Her Hands - Atlanta''s Westside Neighborhoods',
-    'Georgia Resilience and Opportunity (GRO) Fund & GiveDirectly',
-    'In Her Hands - Atlanta''s Westside Neighborhoods is a guaranteed basic income initiative in In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward, (2) Clay, Terrell, and Randolph Counties, (3) College Park, (4) Atlanta''s Westside neighborhoods., organized by GRO Fund. Implemented during August 2024 - August 2027. Enrolled 275 participants. Data documented by the Stanford Basic Income Lab. Evaluation conducted by Center for Guaranteed Income Research (UPenn).',
+    'GRO Fund',
+    'In Her Hands - Atlanta''s Westside Neighborhoods is a guaranteed basic income initiative in In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward, (2) Clay, Terrell, and Randolph Counties, (3) College Park, (4) Atlanta''s Westside neighborhoods., organized by GRO Fund. Implemented during August 2024 - August 2027. Enrolled 275 participants. Data documented by the Stanford Basic Income Lab.',
     1000,
     'USD',
     '$1,000 (monthly)',
@@ -4081,7 +4406,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Georgia', 'Indiana'],
+    ARRAY[]::TEXT[],
     ARRAY['In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward', 'English Ave., Vine City, Bankhead, Washington Park'],
     NULL,
     NULL,
@@ -4092,7 +4417,7 @@ SELECT
     FALSE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'In Her Hands - Atlanta''s Westside Neighborhoods' LIMIT 1),
-    'https://www.thegrofund.org/in-her-hands',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'In Her Hands - Atlanta''s Westside Neighborhoods'
@@ -4106,10 +4431,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    200,
+    208,
     'In Her Hands - Southwest Georgia (Clay, Randolph, and Terrell Counties)',
-    'Georgia Resilience and Opportunity (GRO) Fund & GiveDirectly',
-    'In Her Hands - Southwest Georgia (Clay, Randolph, and Terrell Counties) is a guaranteed basic income initiative in In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward, (2) Clay, Terrell, and Randolph Counties, (3) College Park, (4) Atlanta''s Westside neighborhoods., organized by GRO Fund. Implemented during August 2022 - August 2024. Enrolled 236 participants. Data documented by the Stanford Basic Income Lab. Evaluation conducted by Center for Guaranteed Income Research (UPenn).',
+    'GRO Fund',
+    'In Her Hands - Southwest Georgia (Clay, Randolph, and Terrell Counties) is a guaranteed basic income initiative in In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward, (2) Clay, Terrell, and Randolph Counties, (3) College Park, (4) Atlanta''s Westside neighborhoods., organized by GRO Fund. Implemented during August 2022 - August 2024. Enrolled 236 participants. Data documented by the Stanford Basic Income Lab.',
     850,
     'USD',
     '$850 (monthly)',
@@ -4122,7 +4447,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Georgia', 'Indiana'],
+    ARRAY[]::TEXT[],
     ARRAY['In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward'],
     NULL,
     NULL,
@@ -4133,7 +4458,7 @@ SELECT
     FALSE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'In Her Hands - Southwest Georgia (Clay, Randolph, and Terrell Counties)' LIMIT 1),
-    'https://www.thegrofund.org/in-her-hands',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'In Her Hands - Southwest Georgia (Clay, Randolph, and Terrell Counties)'
@@ -4147,10 +4472,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    201,
+    209,
     'In Her Hands - City of College Park',
-    'Georgia Resilience and Opportunity (GRO) Fund & GiveDirectly',
-    'In Her Hands - City of College Park is a guaranteed basic income initiative in In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward, (2) Clay, Terrell, and Randolph Counties, (3) College Park, (4) Atlanta''s Westside neighborhoods., organized by GRO Fund. Implemented during October 2022 - October 2024. Enrolled 204 participants. Data documented by the Stanford Basic Income Lab. Evaluation conducted by Center for Guaranteed Income Research (UPenn).',
+    'GRO Fund',
+    'In Her Hands - City of College Park is a guaranteed basic income initiative in In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward, (2) Clay, Terrell, and Randolph Counties, (3) College Park, (4) Atlanta''s Westside neighborhoods., organized by GRO Fund. Implemented during October 2022 - October 2024. Enrolled 204 participants. Data documented by the Stanford Basic Income Lab.',
     850,
     'USD',
     '$850 (monthly)',
@@ -4163,7 +4488,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Georgia', 'Indiana'],
+    ARRAY[]::TEXT[],
     ARRAY['In Her Hands  includes four sites in Georgia: (1) Atlanta''s Old Fourth Ward'],
     NULL,
     NULL,
@@ -4174,7 +4499,7 @@ SELECT
     FALSE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'In Her Hands - City of College Park' LIMIT 1),
-    'https://www.thegrofund.org/in-her-hands',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'In Her Hands - City of College Park'
@@ -4188,10 +4513,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    202,
+    210,
     'Rural Income Maintenance Experiment',
-    'Office of Economic Opportunity & University of Wisconsin',
-    'Rural Income Maintenance Experiment is a guaranteed basic income initiative in Calhound and Pocahontas Counties, IA, organized by Institute for Research on Poverty. Implemented during 1970 - 1972. Enrolled 810 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Institute for Research on Poverty.',
+    'Institute for Research on Poverty',
+    'Rural Income Maintenance Experiment is a guaranteed basic income initiative in Calhound and Pocahontas Counties, IA, organized by Institute for Research on Poverty. Implemented during 1970 - 1972. Enrolled 810 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     500,
     'USD',
     'Varied (monthly)',
@@ -4204,7 +4529,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Iowa'],
+    ARRAY[]::TEXT[],
     ARRAY['Calhound and Pocahontas Counties'],
     NULL,
     NULL,
@@ -4215,7 +4540,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Rural Income Maintenance Experiment' LIMIT 1),
-    'https://www.irp.wisc.edu/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Rural Income Maintenance Experiment'
@@ -4229,7 +4554,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    203,
+    211,
     'UpLift - The Central Iowa Basic Income Pilot',
     'Project Coordination Team at The Harkin Institute',
     'UpLift - The Central Iowa Basic Income Pilot is a guaranteed basic income initiative in Polk, Dallas, and Warren Counties, IA, organized by Project Coordination Team at The Harkin Institute. Implemented during 5/15/23 - 4/15/25. Enrolled 110 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -4245,7 +4570,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Iowa'],
+    ARRAY[]::TEXT[],
     ARRAY['Polk'],
     NULL,
     NULL,
@@ -4270,7 +4595,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    204,
+    212,
     'Champaign County Guaranteed Income Project',
     'University of Illinois',
     'Champaign County Guaranteed Income Project is a guaranteed basic income initiative in Champaign County, IL, organized by University of Illinois. Implemented during 3/1/2023 - 9/30/2026. Enrolled 10 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4286,7 +4611,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Illinois'],
+    ARRAY[]::TEXT[],
     ARRAY['Champaign County'],
     NULL,
     NULL,
@@ -4311,7 +4636,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    205,
+    213,
     'Affording Survival',
     'The Network',
     'Affording Survival is a guaranteed basic income initiative in Chicago, IL, organized by The Network. Implemented during 7/27/2024 - July 2025. Enrolled 60 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4327,7 +4652,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Illinois'],
+    ARRAY[]::TEXT[],
     ARRAY['Chicago'],
     NULL,
     NULL,
@@ -4352,10 +4677,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    206,
+    214,
     'Chicago Resilient Communities Pilot',
-    'City of Chicago Department of Family & Support Services',
-    'Chicago Resilient Communities Pilot is a guaranteed basic income initiative in Chicago, IL, organized by City of Chicago. Implemented during June 2022  - May 2023. Enrolled 5000 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by University of Chicago Inclusive Economy Lab.',
+    'City of Chicago',
+    'Chicago Resilient Communities Pilot is a guaranteed basic income initiative in Chicago, IL, organized by City of Chicago. Implemented during June 2022  - May 2023. Enrolled 5000 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     500,
     'USD',
     '500 USD (monthly)',
@@ -4368,7 +4693,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Illinois'],
+    ARRAY[]::TEXT[],
     ARRAY['Chicago'],
     18,
     NULL,
@@ -4379,7 +4704,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Chicago Resilient Communities Pilot' LIMIT 1),
-    'https://www.chicago.gov/city/en/sites/resilient-communities-pilot/home.html',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Chicago Resilient Communities Pilot'
@@ -4393,7 +4718,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    207,
+    215,
     'Dream Keeper Fellowship',
     'Direct Giving Lab',
     'Dream Keeper Fellowship is a guaranteed basic income initiative in Chicago, IL, organized by Direct Giving Lab. Implemented during 1/1/2024 - 1/1/2026. Enrolled 70 low-income families. Proposed expansion to 200 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4409,7 +4734,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Illinois'],
+    ARRAY[]::TEXT[],
     ARRAY['Chicago'],
     NULL,
     NULL,
@@ -4434,7 +4759,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    208,
+    216,
     'Evanston Equitable Recovery Fund',
     'Family Independence Initiative',
     'Evanston Equitable Recovery Fund is a guaranteed basic income initiative in Chicago, IL, organized by Family Independence Initiative. Implemented during 4/26/2021 - 2/26/2022. Enrolled 24 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4450,7 +4775,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Illinois'],
+    ARRAY[]::TEXT[],
     ARRAY['Chicago'],
     NULL,
     NULL,
@@ -4475,7 +4800,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    209,
+    217,
     'Family Goal Fund — Chicago, IL',
     'LIFT',
     'Family Goal Fund is a guaranteed basic income initiative in Chicago, IL, organized by LIFT. Implemented during January 2018 -. Enrolled 800+ participants. Data documented by the Stanford Basic Income Lab.',
@@ -4491,7 +4816,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Illinois'],
+    ARRAY[]::TEXT[],
     ARRAY['Chicago'],
     NULL,
     NULL,
@@ -4501,7 +4826,7 @@ SELECT
     'Households in the LIFT program with low-income and children 0-8 years of age',
     FALSE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Family Goal Fund' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Family Goal Fund — Chicago, IL' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -4516,7 +4841,49 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    210,
+    218,
+    'Cook County Promise Guaranteed Income',
+    'Cook County Government',
+    'Cook County Promise Guaranteed Income is a guaranteed basic income initiative in Cook County, IL, organized by Cook County Government. Implemented during October 2022 - 2025. Enrolled 3,250 participants. Data documented by the Stanford Basic Income Lab.',
+    500,
+    'USD',
+    '$500 (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Cook County'],
+    NULL,
+    NULL,
+    NULL,
+    40000,
+    '3,250',
+    'Individuals  18 or older with a household income at or below 250% of the federal poverty level or less, and  
+no one else in your household is participating in another guaranteed income pilot.',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Cook County Promise Guaranteed Income' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Cook County Promise Guaranteed Income'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    219,
     'Every Dollar Counts',
     'Heartland Alliance',
     'Every Dollar Counts is a guaranteed basic income initiative in Cook, Iroquois, Kane, LaSalle, Lee, Ogle, Will, Winnebago, organized by Heartland Alliance. Implemented during January 2020 - December 2023. Enrolled Not available participants. Data documented by the Stanford Basic Income Lab.',
@@ -4557,7 +4924,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    211,
+    220,
+    'Guaranteed Income Pilot Program',
+    'City of Evanston and Northwestern University',
+    'Guaranteed Income Pilot Program is a guaranteed basic income initiative in Evanston, IL, organized by City of Evanston and Northwestern University. Implemented during April 2021 - January 2022. Enrolled 165 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
+    500,
+    'USD',
+    '500 USD (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Evanston'],
+    60,
+    NULL,
+    NULL,
+    NULL,
+    '165',
+    'Individuals aged 18-24, senior and undocumented residents with low-income',
+    TRUE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Guaranteed Income Pilot Program' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Guaranteed Income Pilot Program'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    221,
     'Direct Giving Lab',
     'Direct Giving Lab',
     'Direct Giving Lab is a guaranteed basic income initiative in Illinois, organized by Direct Giving Lab. Implemented during 5/1/2017 - May 2018. Enrolled 70 low-income families. Proposed expansion to 200 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4573,8 +4981,8 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Illinois'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -4598,7 +5006,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    212,
+    222,
     'Empower Parenting with Resources (EmPwR)',
     'University of Illinois Urbana-Champaign',
     'Empower Parenting with Resources (EmPwR) is a guaranteed basic income initiative in Illinois, organized by University of Illinois Urbana-Champaign. Enrolled 800 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4614,8 +5022,8 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Illinois'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -4639,7 +5047,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    213,
+    223,
     'Chicago Future Fund',
     'EAT Chicago',
     'Chicago Future Fund is a guaranteed basic income initiative in Chicago, IL, organized by EAT Chicago. Implemented during October 2021 - April 2023. Enrolled 30 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4655,7 +5063,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Illinois'],
+    ARRAY[]::TEXT[],
     ARRAY['West Garfield Park', 'Chicago'],
     NULL,
     NULL,
@@ -4680,7 +5088,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    214,
+    224,
     'OpenResearch Unconditional Cash Study (previously, Y Combinator Basic Income Experiment)',
     'OpenResearch',
     'OpenResearch Unconditional Cash Study (previously, Y Combinator Basic Income Experiment) is a guaranteed basic income initiative in Illinois and Texas, organized by OpenResearch. Implemented during 11/1/2020 - 10/31/2023. Enrolled 3,000 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4696,7 +5104,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Illinois', 'Texas'],
+    ARRAY[]::TEXT[],
     ARRAY['Illinois and Texas'],
     NULL,
     NULL,
@@ -4721,10 +5129,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    215,
+    225,
     'Gary Income Maintenance Experiment',
-    'U.S. Department of Health, Education, and Welfare & Indiana University',
-    'Gary Income Maintenance Experiment is a guaranteed basic income initiative in Gary, IN, organized by State of Indiana Department of Public Welfare. Implemented during 1971 - 1974. Enrolled 1782 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Institute for Research on Poverty, University of Wisconsin-Madison.',
+    'State of Indiana Department of Public Welfare',
+    'Gary Income Maintenance Experiment is a guaranteed basic income initiative in Gary, IN, organized by State of Indiana Department of Public Welfare. Implemented during 1971 - 1974. Enrolled 1782 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     275,
     'USD',
     '275 or 358 USD (monthly)',
@@ -4737,7 +5145,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Indiana'],
+    ARRAY[]::TEXT[],
     ARRAY['Gary'],
     NULL,
     NULL,
@@ -4748,7 +5156,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Gary Income Maintenance Experiment' LIMIT 1),
-    'https://www.irp.wisc.edu/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Gary Income Maintenance Experiment'
@@ -4762,7 +5170,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    216,
+    226,
     'Guaranteed Income Validation Effort (GIVE Gary)',
     'City of Gary',
     'Guaranteed Income Validation Effort (GIVE Gary) is a guaranteed basic income initiative in Gary, IN, organized by City of Gary. Implemented during May 2021 - May 2022. Enrolled 100 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -4778,7 +5186,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Indiana'],
+    ARRAY[]::TEXT[],
     ARRAY['Gary'],
     NULL,
     NULL,
@@ -4803,7 +5211,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    217,
+    227,
     'The Rooted School: The 50 Dollar Study',
     'Rooted School Foundation',
     'The Rooted School: The 50 Dollar Study is a guaranteed basic income initiative in Indianapolis, IN, organized by Rooted School Foundation. Implemented during 10/1/2022 - 9/30/2024. Enrolled 470 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -4820,7 +5228,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     60,
     NULL,
     NULL,
@@ -4844,7 +5252,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    218,
+    228,
     'YALift! (Young Adult Louisville Income For Transformation)',
     'Louisville Metro Government',
     'YALift! (Young Adult Louisville Income For Transformation) is a guaranteed basic income initiative in Louisville, KY, organized by Louisville Metro Government. Implemented during April 2022 - March 2023. Enrolled 151 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4860,7 +5268,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Kentucky'],
+    ARRAY[]::TEXT[],
     ARRAY['California, Russell, Smoketown', 'Louisville'],
     NULL,
     NULL,
@@ -4885,7 +5293,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    219,
+    229,
     'Baby''s First Years - Louisiana',
     'Teacher''s College',
     'Baby''s First Years - Louisiana is a guaranteed basic income initiative in Greater New Orleans metropolitan area, LA, organized by Teacher''s College. Implemented during 5/1/2018 -. Enrolled 1,000 across all 4 Baby''s First Years study sites (New York City, New Orleans metropolitan area, the Twin Cities, Omaha metropolitan area) participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -4901,7 +5309,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Louisiana'],
+    ARRAY[]::TEXT[],
     ARRAY['Greater New Orleans metropolitan area'],
     NULL,
     NULL,
@@ -4926,7 +5334,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    220,
+    230,
     'Shreveport Guaranteed Income',
     'City of Shreveport',
     'Shreveport Guaranteed Income is a guaranteed basic income initiative in Shreveport, LA, organized by City of Shreveport. Implemented during March 2022 - March 2023. Enrolled 110 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -4942,7 +5350,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Louisiana'],
+    ARRAY[]::TEXT[],
     ARRAY['Shreveport'],
     NULL,
     NULL,
@@ -4967,7 +5375,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    221,
+    231,
     'The Truth & Reconciliation Project''s Guaranteed Monthly Income',
     'ACLU of Louisiana and the Fund for Guaranteed Income',
     'The Truth & Reconciliation Project''s Guaranteed Monthly Income is a guaranteed basic income initiative in Louisiana, organized by ACLU of Louisiana and the Fund for Guaranteed Income. Implemented during 12/1/2023 - 12/1/2024. Enrolled 12 participants. Data documented by the Stanford Basic Income Lab.',
@@ -4983,8 +5391,8 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Louisiana'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -5008,7 +5416,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    222,
+    232,
     'New Orleans Guaranteed Income Program',
     'City of New Orleans',
     'New Orleans Guaranteed Income Program is a guaranteed basic income initiative in New Orleans, LA, organized by City of New Orleans. Implemented during April 2022 - March 2023. Enrolled 125 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5024,7 +5432,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Louisiana'],
+    ARRAY[]::TEXT[],
     ARRAY['New Orleans'],
     18,
     24,
@@ -5049,7 +5457,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    223,
+    233,
     'The Rooted School: The 50 Dollar Study — New Orleans, LA',
     'Rooted School Foundation',
     'The Rooted School: The 50 Dollar Study is a guaranteed basic income initiative in New Orleans, LA, organized by Rooted School Foundation. Implemented during 10/1/2022 - 9/30/2024. Enrolled 470 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -5065,7 +5473,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Louisiana'],
+    ARRAY[]::TEXT[],
     ARRAY['New Orleans'],
     60,
     NULL,
@@ -5075,7 +5483,7 @@ SELECT
     'High school senior enrolled at Rooted School New Orleans',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'The Rooted School: The 50 Dollar Study' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'The Rooted School: The 50 Dollar Study — New Orleans, LA' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -5090,7 +5498,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    224,
+    234,
+    'Camp Harbor View Guaranteed Income Pilot',
+    'Camp Harbor View & UpTogether',
+    'Camp Harbor View Guaranteed Income Pilot is a guaranteed basic income initiative in Boston, MA, organized by Camp Harbor View & UpTogether. Implemented during August 2021 - August 2023. Enrolled 50 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
+    583,
+    'USD',
+    '583 USD (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'philanthropic_grant',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Boston'],
+    18,
+    24,
+    NULL,
+    NULL,
+    '50',
+    'Child in one of CHVs youth serving programs and  self-certify as low-income but not receiving most benefits',
+    TRUE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Camp Harbor View Guaranteed Income Pilot' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Camp Harbor View Guaranteed Income Pilot'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    235,
     'Community Love Fund',
     'The National Council',
     'Community Love Fund is a guaranteed basic income initiative in Boston, MA, organized by The National Council. Implemented during February 2022 - January 2023. Enrolled 21 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5106,7 +5555,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Massachusetts'],
+    ARRAY[]::TEXT[],
     ARRAY['Boston'],
     NULL,
     NULL,
@@ -5131,7 +5580,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    225,
+    236,
     'Pediatric RISE',
     'Dana-Farber Cancer Institute Department of Pediatric Oncology',
     'Pediatric RISE is a guaranteed basic income initiative in Boston, MA, organized by Dana-Farber Cancer Institute Department of Pediatric Oncology. Implemented during 10/1/2024 - 12/31/2024. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5147,7 +5596,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Massachusetts'],
+    ARRAY[]::TEXT[],
     ARRAY['Boston'],
     NULL,
     NULL,
@@ -5172,7 +5621,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    226,
+    237,
     'Striving Towards Economic Prosperity (STEP)',
     'Unitd South End Settlements',
     'Striving Towards Economic Prosperity (STEP) is a guaranteed basic income initiative in Boston, MA, organized by Unitd South End Settlements. Implemented during 10/1/2021. Enrolled 32 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5188,7 +5637,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Massachusetts'],
+    ARRAY[]::TEXT[],
     ARRAY['South End, Roxbury, other Boston neighborhoods', 'Boston'],
     NULL,
     NULL,
@@ -5213,7 +5662,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    227,
+    238,
     'Trust and Invest Collaborative',
     'UpTogether',
     'Trust and Invest Collaborative is a guaranteed basic income initiative in Boston and Cambridge, MA, organized by UpTogether. Implemented during June 2021 - December 2022. Enrolled 1482 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5229,7 +5678,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Massachusetts'],
+    ARRAY[]::TEXT[],
     ARRAY['Boston and Cambridge'],
     NULL,
     20,
@@ -5254,10 +5703,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    228,
+    239,
     'Cambridge RISE (Recurring Income for Success and Empowerment)',
-    'City of Cambridge & Cambridge Economic Opportunity Authority',
-    'Cambridge RISE (Recurring Income for Success and Empowerment) is a guaranteed basic income initiative in Cambridge, MA, organized by City of Cambridge. Implemented during September 2021 - February 2023. Enrolled 130 participants. Data documented by the Stanford Basic Income Lab. Evaluation conducted by Center for Guaranteed Income Research (UPenn).',
+    'City of Cambridge',
+    'Cambridge RISE (Recurring Income for Success and Empowerment) is a guaranteed basic income initiative in Cambridge, MA, organized by City of Cambridge. Implemented during September 2021 - February 2023. Enrolled 130 participants. Data documented by the Stanford Basic Income Lab.',
     500,
     'USD',
     '500 USD (monthly)',
@@ -5270,7 +5719,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Massachusetts'],
+    ARRAY[]::TEXT[],
     ARRAY['Cambridge'],
     NULL,
     18,
@@ -5281,7 +5730,7 @@ SELECT
     FALSE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Cambridge RISE (Recurring Income for Success and Empowerment)' LIMIT 1),
-    'https://www.cambridgema.gov/rise',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Cambridge RISE (Recurring Income for Success and Empowerment)'
@@ -5295,10 +5744,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    229,
+    240,
     'Chelsea Eats',
-    'City of Chelsea, Massachusetts',
-    'Chelsea Eats is a guaranteed basic income initiative in Chelsea, MA, organized by City of Chelsea. Implemented during November 2020 - May 2021. Enrolled 2000 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Harvard Kennedy School Rappaport Institute.',
+    'City of Chelsea',
+    'Chelsea Eats is a guaranteed basic income initiative in Chelsea, MA, organized by City of Chelsea. Implemented during November 2020 - May 2021. Enrolled 2000 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     200,
     'USD',
     '200 - 400 USD (monthly)',
@@ -5311,7 +5760,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Massachusetts'],
+    ARRAY[]::TEXT[],
     ARRAY['Chelsea'],
     NULL,
     NULL,
@@ -5322,7 +5771,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Chelsea Eats' LIMIT 1),
-    'https://www.chelseama.gov/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Chelsea Eats'
@@ -5336,7 +5785,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    230,
+    241,
     'Healthy Families MA (HFM) Family Financial Pilot',
     'Children''s Trust of MA',
     'Healthy Families MA (HFM) Family Financial Pilot is a guaranteed basic income initiative in Cities and towns in the HFM Springfield catchment area: Agawam, Blandford, East Longmeadow, Granville, Hampden, Longmeadow, Montgomery, Russell, Southwick, Springfield, Tolland, West Springfield, Wilbraham, organized by Children''s Trust of MA. Implemented during 6/15/2023 - 6/30/2025. Enrolled 123 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5352,7 +5801,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Indiana'],
+    ARRAY[]::TEXT[],
     ARRAY['Cities and towns in the HFM Springfield catchment area: Agawam'],
     NULL,
     NULL,
@@ -5377,7 +5826,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    231,
+    242,
     'Bridge to Prosperity Cliffs Pilot Program',
     'Springfield WORKS',
     'Bridge to Prosperity Cliffs Pilot Program is a guaranteed basic income initiative in Greater Boston, Worcester, and Springfield, MA, organized by Springfield WORKS. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5393,7 +5842,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Massachusetts'],
+    ARRAY[]::TEXT[],
     ARRAY['Greater Boston'],
     NULL,
     NULL,
@@ -5418,7 +5867,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    232,
+    243,
     'Family Health Project',
     'Health Metrics',
     'Family Health Project is a guaranteed basic income initiative in Lynn, MA, organized by Health Metrics. Implemented during January 2018 -. Enrolled 30 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5434,7 +5883,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Massachusetts'],
+    ARRAY[]::TEXT[],
     ARRAY['Lynn'],
     NULL,
     NULL,
@@ -5459,7 +5908,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    233,
+    244,
     'Economic Stability/Mobility Initiative',
     'The City of Newton and Economic Mobility Pathways (EMPath)',
     'Economic Stability/Mobility Initiative is a guaranteed basic income initiative in Newton, MA, organized by The City of Newton and Economic Mobility Pathways (EMPath). Implemented during 9/1/2023 - September 2025. Enrolled 50 families participants. Data documented by the Stanford Basic Income Lab.',
@@ -5475,7 +5924,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Massachusetts'],
+    ARRAY[]::TEXT[],
     ARRAY['Newton'],
     NULL,
     18,
@@ -5500,7 +5949,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    234,
+    245,
+    'Prince George Guaranteed Income Pilot Program',
+    'Thrive Prince George''s',
+    'Prince George Guaranteed Income Pilot Program is a guaranteed basic income initiative in Prince George''s County, MD, organized by Thrive Prince George''s. Implemented during 4/1/2024 - 3/1/2026. Enrolled 175 participants. Data documented by the Stanford Basic Income Lab.',
+    800,
+    'USD',
+    '$800 (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Prince George''s County'],
+    18,
+    24,
+    NULL,
+    NULL,
+    '175',
+    '50 youth (age 18-24) who have aged out of foster care and 125+ seniors (age 60+) within Prince George''s County.',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Prince George Guaranteed Income Pilot Program' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Prince George Guaranteed Income Pilot Program'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    246,
     'Montgomery County Guaranteed Income Program',
     'Uptogether',
     'Montgomery County Guaranteed Income Program is a guaranteed basic income initiative in Mongomery, MD, organized by Uptogether. Implemented during August 2022 - July 2024. Enrolled 300 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5516,7 +6006,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Maryland'],
+    ARRAY[]::TEXT[],
     ARRAY['Mongomery'],
     NULL,
     NULL,
@@ -5541,10 +6031,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    235,
+    247,
     'Baltimore Young Families Success Fund',
-    'Mayor''s Office of Children & Family Success (Baltimore)',
-    'Baltimore Young Families Success Fund is a guaranteed basic income initiative in Baltimore, MD, organized by City of Baltimore. Implemented during 8/1/2022 - 07/01/2024. Enrolled 200 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Center for Guaranteed Income Research (UPenn).',
+    'City of Baltimore',
+    'Baltimore Young Families Success Fund is a guaranteed basic income initiative in Baltimore, MD, organized by City of Baltimore. Implemented during 8/1/2022 - 07/01/2024. Enrolled 200 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     1000,
     'USD',
     '1000 USD (monthly)',
@@ -5557,7 +6047,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Maryland'],
+    ARRAY[]::TEXT[],
     ARRAY['Baltimore'],
     NULL,
     NULL,
@@ -5568,7 +6058,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Baltimore Young Families Success Fund' LIMIT 1),
-    'https://www.baltimorecity.gov/byfsf',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Baltimore Young Families Success Fund'
@@ -5582,7 +6072,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    236,
+    248,
     'Project Home Trust',
     'Quality Housing Coalition',
     'Project Home Trust is a guaranteed basic income initiative in Maine, organized by Quality Housing Coalition. Implemented during 6/1/2023 - 5/31/2024. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5598,8 +6088,8 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Maine'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     'female'::public.program_gender_requirement,
@@ -5623,7 +6113,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    237,
+    249,
     'Guaranteed Income to Grow Ann Arbor',
     'City of Ann Arbor',
     'Guaranteed Income to Grow Ann Arbor is a guaranteed basic income initiative in Ann Arbor, MI, organized by City of Ann Arbor. Implemented during 1/1/2024 - January 2026. Enrolled 100 families/individuals participants. Data documented by the Stanford Basic Income Lab.',
@@ -5639,7 +6129,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Michigan'],
+    ARRAY[]::TEXT[],
     ARRAY['Ann Arbor'],
     NULL,
     NULL,
@@ -5664,7 +6154,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    238,
+    250,
     'Thriving Families',
     'Ann Arbor Area Community Foundation',
     'Thriving Families is a guaranteed basic income initiative in Washtenaw County, MI, organized by Ann Arbor Area Community Foundation. Implemented during April 2022 - April 2024. Enrolled 45 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5680,7 +6170,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Michigan'],
+    ARRAY[]::TEXT[],
     ARRAY['Washtenaw County'],
     NULL,
     NULL,
@@ -5705,7 +6195,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    239,
+    251,
     'Project Solid Ground',
     'Avivo',
     'Project Solid Ground is a guaranteed basic income initiative in Minneapolis–St. Paul (Twin Cities), MN, organized by Avivo. Implemented during 10/1/2020 - 9/30/2021. Enrolled 15 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5721,7 +6211,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Minnesota'],
+    ARRAY[]::TEXT[],
     ARRAY['Minneapolis–St. Paul (Twin Cities)'],
     NULL,
     NULL,
@@ -5746,7 +6236,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    240,
+    252,
     'Minneapolis Guaranteed Basic Income Pilot',
     'City of Minneapolis',
     'Minneapolis Guaranteed Basic Income Pilot is a guaranteed basic income initiative in Minneapolis, MN, organized by City of Minneapolis. Implemented during June 2022 - May 2024. Enrolled 200 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5762,7 +6252,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Minnesota'],
+    ARRAY[]::TEXT[],
     ARRAY['Minneapolis'],
     NULL,
     NULL,
@@ -5787,7 +6277,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    241,
+    253,
     'CollegeBound Boost',
     'St. Paul’s Office of Financial Empowerment',
     'CollegeBound Boost is a guaranteed basic income initiative in St. Paul, MN, organized by St. Paul’s Office of Financial Empowerment. Implemented during Fall 2022 -. Enrolled 333 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5803,7 +6293,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Minnesota'],
+    ARRAY[]::TEXT[],
     ARRAY['St. Paul'],
     NULL,
     NULL,
@@ -5828,7 +6318,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    242,
+    254,
     'International Institute of Minnesota''s Guaranteed Income Program for Refugees',
     'International Institute of Minnesota',
     'International Institute of Minnesota''s Guaranteed Income Program for Refugees is a guaranteed basic income initiative in St. Paul, MN, organized by International Institute of Minnesota. Implemented during August 2022 - July 2023. Enrolled 25 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5844,7 +6334,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Minnesota'],
+    ARRAY[]::TEXT[],
     ARRAY['St. Paul'],
     NULL,
     NULL,
@@ -5869,7 +6359,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    243,
+    255,
     'People''s Prosperity Pilot',
     'City of St. Paul',
     'People''s Prosperity Pilot is a guaranteed basic income initiative in St. Paul, MN, organized by City of St. Paul. Implemented during October 2020 - March 2022. Enrolled 150 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -5885,7 +6375,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Minnesota'],
+    ARRAY[]::TEXT[],
     ARRAY['St. Paul'],
     NULL,
     NULL,
@@ -5910,7 +6400,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    244,
+    256,
     'Baby''s First Years - Minnesota',
     'Teacher''s College',
     'Baby''s First Years - Minnesota is a guaranteed basic income initiative in Twin Cities (Minneapolis and St. Paul), MN, organized by Teacher''s College. Implemented during 5/1/2018 -. Enrolled 1,000 across all 4 Baby''s First Years study sites (New York City, New Orleans metropolitan area, the Twin Cities, Omaha metropolitan area) participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -5926,7 +6416,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Minnesota'],
+    ARRAY[]::TEXT[],
     ARRAY['Twin Cities (Minneapolis and St. Paul)'],
     NULL,
     NULL,
@@ -5951,7 +6441,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    245,
+    257,
     'Rai$e Program',
     'Wilder Foundation',
     'Rai$e Program is a guaranteed basic income initiative in Minnesota, organized by Wilder Foundation. Implemented during 1/31/2023 - 8/25/2024. Enrolled 150 participants. Data documented by the Stanford Basic Income Lab.',
@@ -5967,8 +6457,8 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Minnesota'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -5994,7 +6484,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    246,
+    258,
     'Magnolia Mother''s Trust Cohort 4',
     'Springboard to Opportunities',
     'Magnolia Mother''s Trust Cohort 4 is a guaranteed basic income initiative in Jackson, MS, organized by Springboard to Opportunities. Implemented during 5/1/2022 - 4/1/2023. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6010,7 +6500,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Mississippi'],
+    ARRAY[]::TEXT[],
     ARRAY['Jackson'],
     NULL,
     NULL,
@@ -6035,7 +6525,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    247,
+    259,
     'Magnolia Mother''s Trust',
     'Springboard to Opportunities',
     'Magnolia Mother''s Trust is a guaranteed basic income initiative in Jackson, MS, organized by Springboard to Opportunities. Implemented during 2018 -. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6051,7 +6541,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Mississippi'],
+    ARRAY[]::TEXT[],
     ARRAY['Jackson'],
     NULL,
     NULL,
@@ -6076,7 +6566,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    248,
+    260,
     'Rural Income for Self Empowerment Guaranteed Minimum Income Program (RISE GMI) - Warren County, Mississippi',
     'Rural GMI Initiative',
     'Rural Income for Self Empowerment Guaranteed Minimum Income Program (RISE GMI) - Warren County, Mississippi is a guaranteed basic income initiative in Warren County, MS, organized by Rural GMI Initiative. Implemented during 12/1/2025 -. Enrolled About 530 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6092,7 +6582,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Mississippi'],
+    ARRAY[]::TEXT[],
     ARRAY['Warren County'],
     NULL,
     NULL,
@@ -6117,7 +6607,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    249,
+    261,
     'LIFT',
     'Mountain Home',
     'LIFT is a guaranteed basic income initiative in Missoula. MT, organized by Mountain Home. Implemented during 8/23/2022 - 8/24/2023. Enrolled 10 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6133,7 +6623,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Montana'],
+    ARRAY[]::TEXT[],
     ARRAY['Missoula. MT', '59804'],
     NULL,
     NULL,
@@ -6158,7 +6648,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    250,
+    262,
     'The Returning Citizen Stimulus (RCS) Program',
     'Center for Employment Opportunities (CEO)',
     'The Returning Citizen Stimulus (RCS) Program is a guaranteed basic income initiative in 28 cities in the United States, organized by Center for Employment Opportunities (CEO). Implemented during 4/1/2020 - 2021. Enrolled 10,400 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6174,7 +6664,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Indiana'],
+    ARRAY[]::TEXT[],
     ARRAY['28 cities in the United States'],
     NULL,
     NULL,
@@ -6199,7 +6689,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    251,
+    263,
     'Project 100+',
     'GiveDirectly',
     'Project 100+ is a guaranteed basic income initiative in Multiple, organized by GiveDirectly. Implemented during April 2020 - October 2021. Enrolled 200,000 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6240,7 +6730,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    252,
+    264,
     'Bootstraps',
     'Pale Blue Dot Media',
     'Bootstraps is a guaranteed basic income initiative in United States, organized by Pale Blue Dot Media. Implemented during 2018 -. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6257,7 +6747,7 @@ SELECT
     'Ongoing monthly distributions',
     ARRAY['United States'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -6281,7 +6771,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    253,
+    265,
     'Growing Strong',
     'Women in Need Homeless Shelter System',
     'Growing Strong is a guaranteed basic income initiative in United States, organized by Women in Need Homeless Shelter System. Implemented during January 2020 -. Enrolled 200 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6298,7 +6788,7 @@ SELECT
     'Ongoing monthly distributions',
     ARRAY['United States'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     2,
     'female'::public.program_gender_requirement,
@@ -6322,7 +6812,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    254,
+    266,
     'The Resilience Fund',
     'Polaris',
     'The Resilience Fund is a guaranteed basic income initiative in United States, organized by Polaris. Implemented during 12/1/2023 - 7/1/2025. Enrolled 24 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6339,7 +6829,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -6363,7 +6853,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    255,
+    267,
     'Immigrant Families Recovery Program - National',
     'Mission Asset Fund (MAF)',
     'Immigrant Families Recovery Program - National is a guaranteed basic income initiative in United States, organized by Mission Asset Fund (MAF). Implemented during 2021 - 2023. Enrolled 3000 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6380,7 +6870,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -6404,7 +6894,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    256,
+    268,
     'Rural Income for Self Empowerment Guaranteed Minimum Income Program (RISE GMI) - Beaufort County, North Carolina',
     'Rural GMI Initiative',
     'Rural Income for Self Empowerment Guaranteed Minimum Income Program (RISE GMI) - Beaufort County, North Carolina is a guaranteed basic income initiative in Beaufort County, NC, organized by Rural GMI Initiative. Implemented during 11/3/2025 -. Enrolled About 530 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6420,7 +6910,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['North Carolina'],
+    ARRAY[]::TEXT[],
     ARRAY['Beaufort County'],
     NULL,
     NULL,
@@ -6445,10 +6935,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    257,
+    269,
     'Rural Income Maintenance Experiment — Duplic County, NC',
-    'Office of Economic Opportunity & University of Wisconsin',
-    'Rural Income Maintenance Experiment is a guaranteed basic income initiative in Duplic County, NC, organized by Institute for Research on Poverty. Implemented during 1970 - 1972. Enrolled 810 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Institute for Research on Poverty.',
+    'Institute for Research on Poverty',
+    'Rural Income Maintenance Experiment is a guaranteed basic income initiative in Duplic County, NC, organized by Institute for Research on Poverty. Implemented during 1970 - 1972. Enrolled 810 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     500,
     'USD',
     'Varied (monthly)',
@@ -6461,7 +6951,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['North Carolina'],
+    ARRAY[]::TEXT[],
     ARRAY['Duplic County'],
     NULL,
     NULL,
@@ -6471,8 +6961,8 @@ SELECT
     'Families with at least one working-age male who was neither a full-time student nor disabled with income up to 150% of the federal poverty level ($3,330 for a family of four in 1968)',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Rural Income Maintenance Experiment' LIMIT 1),
-    'https://www.irp.wisc.edu/',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Rural Income Maintenance Experiment — Duplic County, NC' LIMIT 1),
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Rural Income Maintenance Experiment — Duplic County, NC'
@@ -6486,7 +6976,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    258,
+    270,
     'Excel',
     'StepUp Durham',
     'Excel is a guaranteed basic income initiative in Durham, NC, organized by StepUp Durham. Implemented during March 2022 - February 2023. Enrolled 109 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6502,7 +6992,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['North Carolina'],
+    ARRAY[]::TEXT[],
     ARRAY['Durham'],
     NULL,
     NULL,
@@ -6527,7 +7017,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    259,
+    271,
     'Baby''s First Years - Nebraska',
     'Teacher''s College',
     'Baby''s First Years - Nebraska is a guaranteed basic income initiative in Greater Omaha metropolitan area, NE, organized by Teacher''s College. Implemented during 5/1/2018 -. Enrolled 1,000 across all 4 Baby''s First Years study sites (New York City, New Orleans metropolitan area, the Twin Cities, Omaha metropolitan area) participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -6543,7 +7033,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Nebraska'],
+    ARRAY[]::TEXT[],
     ARRAY['Greater Omaha metropolitan area'],
     NULL,
     NULL,
@@ -6568,7 +7058,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    260,
+    272,
     'New Jersey Income Maintenance Experiment',
     'Institute for Research on Poverty',
     'New Jersey Income Maintenance Experiment is a guaranteed basic income initiative in Jersey City, NJ, organized by Institute for Research on Poverty. Implemented during 1968-1972. Enrolled 1357 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -6584,7 +7074,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New Jersey'],
+    ARRAY[]::TEXT[],
     ARRAY['Jersey City'],
     NULL,
     NULL,
@@ -6609,10 +7099,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    261,
+    273,
     'Newark Movement for Economic Equity',
-    'City of Newark & United Way of Greater Newark',
-    'Newark Movement for Economic Equity is a guaranteed basic income initiative in Newark, NJ, organized by City of Newark. Implemented during October 2021 - September 2023. Enrolled 200 receiving bi-weekly payment, 200 receiving bi-annual payment participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Center for Guaranteed Income Research (UPenn).',
+    'City of Newark',
+    'Newark Movement for Economic Equity is a guaranteed basic income initiative in Newark, NJ, organized by City of Newark. Implemented during October 2021 - September 2023. Enrolled 200 receiving bi-weekly payment, 200 receiving bi-annual payment participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     21,
     'USD',
     '250  (bi-weekly) or 3000 (semi-annually) USD (bi-weekly and semi-annually)',
@@ -6625,7 +7115,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New Jersey'],
+    ARRAY[]::TEXT[],
     ARRAY['Newark'],
     NULL,
     NULL,
@@ -6636,7 +7126,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Newark Movement for Economic Equity' LIMIT 1),
-    'https://www.uwnpc.org/nmee',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Newark Movement for Economic Equity'
@@ -6650,7 +7140,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    262,
+    274,
     'New Jersey Income Maintenance Experiment — Paterson, NJ',
     'Institute for Research on Poverty',
     'New Jersey Income Maintenance Experiment is a guaranteed basic income initiative in Paterson, NJ, organized by Institute for Research on Poverty. Implemented during 1968-1973. Enrolled 1357 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -6666,7 +7156,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New Jersey'],
+    ARRAY[]::TEXT[],
     ARRAY['Paterson'],
     NULL,
     NULL,
@@ -6676,7 +7166,7 @@ SELECT
     'Families with at least one working-age male who was neither a full-time student nor disabled with income up to 150% of the federal poverty level ($3,330 for a family of four in 1968)',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'New Jersey Income Maintenance Experiment' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'New Jersey Income Maintenance Experiment — Paterson, NJ' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -6691,7 +7181,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    263,
+    275,
+    'Paterson Guaranteed Income Pilot Program',
+    'City of Paterson',
+    'Paterson Guaranteed Income Pilot Program is a guaranteed basic income initiative in Paterson, NJ, organized by City of Paterson. Implemented during July 2021 - June 2022. Enrolled 110 participants. Data documented by the Stanford Basic Income Lab.',
+    400,
+    'USD',
+    '400 USD (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'philanthropic_grant',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Paterson'],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '110',
+    'Individuals 18 and over with an annual income $30,000 or less for individuals and $88,000 or less for households',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Paterson Guaranteed Income Pilot Program' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Paterson Guaranteed Income Pilot Program'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    276,
     'New Jersey Income Maintenance Experiment — Prassaic, NJ',
     'Institute for Research on Poverty',
     'New Jersey Income Maintenance Experiment is a guaranteed basic income initiative in Prassaic, NJ, organized by Institute for Research on Poverty. Implemented during 1968-1974. Enrolled 1357 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -6707,7 +7238,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New Jersey'],
+    ARRAY[]::TEXT[],
     ARRAY['Prassaic'],
     NULL,
     NULL,
@@ -6717,7 +7248,7 @@ SELECT
     'Families with at least one working-age male who was neither a full-time student nor disabled with income up to 150% of the federal poverty level ($3,330 for a family of four in 1968)',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'New Jersey Income Maintenance Experiment' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'New Jersey Income Maintenance Experiment — Prassaic, NJ' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -6732,7 +7263,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    264,
+    277,
     'New Jersey Income Maintenance Experiment — Scranton, NJ',
     'Institute for Research on Poverty',
     'New Jersey Income Maintenance Experiment is a guaranteed basic income initiative in Scranton, NJ, organized by Institute for Research on Poverty. Implemented during 1968-1976. Enrolled 1357 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -6748,7 +7279,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New Jersey'],
+    ARRAY[]::TEXT[],
     ARRAY['Scranton'],
     NULL,
     NULL,
@@ -6758,7 +7289,7 @@ SELECT
     'Families with at least one working-age male who was neither a full-time student nor disabled with income up to 150% of the federal poverty level ($3,330 for a family of four in 1968)',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'New Jersey Income Maintenance Experiment' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'New Jersey Income Maintenance Experiment — Scranton, NJ' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -6773,7 +7304,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    265,
+    278,
     'New Jersey Income Maintenance Experiment — Trenton, NJ',
     'Institute for Research on Poverty',
     'New Jersey Income Maintenance Experiment is a guaranteed basic income initiative in Trenton, NJ, organized by Institute for Research on Poverty. Implemented during 1968-1975. Enrolled 1357 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -6789,7 +7320,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New Jersey'],
+    ARRAY[]::TEXT[],
     ARRAY['Trenton'],
     NULL,
     NULL,
@@ -6799,7 +7330,7 @@ SELECT
     'Families with at least one working-age male who was neither a full-time student nor disabled with income up to 150% of the federal poverty level ($3,330 for a family of four in 1968)',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'New Jersey Income Maintenance Experiment' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'New Jersey Income Maintenance Experiment — Trenton, NJ' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -6814,7 +7345,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    266,
+    279,
     'Students Experiencing Homelessness Basic Needs Stipend Pilot',
     'New Mexico Appleseed',
     'Students Experiencing Homelessness Basic Needs Stipend Pilot is a guaranteed basic income initiative in Albuquerque and La Cruces, NM, organized by New Mexico Appleseed. Implemented during 2020- 2021. Enrolled 53 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6830,7 +7361,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Louisiana', 'New Mexico'],
+    ARRAY[]::TEXT[],
     ARRAY['Albuquerque and La Cruces'],
     NULL,
     NULL,
@@ -6855,7 +7386,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    267,
+    280,
     'Albuquerque Public Schools and Las Cruces Public Schools- Students Experiencing Homelessness Pilot',
     'New Mexico Appleseed',
     'Albuquerque Public Schools and Las Cruces Public Schools- Students Experiencing Homelessness Pilot is a guaranteed basic income initiative in Alburquerque, NM, organized by New Mexico Appleseed. Implemented during January 2020 - December 2021. Enrolled 65 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6871,7 +7402,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New Mexico'],
+    ARRAY[]::TEXT[],
     ARRAY['Alburquerque'],
     NULL,
     NULL,
@@ -6896,7 +7427,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    268,
+    281,
     'New Mexico Guaranteed Basic Income Pilot Project & Study for Immigrant Families',
     'UpTogether',
     'New Mexico Guaranteed Basic Income Pilot Project & Study for Immigrant Families is a guaranteed basic income initiative in Bernalillo County, Santa Fe County, Rio Arriba County, McKinley County, Curry County, Roosevelt County, San Juan County, Chaves County, Lea County, Doña Ana County, Luna County, Grant County, and Hidalgo County., organized by UpTogether. Implemented during January 2022 - December 2023. Enrolled 330 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6937,7 +7468,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    269,
+    282,
     'Family Prosperity',
     'Community Action Agency',
     'Family Prosperity is a guaranteed basic income initiative in La Cruces, NM, organized by Community Action Agency. Implemented during 7/19/2023 - 7/19/2025. Enrolled 300 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -6953,7 +7484,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Louisiana', 'New Mexico'],
+    ARRAY[]::TEXT[],
     ARRAY['La Cruces'],
     NULL,
     NULL,
@@ -6978,7 +7509,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    270,
+    283,
     'Santa Fe Learn, Earn, Achieve Program (SF LEAP)',
     'City of Santa Fe',
     'Santa Fe Learn, Earn, Achieve Program (SF LEAP) is a guaranteed basic income initiative in Santa Fe, NM, organized by City of Santa Fe. Implemented during October 2021 - September 2022. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -6994,7 +7525,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New Mexico'],
+    ARRAY[]::TEXT[],
     ARRAY['Santa Fe'],
     NULL,
     NULL,
@@ -7019,7 +7550,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    271,
+    284,
     'Jubilant Birth',
     'United Way of the Greater Capital Region',
     'Jubilant Birth is a guaranteed basic income initiative in Albany, NY, organized by United Way of the Greater Capital Region. Implemented during 5/6/2025 - 5/6/2026. Enrolled 25 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7035,7 +7566,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New York'],
+    ARRAY[]::TEXT[],
     ARRAY['Albany'],
     18,
     45,
@@ -7060,7 +7591,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    272,
+    285,
     'Artist Grants Program',
     'The Local Sounds Collaborative',
     'Artist Grants Program is a guaranteed basic income initiative in Rochester, NY, organized by The Local Sounds Collaborative. Enrolled 6 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7076,7 +7607,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New York'],
+    ARRAY[]::TEXT[],
     ARRAY['Rochester'],
     NULL,
     NULL,
@@ -7101,10 +7632,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    273,
+    286,
     'HudsonUP',
-    'The Spark of Hudson & Jain Family Institute',
-    'HudsonUP is a guaranteed basic income initiative in Hudson, NY, organized by City of Hudson. Implemented during November 2020 - September 2026. Enrolled 75 participants. Data documented by the Stanford Basic Income Lab. Evaluation conducted by Jain Family Institute (JFI).',
+    'City of Hudson',
+    'HudsonUP is a guaranteed basic income initiative in Hudson, NY, organized by City of Hudson. Implemented during November 2020 - September 2026. Enrolled 75 participants. Data documented by the Stanford Basic Income Lab.',
     500,
     'USD',
     '500 USD (monthly)',
@@ -7117,7 +7648,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['New York'],
+    ARRAY[]::TEXT[],
     ARRAY['Hudson'],
     NULL,
     NULL,
@@ -7128,7 +7659,7 @@ SELECT
     FALSE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'HudsonUP' LIMIT 1),
-    'https://hudsonup.org/',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'HudsonUP'
@@ -7142,7 +7673,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    274,
+    287,
     'Ithaca Guaranteed Income',
     'Human Services Coalition of Tompkins County',
     'Ithaca Guaranteed Income is a guaranteed basic income initiative in Ithaca, NY, organized by Human Services Coalition of Tompkins County. Implemented during June 2022 - May 2023. Enrolled 110 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -7158,7 +7689,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New York'],
+    ARRAY[]::TEXT[],
     ARRAY['Ithaca'],
     NULL,
     NULL,
@@ -7183,7 +7714,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    275,
+    288,
     'Level Up Guaranteed Income Pilot',
     'City of Mount Vernon',
     'Level Up Guaranteed Income Pilot is a guaranteed basic income initiative in Mount Vernon, NY, organized by City of Mount Vernon. Implemented during November 2022 - October 2024. Enrolled 200 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -7199,7 +7730,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New York'],
+    ARRAY[]::TEXT[],
     ARRAY['Mount Vernon'],
     NULL,
     NULL,
@@ -7224,7 +7755,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    276,
+    289,
     'Family Goal Fund — New York, NY',
     'LIFT',
     'Family Goal Fund is a guaranteed basic income initiative in New York, NY, organized by LIFT. Implemented during January 2018 -. Enrolled 800+ participants. Data documented by the Stanford Basic Income Lab.',
@@ -7240,8 +7771,8 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['New York'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -7250,7 +7781,7 @@ SELECT
     'Households in the LIFT program with low-income and children 0-8 years of age',
     FALSE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Family Goal Fund' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Family Goal Fund — New York, NY' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -7265,7 +7796,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    277,
+    290,
     'Baby''s First Years - New York',
     'Teacher''s College',
     'Baby''s First Years - New York is a guaranteed basic income initiative in New York City, NY, organized by Teacher''s College. Implemented during 5/1/2018 -. Enrolled 1,000 across all 4 Baby''s First Years study sites (New York City, New Orleans metropolitan area, the Twin Cities, Omaha metropolitan area) participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -7281,7 +7812,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['New York'],
+    ARRAY[]::TEXT[],
     ARRAY['New York City'],
     NULL,
     NULL,
@@ -7306,7 +7837,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    278,
+    291,
     'Trust Youth Initiative: Direct Cash Transfers to Address Young Adult Homelessness',
     'Point Source Youth',
     'Trust Youth Initiative: Direct Cash Transfers to Address Young Adult Homelessness is a guaranteed basic income initiative in New York, NY, organized by Point Source Youth. Implemented during March 2022 - May 2024. Enrolled 30 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -7322,8 +7853,8 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New York'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     18,
     24,
     NULL,
@@ -7347,7 +7878,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    279,
+    292,
     'City of Rochester Guaranteed Basic Income (GBI) Pilot Program',
     'City of Rochester',
     'City of Rochester Guaranteed Basic Income (GBI) Pilot Program is a guaranteed basic income initiative in Rochester, NY, organized by City of Rochester. Implemented during 10/15/2023 - 11/1/2024. Enrolled 351 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7363,7 +7894,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New York'],
+    ARRAY[]::TEXT[],
     ARRAY['Rochester', 'Qualified Census tracts'],
     NULL,
     NULL,
@@ -7388,7 +7919,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    280,
+    293,
     'Artist Grants',
     'The Local Sound',
     'Artist Grants is a guaranteed basic income initiative in Rochester, NY, organized by The Local Sound. Implemented during June 2022 - May 2023. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7404,7 +7935,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New York'],
+    ARRAY[]::TEXT[],
     ARRAY['Rochester'],
     NULL,
     NULL,
@@ -7429,7 +7960,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    281,
+    294,
     'Project Resilience',
     'Ulster County',
     'Project Resilience is a guaranteed basic income initiative in Ulster County, NY, organized by Ulster County. Implemented during May 2021 - April 2022. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7445,7 +7976,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['New York'],
+    ARRAY[]::TEXT[],
     ARRAY['Ulster County'],
     NULL,
     NULL,
@@ -7470,7 +8001,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    282,
+    295,
+    'CRNY Guaranteed Income for Artists',
+    'Creatives Rebuild New York',
+    'CRNY Guaranteed Income for Artists is a guaranteed basic income initiative in New York State, organized by Creatives Rebuild New York. Implemented during 6/1/2022 - 3/31/2024. Enrolled 2400 participants. Data documented by the Stanford Basic Income Lab.',
+    1000,
+    'USD',
+    '1000 USD (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'philanthropic_grant',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['New York State'],
+    18,
+    NULL,
+    NULL,
+    NULL,
+    '2400',
+    'Individuals 18 years or older as of January 1, 2022, with financial need, and who identify as an artist, culture bearer, or culture maker.',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'CRNY Guaranteed Income for Artists' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'CRNY Guaranteed Income for Artists'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    296,
     'Ohio Mothers Trust',
     'Motherful',
     'Ohio Mothers Trust is a guaranteed basic income initiative in Columbus, OH, organized by Motherful. Implemented during 12/1/2024 - 11/1/2025. Enrolled 32 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7486,7 +8058,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Ohio'],
+    ARRAY[]::TEXT[],
     ARRAY['Columbus'],
     NULL,
     NULL,
@@ -7511,7 +8083,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    283,
+    297,
     'YSEQUITY',
     'Yellow Springs Community Foundation',
     'YSEQUITY is a guaranteed basic income initiative in Yellow Springs, Ohio, organized by Yellow Springs Community Foundation. Implemented during January 2023 - December 2025. Enrolled 90 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7527,7 +8099,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Ohio'],
+    ARRAY[]::TEXT[],
     ARRAY['Yellow Springs'],
     NULL,
     NULL,
@@ -7552,7 +8124,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    284,
+    298,
     'UpTogether Tusla',
     'UpTogether',
     'UpTogether Tusla is a guaranteed basic income initiative in Tusla, OK, organized by UpTogether. Implemented during July 2021 - October 2023. Enrolled 304 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7568,7 +8140,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Oklahoma'],
+    ARRAY[]::TEXT[],
     ARRAY['Tusla'],
     NULL,
     NULL,
@@ -7593,7 +8165,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    285,
+    299,
     'Southern Oregon Success',
     'UpTogether',
     'Southern Oregon Success is a guaranteed basic income initiative in Jackson and Josephine Counties, OR, organized by UpTogether. Implemented during March 2022 - July 2023. Enrolled 70 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7609,7 +8181,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Oregon'],
+    ARRAY[]::TEXT[],
     ARRAY['Jackson and Josephine Counties'],
     NULL,
     NULL,
@@ -7634,7 +8206,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    286,
+    300,
     'Oregon Direct Cash Transfers Plus',
     'Point Source Youth',
     'Oregon Direct Cash Transfers Plus is a guaranteed basic income initiative in Multnomah, Clackamas, and Deschutes County, OR, organized by Point Source Youth. Implemented during 2/1/2023 - 2/1/2025. Enrolled 120 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7650,7 +8222,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Oregon'],
+    ARRAY[]::TEXT[],
     ARRAY['Multnomah'],
     NULL,
     NULL,
@@ -7675,7 +8247,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    287,
+    301,
     'Black Resilience Fund',
     'Brown Hope',
     'Black Resilience Fund is a guaranteed basic income initiative in Portland, OR, organized by Brown Hope. Implemented during 6/1/2020 -12/31/2025. Enrolled 50 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7691,7 +8263,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Oregon'],
+    ARRAY[]::TEXT[],
     ARRAY['Portland'],
     NULL,
     NULL,
@@ -7716,7 +8288,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    288,
+    302,
     'Path Home Basic Income Guarantee Pilot Project',
     'Path Home',
     'Path Home Basic Income Guarantee Pilot Project is a guaranteed basic income initiative in Portland, Oregon, organized by Path Home. Implemented during 2/1/2022 - 1/1/2024. Enrolled 6 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7732,7 +8304,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Oregon'],
+    ARRAY[]::TEXT[],
     ARRAY['Portland'],
     NULL,
     NULL,
@@ -7757,7 +8329,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    289,
+    303,
     'Path Home Cash Transfer Pilot Program',
     'Path Home',
     'Path Home Cash Transfer Pilot Program is a guaranteed basic income initiative in Portland Oregon and surrounding area, organized by Path Home. Implemented during 4/15/2024 - 3/15/2026. Enrolled 15 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7773,7 +8345,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Oregon'],
+    ARRAY[]::TEXT[],
     ARRAY['Portland Oregon and surrounding area'],
     NULL,
     NULL,
@@ -7798,7 +8370,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    290,
+    304,
     'Multnomah Mothers'' Trust',
     'Multonomah Ideas Lab',
     'Multnomah Mothers'' Trust is a guaranteed basic income initiative in Multonomah County, OR, organized by Multonomah Ideas Lab. Implemented during January 2022 - June 2022. Enrolled 75 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7814,7 +8386,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Oregon'],
+    ARRAY[]::TEXT[],
     ARRAY['Multonomah County'],
     NULL,
     NULL,
@@ -7839,7 +8411,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    291,
+    305,
     'Osage ARP Cash Assistance',
     'Osage Nation',
     'Osage ARP Cash Assistance is a guaranteed basic income initiative in Osage Nation, organized by Osage Nation. Implemented during August 2021. Enrolled 11,721 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7880,7 +8452,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    292,
+    306,
     'A Pilot Study of Cash Transfers to Improve Outcomes in Low-Income Preterm Neonates and Their Families',
     'Children''s Hospital of Philadelphia',
     'A Pilot Study of Cash Transfers to Improve Outcomes in Low-Income Preterm Neonates and Their Families is a guaranteed basic income initiative in Philadelphia, PA, organized by Children''s Hospital of Philadelphia. Implemented during 7/26/2023 - 11/14/2023. Enrolled 24 participants. Data documented by the Stanford Basic Income Lab.',
@@ -7896,7 +8468,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Pennsylvania'],
+    ARRAY[]::TEXT[],
     ARRAY['Philadelphia'],
     18,
     45,
@@ -7921,7 +8493,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    293,
+    307,
     'Guaranteed Resources Optimize Wellbeing (GROW)',
     'Office of Community Empowerment and Opportunity',
     'Guaranteed Resources Optimize Wellbeing (GROW) is a guaranteed basic income initiative in Philadelphia, PA, organized by Office of Community Empowerment and Opportunity. Implemented during 6/1/2023 - June 2024. Enrolled 51 experiment, 239 control participants. Data documented by the Stanford Basic Income Lab.',
@@ -7937,7 +8509,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Pennsylvania'],
+    ARRAY[]::TEXT[],
     ARRAY['Philadelphia'],
     NULL,
     NULL,
@@ -7962,7 +8534,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    294,
+    308,
+    'One Family Philadelphia Guaranteed Income Financial Treatment (GIFTT)',
+    'Thomas Jefferson University Hospital Sidney Kimmel Cancer Center',
+    'One Family Philadelphia Guaranteed Income Financial Treatment (GIFTT) is a guaranteed basic income initiative in Philadelphia, PA, organized by Thomas Jefferson University Hospital Sidney Kimmel Cancer Center. Implemented during 4/1/2023 - 4/1/2024. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
+    1000,
+    'USD',
+    '$1,000 (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'philanthropic_grant',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Philadelphia'],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '100',
+    'Low-income, advanced stage cancer patients over the age of 18, receiving chemotherapy or immunotherapy who are Pennsylvania Medicaid beneficiaries',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'One Family Philadelphia Guaranteed Income Financial Treatment (GIFTT)' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'One Family Philadelphia Guaranteed Income Financial Treatment (GIFTT)'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    309,
     'Philadelphia Guaranteed Income Program',
     'WorkReady',
     'Philadelphia Guaranteed Income Program is a guaranteed basic income initiative in Philadelphia, PA, organized by WorkReady. Implemented during March 2022 - March 2023. Enrolled Up to 60 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -7978,7 +8591,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Pennsylvania'],
+    ARRAY[]::TEXT[],
     ARRAY['Philadelphia'],
     NULL,
     NULL,
@@ -8003,7 +8616,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    295,
+    310,
     'Providence Guaranteed Income Program',
     'City of Providence',
     'Providence Guaranteed Income Program is a guaranteed basic income initiative in Rhode Island, organized by City of Providence. Implemented during November 2021 - April 2023. Enrolled 110 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -8019,8 +8632,8 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Rhode Island'],
     ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -8044,7 +8657,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    296,
+    311,
     'CLIMB (Columbia Life Improvement Monetary Boost)',
     'City of Columbia',
     'CLIMB (Columbia Life Improvement Monetary Boost) is a guaranteed basic income initiative in Columbia, SC, organized by City of Columbia. Implemented during September 2021 - August 2022. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8060,7 +8673,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['South Carolina'],
+    ARRAY[]::TEXT[],
     ARRAY['Columbia'],
     NULL,
     NULL,
@@ -8085,7 +8698,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    297,
+    312,
     '37208 Demonstration',
     'Moving Nashville Forward (MOVE)',
     '37208 Demonstration is a guaranteed basic income initiative in Nashville, TN, organized by Moving Nashville Forward (MOVE). Implemented during November 2021 - October 2022. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8101,7 +8714,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Tennessee'],
+    ARRAY[]::TEXT[],
     ARRAY['37208 Zip Code', 'Nashville'],
     NULL,
     NULL,
@@ -8126,7 +8739,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    298,
+    313,
     'Black Music Action Coalition x Academy of Country Music Guaranteed Income Program',
     'Black Music Action Coalition (BMAC) and the Academy of Country Music (ACM)',
     'Black Music Action Coalition x Academy of Country Music Guaranteed Income Program is a guaranteed basic income initiative in Nashville, TN, organized by Black Music Action Coalition (BMAC) and the Academy of Country Music (ACM). Implemented during 6/1/2023 -. Enrolled 20 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8142,7 +8755,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Tennessee'],
+    ARRAY[]::TEXT[],
     ARRAY['Nashville'],
     NULL,
     NULL,
@@ -8167,7 +8780,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    299,
+    314,
+    'Austin''s Guaranteed Income Pilot Program',
+    'City of Austin (including Austin Public Health',
+    'Austin''s Guaranteed Income Pilot Program is a guaranteed basic income initiative in Austin, TX, organized by City of Austin (including Austin Public Health. Implemented during September 2022 - September 2023. Enrolled 135 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
+    1000,
+    'USD',
+    '1000 USD (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Austin', 'City of Austin and Travis County'],
+    NULL,
+    NULL,
+    NULL,
+    50000,
+    '135',
+    'Households with a  household income that is at or below 60% of the Area Median Family Income ($66,180 for a household of 4) and who meet at least one of the four other criteria: moving from homelessness toward permanent housing; have a filed eviction; household has been behind on rent for 2 or more months over the past year; and/or household has received a verbal or written notice of intent to evict OR a threat to vacate by landlord or property manager at any time within the past 3 months due to nonpayment of rent',
+    TRUE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Austin''s Guaranteed Income Pilot Program' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Austin''s Guaranteed Income Pilot Program'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    315,
     'Central Texas 12-Month Pilot',
     'UpTogether',
     'Central Texas 12-Month Pilot is a guaranteed basic income initiative in Austin and Georgetown, TX, organized by UpTogether. Implemented during March 2021 - March 2022. Enrolled 173 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8183,7 +8837,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Texas'],
+    ARRAY[]::TEXT[],
     ARRAY['Austin and Georgetown', 'City of Austin zip codes: 78752, 78721, 78724, 78732, 78753 and City of Georgetown'],
     NULL,
     NULL,
@@ -8208,7 +8862,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    300,
+    316,
     'Dallas Targeted Eviction Prevention Program Fund',
     'UpTogether',
     'Dallas Targeted Eviction Prevention Program Fund is a guaranteed basic income initiative in Dallas, TX, organized by UpTogether. Implemented during December 2021 - November 2024. Enrolled 500 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8224,7 +8878,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Texas'],
+    ARRAY[]::TEXT[],
     ARRAY['South Dallas', 'Dallas'],
     NULL,
     NULL,
@@ -8249,7 +8903,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    301,
+    317,
     'UpTogether Morningside',
     'UpTogether',
     'UpTogether Morningside is a guaranteed basic income initiative in Fort Worth, TX, organized by UpTogether. Implemented during January 2022 - January 2023. Enrolled 30 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8265,7 +8919,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Texas'],
+    ARRAY[]::TEXT[],
     ARRAY['Fort Worth'],
     NULL,
     NULL,
@@ -8290,7 +8944,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    302,
+    318,
     'Houston Equity Fund',
     'The Houston Fund',
     'Houston Equity Fund is a guaranteed basic income initiative in Houston, TX, organized by The Houston Fund. Implemented during September 2022 - August 2023. Enrolled 110 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -8306,7 +8960,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Texas'],
+    ARRAY[]::TEXT[],
     ARRAY['Houston'],
     NULL,
     NULL,
@@ -8331,7 +8985,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    303,
+    319,
     'Rising UpTogether San Antonio',
     'UpTogether',
     'Rising UpTogether San Antonio is a guaranteed basic income initiative in San Antonio, TX, organized by UpTogether. Implemented during 4/1/2021 - 1/1/2023. Enrolled 1,000 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8347,7 +9001,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Texas'],
+    ARRAY[]::TEXT[],
     ARRAY['San Antonio'],
     NULL,
     NULL,
@@ -8372,7 +9026,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    304,
+    320,
     'San Antonio Basic Income Pilot',
     'UpTogether',
     'San Antonio Basic Income Pilot is a guaranteed basic income initiative in San Antonio, TX, organized by UpTogether. Implemented during December 2020 - January 2023. Enrolled 1000 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8388,7 +9042,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Texas'],
+    ARRAY[]::TEXT[],
     ARRAY['San Antonio', '78207 or 78227 zip codes'],
     NULL,
     NULL,
@@ -8413,7 +9067,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    305,
+    321,
     'OpenResearch Unconditional Cash Study (previously, Y Combinator Basic Income Experiment) — Texas and Illinois',
     'OpenResearch',
     'OpenResearch Unconditional Cash Study (previously, Y Combinator Basic Income Experiment) is a guaranteed basic income initiative in Texas and Illinois, organized by OpenResearch. Implemented during 11/1/2020 - 10/31/2023. Enrolled 3,000 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8429,7 +9083,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Illinois', 'Texas'],
+    ARRAY[]::TEXT[],
     ARRAY['Texas and Illinois'],
     NULL,
     NULL,
@@ -8439,7 +9093,7 @@ SELECT
     'Individuals living in one of 19 study counties in Texas and Illinois who were aged 21 to 40, with total household income less than 300% of the federal poverty line (average annual household income of $29,900), not receiving SSI or living in public housing (to avoid risk of losing these key public benefits). Pilot was structured as a randomized controlled trial (RCT), with 1,000 individuals randomly assigned to the treatment group to receive $1,000 per month, and 2,000 individuals randomly assigned to the control group to receive $50 per month. Extensive data were collected with study results available at https://www.openresearchlab.org/projects/unconditional-cash-study.',
     FALSE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'OpenResearch Unconditional Cash Study (previously, Y Combinator Basic Income Experiment)' LIMIT 1),
+    (SELECT id FROM public.stanford_experiments WHERE name = 'OpenResearch Unconditional Cash Study (previously, Y Combinator Basic Income Experiment) — Texas and Illinois' LIMIT 1),
     NULL,
     TRUE
 WHERE NOT EXISTS (
@@ -8454,7 +9108,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    306,
+    322,
     'Alexandria Recurring Income for Success and Equity (ARISE)',
     'City of Alexandria',
     'Alexandria Recurring Income for Success and Equity (ARISE) is a guaranteed basic income initiative in Alexandria, VA, organized by City of Alexandria. Implemented during Feb 2023 - June 2025. Enrolled 170 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -8470,7 +9124,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Virginia'],
+    ARRAY[]::TEXT[],
     ARRAY['Alexandria', 'Four zip codes (22312, 22311, 22304, 22305) within US Department of Housing and Urban Development ''qualified census tracts'''],
     NULL,
     NULL,
@@ -8495,7 +9149,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    307,
+    323,
     'Arlington''s Guarantee',
     'Arlington Community Foundation',
     'Arlington''s Guarantee is a guaranteed basic income initiative in Arlington, VA, organized by Arlington Community Foundation. Implemented during September 2021 - December 2022. Enrolled 200 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -8511,7 +9165,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Virginia'],
+    ARRAY[]::TEXT[],
     ARRAY['Arlington'],
     NULL,
     NULL,
@@ -8536,7 +9190,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    308,
+    324,
     'Fairfax County Economic Mobility Pilot (FCEMP)',
     'Fairfax Neighborhood and Community Services',
     'Fairfax County Economic Mobility Pilot (FCEMP) is a guaranteed basic income initiative in Fairfax, VA, organized by Fairfax Neighborhood and Community Services. Implemented during 10/1/2023 - January 2026. Enrolled 180 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8552,7 +9206,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Virginia'],
+    ARRAY[]::TEXT[],
     ARRAY['Fairfax'],
     NULL,
     NULL,
@@ -8577,7 +9231,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    309,
+    325,
     'Richmond Resilience Initiative (RRI)',
     'City of Richmond Office of Community Wealth Building',
     'Richmond Resilience Initiative (RRI) is a guaranteed basic income initiative in Richmond, VA, organized by City of Richmond Office of Community Wealth Building. Implemented during October 2020 - May 2024. Enrolled Two cohorts totaling 64 individuals participants. Data documented by the Stanford Basic Income Lab.',
@@ -8593,7 +9247,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Virginia'],
+    ARRAY[]::TEXT[],
     ARRAY['Richmond'],
     NULL,
     NULL,
@@ -8618,7 +9272,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    310,
+    326,
     'Spectrum Pilots Direct Cash Transfer Program',
     'Spectrum Youth & Family Services',
     'Spectrum Pilots Direct Cash Transfer Program is a guaranteed basic income initiative in Burlingame, VT, organized by Spectrum Youth & Family Services. Implemented during 8/1/2023 - 1/1/2025. Enrolled 10 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8634,7 +9288,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Vermont'],
+    ARRAY[]::TEXT[],
     ARRAY['Burlingame'],
     18,
     24,
@@ -8659,7 +9313,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    311,
+    327,
     'King County GBI Pilot',
     'Workforce Development Council of Seattle-King County',
     'King County GBI Pilot is a guaranteed basic income initiative in King County, WA, organized by Workforce Development Council of Seattle-King County. Implemented during 12/1/2022 - 12/1/2024. Enrolled 102 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8675,7 +9329,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Washington'],
+    ARRAY[]::TEXT[],
     ARRAY['King County'],
     NULL,
     NULL,
@@ -8700,7 +9354,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    312,
+    328,
     'South King County Pilot',
     'Rainier Beach Action Coalition and Urban Family',
     'South King County Pilot is a guaranteed basic income initiative in King County, WA, organized by Rainier Beach Action Coalition and Urban Family. Implemented during 11/1/2022 - 8/1/2023. Enrolled 10 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8716,7 +9370,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Washington'],
+    ARRAY[]::TEXT[],
     ARRAY['King County', 'South King County'],
     NULL,
     NULL,
@@ -8741,7 +9395,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    313,
+    329,
     'Hummingbird Nest',
     'Hummingbird Indigenous Family Services',
     'Hummingbird Nest is a guaranteed basic income initiative in King County, Pierce County, and Tulalip Reservation, WA, organized by Hummingbird Indigenous Family Services. Implemented during 8/1/2023 -. Enrolled 150 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8757,7 +9411,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['Washington'],
+    ARRAY[]::TEXT[],
     ARRAY['King County'],
     18,
     45,
@@ -8782,7 +9436,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    314,
+    330,
     'Olympic Community Action Programs GBI Pilot',
     'Olympic Community Actions Programs',
     'Olympic Community Action Programs GBI Pilot is a guaranteed basic income initiative in North Olympic Peninsula, WA, organized by Olympic Community Actions Programs. Implemented during 1/1/2022 - 6/1/2023. Enrolled 25 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8798,7 +9452,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Washington'],
+    ARRAY[]::TEXT[],
     ARRAY['North Olympic Peninsula'],
     NULL,
     NULL,
@@ -8823,10 +9477,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    315,
+    331,
     'Seattle-Denver Income Maintenance Experiment (SIME/DIME) — Seattle, WA',
-    'U.S. Department of Health, Education, and Welfare & Stanford Research Institute (SRI)',
-    'Seattle-Denver Income Maintenance Experiment (SIME/DIME) is a guaranteed basic income initiative in Seattle, WA, organized by Stanford Research Institute. Implemented during 1971  - 1982. Enrolled 4800 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Stanford Research Institute & Mathematica Policy Research.',
+    'Stanford Research Institute',
+    'Seattle-Denver Income Maintenance Experiment (SIME/DIME) is a guaranteed basic income initiative in Seattle, WA, organized by Stanford Research Institute. Implemented during 1971  - 1982. Enrolled 4800 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     316,
     'USD',
     '316, 400 or 466 USD (monthly)',
@@ -8839,7 +9493,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Washington'],
+    ARRAY[]::TEXT[],
     ARRAY['Seattle'],
     NULL,
     NULL,
@@ -8849,8 +9503,8 @@ SELECT
     'Families with income less than $9000 USD if one head of household was employed and less than $11,000 USD if both employed, with even number of white, black and Mexican-American households selected (last group only in Denver, CO)',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Seattle-Denver Income Maintenance Experiment (SIME/DIME)' LIMIT 1),
-    'https://www.irp.wisc.edu/',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Seattle-Denver Income Maintenance Experiment (SIME/DIME) — Seattle, WA' LIMIT 1),
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Seattle-Denver Income Maintenance Experiment (SIME/DIME) — Seattle, WA'
@@ -8864,7 +9518,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    316,
+    332,
     'Growing Resilience in Tacoma (GRIT)',
     'City of Tacoma',
     'Growing Resilience in Tacoma (GRIT) is a guaranteed basic income initiative in Tacoma, WA, organized by City of Tacoma. Implemented during December 2021 - November 2022. Enrolled 110 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -8880,7 +9534,7 @@ SELECT
     'Pilot completed',
     'Pilot completed (Research evaluation phase)',
     ARRAY['United States'],
-    ARRAY['Washington'],
+    ARRAY[]::TEXT[],
     ARRAY['Eastside (98404), Hilltop (98405), South Tacoma (98409), South End (98408)', 'Tacoma'],
     NULL,
     NULL,
@@ -8905,7 +9559,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    317,
+    333,
+    'Madison Guaranteed Income Pilot Program (Madison Forward Fund)',
+    'TASC Madison',
+    'Madison Guaranteed Income Pilot Program (Madison Forward Fund) is a guaranteed basic income initiative in Madison, WI, organized by TASC Madison. Implemented during Sept 2022 - Aug 2023. Enrolled 155 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
+    500,
+    'USD',
+    '500 USD (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'philanthropic_grant',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Madison'],
+    NULL,
+    18,
+    NULL,
+    40000,
+    '155',
+    'Individuals 18 and older with a household income less than 200% of the Federal Poverty Line, and with a child under 18 years old living at home.',
+    TRUE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Madison Guaranteed Income Pilot Program (Madison Forward Fund)' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Madison Guaranteed Income Pilot Program (Madison Forward Fund)'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    334,
     'Rural Income for Self Empowerment Guaranteed Minimum Income Program (RISE GMI) - Mercer County, West Virginia',
     'Rural GMI Initiative',
     'Rural Income for Self Empowerment Guaranteed Minimum Income Program (RISE GMI) - Mercer County, West Virginia is a guaranteed basic income initiative in Mercer County, WV, organized by Rural GMI Initiative. Implemented during 10/14/2025 -. Enrolled About 530 participants. Data documented by the Stanford Basic Income Lab.',
@@ -8921,7 +9616,7 @@ SELECT
     'Ongoing',
     'Ongoing monthly distributions',
     ARRAY['United States'],
-    ARRAY['West Virginia'],
+    ARRAY[]::TEXT[],
     ARRAY['Mercer County'],
     NULL,
     NULL,
@@ -8946,7 +9641,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    318,
+    335,
     'Basic Income for Care Leavers',
     'Welsh Government',
     'Basic Income for Care Leavers is a guaranteed basic income initiative in Wales, UK, organized by Welsh Government. Implemented during 07/01/22 - 6/30/2025. Enrolled Expected 500 young people are eligible participants. Data documented by the Stanford Basic Income Lab.',
@@ -8963,7 +9658,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['United Kingdom'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -8987,7 +9682,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    319,
+    336,
     'Eight Fort Portal Project',
     'Ghent University',
     'Eight Fort Portal Project is a guaranteed basic income initiative in Busibi, Uganda, organized by Ghent University. Implemented during 2017 - 2019. Enrolled 123 adults and  217 children participants. Data documented by the Stanford Basic Income Lab.',
@@ -9004,7 +9699,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Uganda'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9028,7 +9723,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    320,
+    337,
     'Novissi',
     'Government of Togo',
     'Novissi is a guaranteed basic income initiative in Togo, organized by Government of Togo. Implemented during August 2020 -. Enrolled 819,972 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9069,7 +9764,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    321,
+    338,
     'B-MINCOME',
     'City of Barcelona',
     'B-MINCOME is a guaranteed basic income initiative in Barcelona, Spain, organized by City of Barcelona. Implemented during October 2017 - December 2019. Enrolled 1000 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -9110,7 +9805,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    322,
+    339,
     'Basic Income for Farmers',
     'Gyeonggi Provincial Government',
     'Basic Income for Farmers is a guaranteed basic income initiative in Gyeonggi Province, Republic of Korea (South Korea), organized by Gyeonggi Provincial Government. Implemented during October 2021 -. Enrolled 430,000 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9127,7 +9822,7 @@ SELECT
     'Ongoing monthly distributions',
     ARRAY['South Korea'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9151,7 +9846,101 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    323,
+    340,
+    'Youth Basic Income Program',
+    'Gyeonggi Provincial Government',
+    'Youth Basic Income Program is a guaranteed basic income initiative in Gyeonggi Province, Republic of Korea (South Korea), organized by Gyeonggi Provincial Government. Implemented during 2018 -. Enrolled 125,000 participants. Data documented by the Stanford Basic Income Lab.',
+    62,
+    'KRW',
+    '250,000 Won (~212 USD) (quarterly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'active_open'::public.program_status,
+    'Ongoing',
+    'Ongoing monthly distributions',
+    ARRAY['South Korea'],
+    ARRAY[]::TEXT[],
+    ARRAY[],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '125,000',
+    'Individuals receive the transfer at 24 years of age',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Youth Basic Income Program' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Youth Basic Income Program'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    341,
+    'Seoul Stepping Stone Income Project (SSIP)',
+    'Seoul Metropolitan Government',
+    'Seoul Stepping Stone Income Project (SSIP) is a guaranteed basic income initiative in Seoul, Republic of Korea (South Korea), organized by Seoul Metropolitan Government. Implemented during - Phase 1: July 2022 – June 2025 / 3 years
+
+- Phase 2: July 2023 – June 2025 / 2 years. Enrolled Phase 1: 500 households (control group: 1,000 households) ; 
+
+Phase 2: 1,100 households (control group: 2,200 households) participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
+    10,
+    'KRW',
+    'Phase 1: randomly select 500 households with income at or below 50% of the standard median income receive half of the difference between the threshold and the household’s income as a monthly payment;
+
+Phase 2: randomly select 1,100 households with income at or below 85% of the standard median income receive half of the difference between the threshold and the household’s income as a monthly payment  
+
+Monthly payment = (85% of standard median income – current household income) x 0.5 – allowance for livelihood and housing cash benefits / 85% of the standard median income household size (2023) : 1-person household (1,766,208 KRW / 1,374 USD) / 4-person household : 4,590,819 KRW / 3,573 USD) (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['South Korea'],
+    ARRAY[]::TEXT[],
+    ARRAY[],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    'Phase 1: 500 households (control group: 1,000 households) ; 
+
+Phase 2: 1,100 households (control group: 2,200 households)',
+    '- Phase 1: households earning at or below 50% of the standard median income and with KRW 326 million ($272,803 USD) or less in assets;
+
+Phase 2: households earning at or below 85% of the standard median income and holding - KRW 326 million ($272,803 USD) or less in assets',
+    TRUE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Seoul Stepping Stone Income Project (SSIP)' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Seoul Stepping Stone Income Project (SSIP)'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    342,
     'Social Income Sierra Leone',
     'Social Income',
     'Social Income Sierra Leone is a guaranteed basic income initiative in Sierra Leone, organized by Social Income. Enrolled 146 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9168,7 +9957,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Sierra Leone'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9192,7 +9981,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    324,
+    343,
     'Weten wat werkt',
     'City of Utrecht',
     'Weten wat werkt is a guaranteed basic income initiative in Utrecht, Netherlands, organized by City of Utrecht. Implemented during 06/01/18 - 10/01/19. Enrolled 752 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -9209,7 +9998,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Netherlands'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9233,7 +10022,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    325,
+    344,
     'Basic Income Grant (BIG) Pilot',
     'Namibian Big Coalition (Council of Churches',
     'Basic Income Grant (BIG) Pilot is a guaranteed basic income initiative in Otjivero-Omitara, Namibia, organized by Namibian Big Coalition (Council of Churches. Implemented during January 2008 - January 2009. Enrolled 930 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9250,7 +10039,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Namibia'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     60,
     NULL,
@@ -9274,7 +10063,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    326,
+    345,
     'Human Development Fund',
     'Government of Mongolia',
     'Human Development Fund is a guaranteed basic income initiative in Mongolia, organized by Government of Mongolia. Implemented during 2010 - 2012. Enrolled ~2.7 million participants. Data documented by the Stanford Basic Income Lab.',
@@ -9315,7 +10104,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    327,
+    346,
     'Liberia Basic Income',
     'GiveDirectly',
     'Liberia Basic Income is a guaranteed basic income initiative in Maryland County, Liberia, organized by GiveDirectly. Implemented during July 2022 - February 2026. Enrolled 10,987 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -9332,7 +10121,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Liberia'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9356,7 +10145,50 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    328,
+    347,
+    'Basic Income Kenya Study',
+    'Give Directly',
+    'Basic Income Kenya Study is a guaranteed basic income initiative in Western and Rift Valley, Kenya, organized by Give Directly. Implemented during 01/2017 - 12/2030. Enrolled 20,847 participants. Data documented by the Stanford Basic Income Lab.',
+    10,
+    'USD',
+    '1. $0.75 US per day (44 villages for 12 years)
+2. $0.75 US per day (80 villages for 2 years)
+3. 8548 US total lump sum at start equal in net present value as group 2 (71 villages) (monthly or lump sum)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'philanthropic_grant',
+    'external_self_apply',
+    'active_open'::public.program_status,
+    'Ongoing',
+    'Ongoing monthly distributions',
+    ARRAY['Kenya'],
+    ARRAY[]::TEXT[],
+    ARRAY[],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '20,847',
+    'All individuals in targeted villages',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Basic Income Kenya Study' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Basic Income Kenya Study'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    348,
     'Give Directly',
     'Give Directly',
     'Give Directly is a guaranteed basic income initiative in Rarieda District, Kenya, organized by Give Directly. Implemented during 2011 - 2013. Enrolled 503 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -9373,7 +10205,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Kenya'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9397,7 +10229,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    329,
+    349,
     'Maezawa Method Basic Income Social Experiment',
     'Yusaku Maezawa',
     'Maezawa Method Basic Income Social Experiment is a guaranteed basic income initiative in Japan, organized by Yusaku Maezawa. Enrolled 500  Lump sum recepients, 500 monthly payment recepients participants. Data documented by the Stanford Basic Income Lab.',
@@ -9438,7 +10270,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    330,
+    350,
     'Reddito di Cittadinanza',
     'City of Livorno',
     'Reddito di Cittadinanza is a guaranteed basic income initiative in Livorno, Italy, organized by City of Livorno. Implemented during 06/01/16 - 12/31/2016. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9455,7 +10287,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Italy'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9479,7 +10311,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    331,
+    351,
+    'Basic Income for the Arts',
+    'Irish Government',
+    'Basic Income for the Arts is a guaranteed basic income initiative in Ireland, organized by Irish Government. Implemented during 10/01/22 - 10/01/25. Enrolled 2000 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
+    1520,
+    'EUR',
+    '€325 (weekly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'closed'::public.program_status,
+    'Pilot completed',
+    'Pilot completed (Research evaluation phase)',
+    ARRAY['Ireland'],
+    ARRAY[]::TEXT[],
+    ARRAY[],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '2000',
+    '2000 individuals were selected from a pool of 8200 applicants to the program',
+    TRUE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Basic Income for the Arts' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Basic Income for the Arts'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    352,
     'Targeted Subsidies Reform Act',
     'Islamic Republic of Iran',
     'Targeted Subsidies Reform Act is a guaranteed basic income initiative in Iran, organized by Islamic Republic of Iran. Implemented during 2010 -. Enrolled ~ 75 million participants. Data documented by the Stanford Basic Income Lab.',
@@ -9496,7 +10369,7 @@ SELECT
     'Ongoing monthly distributions',
     ARRAY['Iran'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9520,7 +10393,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    332,
+    353,
     'Jamesta Istimewa',
     'Yanu Endar Prasetyo (IndoBIG Network & Research Center for Population BRIN)',
     'Jamesta Istimewa is a guaranteed basic income initiative in Yogyakarta, Indonesia, organized by Yanu Endar Prasetyo (IndoBIG Network & Research Center for Population BRIN). Implemented during 11/01/21 - 04/01/22. Enrolled 25 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9561,7 +10434,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    333,
+    354,
     'Madhya Pradesh Unconditional Cash Transfers Project',
     'UNICEF and the Self Employed Women’s Association (SEWA)',
     'Madhya Pradesh Unconditional Cash Transfers Project is a guaranteed basic income initiative in Madhya Pradesh, India, organized by UNICEF and the Self Employed Women’s Association (SEWA). Implemented during June 2011 - November 2012. Enrolled 5,547 in general village pilot of 20 villages and 756 in tribal village pilot participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -9578,7 +10451,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9602,7 +10475,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    334,
+    355,
     'Empowering Communities with Unconditional Cash Transfers | Shelkui, Maharashtra',
     'Project DEEP',
     'Empowering Communities with Unconditional Cash Transfers | Shelkui, Maharashtra is a guaranteed basic income initiative in Domti, Navadkya and Burkhet in Shelkui Village, Dhadgaon District of Nandurbar, Maharashtra State, India, organized by Project DEEP. Implemented during 5/1/2024 - 5/1/2025. Enrolled 102 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9619,7 +10492,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     'female'::public.program_gender_requirement,
@@ -9643,7 +10516,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    335,
+    356,
     'Building Up Lives | Lumpsum Transfers',
     'Project DEEP',
     'Building Up Lives | Lumpsum Transfers is a guaranteed basic income initiative in Krishnapur Village, in Wardha District, Arvi Taluka, Maharashtra State, India, organized by Project DEEP. Implemented during 5/1/2023 - 4/30/2024. Enrolled 50 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9660,7 +10533,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9684,7 +10557,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    336,
+    357,
     'Empowering Communities with Unconditional Cash Transfers | Sada, Rajasthan',
     'Project DEEP',
     'Empowering Communities with Unconditional Cash Transfers | Sada, Rajasthan is a guaranteed basic income initiative in Amali Phala, Mana Mangari and Kadiya Mangari, Sada Village, Dungarpur District, Rajasthan State, India, organized by Project DEEP. Implemented during 12/1/2023 - 12/1/2024. Enrolled 112 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9701,7 +10574,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     'female'::public.program_gender_requirement,
@@ -9725,7 +10598,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    337,
+    358,
     'Magalir Urimai Thogai Thittam (Women’s Right to Income Scheme)',
     'Tamil Nadu State Government',
     'Magalir Urimai Thogai Thittam (Women’s Right to Income Scheme) is a guaranteed basic income initiative in Tamil Nadu, India, organized by Tamil Nadu State Government. Enrolled Expected up to 10,000,000 women participants. Data documented by the Stanford Basic Income Lab.',
@@ -9742,7 +10615,7 @@ SELECT
     'Ongoing monthly distributions',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     'female'::public.program_gender_requirement,
@@ -9766,7 +10639,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    338,
+    359,
     'Basic Income & Care for Transgender Persons',
     'Anveshi',
     'Basic Income & Care for Transgender Persons is a guaranteed basic income initiative in Hyderabad, India, organized by Anveshi. Enrolled N/A participants. Data documented by the Stanford Basic Income Lab.',
@@ -9783,7 +10656,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9807,7 +10680,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    339,
+    360,
     'UBI+',
     'WorkFree',
     'UBI+ is a guaranteed basic income initiative in Hyderabad, India, organized by WorkFree. Enrolled 1250 participants. Data documented by the Stanford Basic Income Lab.',
@@ -9824,7 +10697,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['India'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9848,7 +10721,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    340,
+    361,
+    'My Basic Income',
+    'Mein Grundeinkommen e.V.',
+    'My Basic Income is a guaranteed basic income initiative in Germany, organized by Mein Grundeinkommen e.V.. Enrolled 1464 participants. Data documented by the Stanford Basic Income Lab.',
+    1296,
+    'EUR',
+    '1200 euros (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'philanthropic_grant',
+    'external_self_apply',
+    'active_open'::public.program_status,
+    'Ongoing',
+    'Ongoing monthly distributions',
+    ARRAY['Germany'],
+    ARRAY[]::TEXT[],
+    ARRAY[],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '1464',
+    'N/A',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'My Basic Income' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'My Basic Income'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    362,
     'Pilotprojekt Grundeinkommen',
     'German Institute for Economic Research (DIW Berlin)',
     'Pilotprojekt Grundeinkommen is a guaranteed basic income initiative in Germany, organized by German Institute for Economic Research (DIW Berlin). Implemented during June 2021 - May 2024. Enrolled 122 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -9865,7 +10779,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Germany'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9889,10 +10803,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    341,
+    363,
     'Finland Basic Income Experiment',
-    'Kela (Social Insurance Institution of Finland)',
-    'Finland Basic Income Experiment is a guaranteed basic income initiative in Finland, organized by Kela and Ministry of Health and Social Affairs. Implemented during January 2017 - December 2018. Enrolled 2000 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Kela & Ministry of Social Affairs and Health.',
+    'Kela and Ministry of Health and Social Affairs',
+    'Finland Basic Income Experiment is a guaranteed basic income initiative in Finland, organized by Kela and Ministry of Health and Social Affairs. Implemented during January 2017 - December 2018. Enrolled 2000 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     560,
     'USD',
     '560 EU (monthly)',
@@ -9906,7 +10820,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Finland'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -9916,7 +10830,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Finland Basic Income Experiment' LIMIT 1),
-    'https://www.kela.fi/web/en/basic-income-experiment',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Finland Basic Income Experiment'
@@ -9930,7 +10844,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    342,
+    364,
+    'Wealth Partaking Scheme',
+    'Government of Macau',
+    'Wealth Partaking Scheme is a guaranteed basic income initiative in Macau Special Administrative Region, China, organized by Government of Macau. Implemented during 2008 -. Enrolled 638,300 permanent residents and 62,000 non-permanent residents participants. Data documented by the Stanford Basic Income Lab.',
+    96,
+    'USD',
+    '1,150 USD (permanent residents); 750 USD non-permanent residents (yearly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'active_open'::public.program_status,
+    'Ongoing',
+    'Ongoing monthly distributions',
+    ARRAY['United States'],
+    ARRAY[]::TEXT[],
+    ARRAY['Macau Special Administrative Region'],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '638,300 permanent residents and 62,000 non-permanent residents',
+    'No criteria',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Wealth Partaking Scheme' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Wealth Partaking Scheme'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    365,
     'Scheme $6,000',
     'Government of Hong Kong',
     'Scheme $6,000 is a guaranteed basic income initiative in Hong Kong, China, organized by Government of Hong Kong. Implemented during 2011. Enrolled ~4 million participants. Data documented by the Stanford Basic Income Lab.',
@@ -9947,7 +10902,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Hong Kong'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     18,
     NULL,
     NULL,
@@ -9971,7 +10926,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    343,
+    366,
     'New Leaf Project',
     'Foundations for Social Change',
     'New Leaf Project is a guaranteed basic income initiative in Vancouver, BC, Canada, organized by Foundations for Social Change. Implemented during 2018 - 2019. Enrolled 50 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
@@ -9988,7 +10943,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Canada'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -10012,7 +10967,7 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    344,
+    367,
     'Agreements with Young Adults',
     'Government of BC',
     'Agreements with Young Adults is a guaranteed basic income initiative in British Columbia, Canada, organized by Government of BC. Implemented during March 2022 -. Enrolled Any individual transitioning out of care participants. Data documented by the Stanford Basic Income Lab.',
@@ -10029,7 +10984,7 @@ SELECT
     'Ongoing monthly distributions',
     ARRAY['Canada'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -10053,10 +11008,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    345,
+    368,
     'Manitoba Basic Annual Income Experiment (MINCOME)',
-    'Canadian Federal Government & Province of Manitoba',
-    'Manitoba Basic Annual Income Experiment (MINCOME) is a guaranteed basic income initiative in Dauphin, MB, Canada, organized by Province of Manitoba. Implemented during 1976 - 1978. Enrolled 2263 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Dr. Evelyn Forget, University of Manitoba.',
+    'Province of Manitoba',
+    'Manitoba Basic Annual Income Experiment (MINCOME) is a guaranteed basic income initiative in Dauphin, MB, Canada, organized by Province of Manitoba. Implemented during 1976 - 1978. Enrolled 2263 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     234,
     'CAD',
     '316 - 483 CAD (monthly)',
@@ -10070,7 +11025,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Canada'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     57,
     NULL,
@@ -10080,7 +11035,7 @@ SELECT
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Manitoba Basic Annual Income Experiment (MINCOME)' LIMIT 1),
-    'https://www.utpjournals.press/doi/abs/10.3138/cpp.37.3.283',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Manitoba Basic Annual Income Experiment (MINCOME)'
@@ -10094,10 +11049,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    346,
+    369,
     'Manitoba Basic Annual Income Experiment (MINCOME) — Winnipeg, MB, Canada',
-    'Canadian Federal Government & Province of Manitoba',
-    'Manitoba Basic Annual Income Experiment (MINCOME) is a guaranteed basic income initiative in Winnipeg, MB, Canada, organized by Province of Manitoba. Implemented during 1975 - 1978. Enrolled 2263 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by Dr. Evelyn Forget, University of Manitoba.',
+    'Province of Manitoba',
+    'Manitoba Basic Annual Income Experiment (MINCOME) is a guaranteed basic income initiative in Winnipeg, MB, Canada, organized by Province of Manitoba. Implemented during 1975 - 1978. Enrolled 2263 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     234,
     'CAD',
     '316 - 483 CAD (monthly)',
@@ -10111,7 +11066,7 @@ SELECT
     'Pilot completed (Research evaluation phase)',
     ARRAY['Canada'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     57,
     NULL,
@@ -10120,8 +11075,8 @@ SELECT
     'Households with head of household under 57 years of age with an average yearly income less than $13,000 in Winnipeg and 9,000 in Dauphin. Households with a disabled adult, one more more heads in armed forces, mentally incompetent and who were unable to complete surveys due to language barriers ineligible to participate',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Manitoba Basic Annual Income Experiment (MINCOME)' LIMIT 1),
-    'https://www.utpjournals.press/doi/abs/10.3138/cpp.37.3.283',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Manitoba Basic Annual Income Experiment (MINCOME) — Winnipeg, MB, Canada' LIMIT 1),
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Manitoba Basic Annual Income Experiment (MINCOME) — Winnipeg, MB, Canada'
@@ -10135,10 +11090,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    347,
+    370,
     'Ontario Basic Income Pilot',
-    'Government of Ontario Ministry of Community and Social Services',
-    'Ontario Basic Income Pilot is a guaranteed basic income initiative in Hamilton, Brantford, Brant County, ON, Canada, organized by Government of Ontario Ministry of Children. Implemented during 2017 - 2018. Enrolled 2748 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by McMaster University & Ryerson University.',
+    'Government of Ontario Ministry of Children',
+    'Ontario Basic Income Pilot is a guaranteed basic income initiative in Hamilton, Brantford, Brant County, ON, Canada, organized by Government of Ontario Ministry of Children. Implemented during 2017 - 2018. Enrolled 2748 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     1048,
     'CAD',
     '16,989 CAD for a single person less 50% of any earned income
@@ -10154,7 +11109,7 @@ Persons with disabilities receive an additional 500 CAD (annual)',
     'Pilot completed (Research evaluation phase)',
     ARRAY['Canada'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -10164,7 +11119,7 @@ Persons with disabilities receive an additional 500 CAD (annual)',
     TRUE,
     'stanford_basic_income_lab',
     (SELECT id FROM public.stanford_experiments WHERE name = 'Ontario Basic Income Pilot' LIMIT 1),
-    'https://www.ontario.ca/page/ontario-basic-income-pilot',
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Ontario Basic Income Pilot'
@@ -10178,10 +11133,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    348,
+    371,
     'Ontario Basic Income Pilot — Lindsay, ON, Canada',
-    'Government of Ontario Ministry of Community and Social Services',
-    'Ontario Basic Income Pilot is a guaranteed basic income initiative in Lindsay, ON, Canada, organized by Government of Ontario Ministry of Children. Implemented during 2019 - 2018. Enrolled 1844 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by McMaster University & Ryerson University.',
+    'Government of Ontario Ministry of Children',
+    'Ontario Basic Income Pilot is a guaranteed basic income initiative in Lindsay, ON, Canada, organized by Government of Ontario Ministry of Children. Implemented during 2019 - 2018. Enrolled 1844 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     1048,
     'CAD',
     '16,989 CAD for a single person less 50% of any earned income
@@ -10197,7 +11152,7 @@ Persons with disabilities receive an additional 500 CAD (annual)',
     'Pilot completed (Research evaluation phase)',
     ARRAY['Canada'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -10206,8 +11161,8 @@ Persons with disabilities receive an additional 500 CAD (annual)',
     'Individuals between 18-65',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Ontario Basic Income Pilot' LIMIT 1),
-    'https://www.ontario.ca/page/ontario-basic-income-pilot',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Ontario Basic Income Pilot — Lindsay, ON, Canada' LIMIT 1),
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Ontario Basic Income Pilot — Lindsay, ON, Canada'
@@ -10221,10 +11176,10 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    349,
+    372,
     'Ontario Basic Income Pilot — Thunder Bay, ON, Canada',
-    'Government of Ontario Ministry of Community and Social Services',
-    'Ontario Basic Income Pilot is a guaranteed basic income initiative in Thunder Bay, ON, Canada, organized by Government of Ontario Ministry of Children. Implemented during 2018 - 2018. Enrolled 1908 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab. Evaluation conducted by McMaster University & Ryerson University.',
+    'Government of Ontario Ministry of Children',
+    'Ontario Basic Income Pilot is a guaranteed basic income initiative in Thunder Bay, ON, Canada, organized by Government of Ontario Ministry of Children. Implemented during 2018 - 2018. Enrolled 1908 participants. Evaluated as a randomized controlled trial (RCT). Data documented by the Stanford Basic Income Lab.',
     1048,
     'CAD',
     '16,989 CAD for a single person less 50% of any earned income
@@ -10240,7 +11195,7 @@ Persons with disabilities receive an additional 500 CAD (annual)',
     'Pilot completed (Research evaluation phase)',
     ARRAY['Canada'],
     ARRAY[]::TEXT[],
-    ARRAY[]::TEXT[],
+    ARRAY[],
     NULL,
     NULL,
     NULL,
@@ -10249,8 +11204,8 @@ Persons with disabilities receive an additional 500 CAD (annual)',
     'Individuals between 18-65',
     TRUE,
     'stanford_basic_income_lab',
-    (SELECT id FROM public.stanford_experiments WHERE name = 'Ontario Basic Income Pilot' LIMIT 1),
-    'https://www.ontario.ca/page/ontario-basic-income-pilot',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Ontario Basic Income Pilot — Thunder Bay, ON, Canada' LIMIT 1),
+    NULL,
     TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM public.programs WHERE name = 'Ontario Basic Income Pilot — Thunder Bay, ON, Canada'
@@ -10264,7 +11219,48 @@ INSERT INTO public.programs (
     is_rct, data_source, stanford_experiment_id, website, verified
 )
 SELECT
-    350,
+    373,
+    'Renda Basica de Cidadania (Citizens'' Basic Income Program)',
+    'Municipal Government of Maricá',
+    'Renda Basica de Cidadania (Citizens'' Basic Income Program) is a guaranteed basic income initiative in Maricá, Brazil, organized by Municipal Government of Maricá. Implemented during December 2019 -. Enrolled 42,000 participants. Data documented by the Stanford Basic Income Lab.',
+    130,
+    'USD',
+    '130 Mumbuca, a currency spendable only within the Municipality of Marica (monthly)',
+    'standard'::public.payment_method,
+    'guaranteed_recurrent',
+    'direct_deposit',
+    'municipal_government',
+    'external_self_apply',
+    'active_open'::public.program_status,
+    'Ongoing',
+    'Ongoing monthly distributions',
+    ARRAY['Brazil'],
+    ARRAY[]::TEXT[],
+    ARRAY[],
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '42,000',
+    'Individuals who are part of Brazil''s Cadastro Único, a unified registry for social benefits',
+    FALSE,
+    'stanford_basic_income_lab',
+    (SELECT id FROM public.stanford_experiments WHERE name = 'Renda Basica de Cidadania (Citizens'' Basic Income Program)' LIMIT 1),
+    NULL,
+    TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.programs WHERE name = 'Renda Basica de Cidadania (Citizens'' Basic Income Program)'
+);
+
+INSERT INTO public.programs (
+    program_id, name, organization, description, monthly_amount_usd, currency, amount_description,
+    payment_method, distribution_type, payout_rail, funding_source, involvement_level, status, application_status,
+    payout_status, available_regions, required_states, municipalities, min_age, max_age,
+    gender_requirement, max_household_income_usd, total_participants, targeting_details,
+    is_rct, data_source, stanford_experiment_id, website, verified
+)
+SELECT
+    374,
     'Quatinga Velho',
     'Instituto ReCivitas',
     'Quatinga Velho is a guaranteed basic income initiative in Mogi das Cruzes, Brazil, organized by Instituto ReCivitas. Implemented during 2008 - 2014. Enrolled 100 participants. Data documented by the Stanford Basic Income Lab.',
