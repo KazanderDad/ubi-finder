@@ -66,7 +66,7 @@ export default function AdminSubmissions() {
 
   // Edit dialog state
   const [editingProgram, setEditingProgram] = useState(null);
-  const [editFormData, setEditFormData] = useState({});
+  const [editFormData, setEditFormData] = useState(/** @type {Record<string, any>} */ ({}));
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Toast feedback

@@ -21,9 +21,9 @@ Assessment date: 2026-09-01
 | Local acceptance harness | Missing — no Playwright/Cypress or equivalent local end-to-end acceptance flow exists. |
 | Coverage governance | Missing — no coverage tooling, thresholds, reports, or CI measurement exists; deeper coverage quality was not audited. |
 | Lint | Pass — `npm run lint` completed successfully on 2026-09-01. |
-| Typecheck | Missing — `npm run typecheck` exists but fails across dependencies and application code; repair is tracked by [#9](https://github.com/ubi-labs/ubi-finder/issues/9). |
+| Typecheck | Pass — [#9](https://github.com/ubi-labs/ubi-finder/issues/9) established repository-wide `checkJs` coverage with zero diagnostics and no suppression directives or broad source exclusions. |
 | Build | Pass — `npm run build` is the only application check enforced by CI and the latest GitHub run for `main` succeeded. |
-| CI coverage | Partial — pull requests and pushes to `main` run `npm ci` and build, but lint, typecheck, tests, coverage, and migration dry-run validation are absent. |
+| CI coverage | Partial — [#9](https://github.com/ubi-labs/ubi-finder/issues/9) adds lint, typecheck, governed coverage, and build gates; the coverage command is completed by [#10](https://github.com/ubi-labs/ubi-finder/issues/10) and migration validation by [#11](https://github.com/ubi-labs/ubi-finder/issues/11). |
 | Supabase edge-function access criterion | Not applicable — this is a single frontend, not an MCP or multi-frontend platform; `CONTRIBUTING.md` explicitly permits direct Supabase client access subject to RLS. |
 | Supabase migration source | Partial — canonical `supabase/` migrations and seed are duplicated byte-for-byte under `src/supabase/`, creating drift risk. |
 | Supabase PR migration validation | Missing — pull requests do not run a migration dry-run or local database validation. |

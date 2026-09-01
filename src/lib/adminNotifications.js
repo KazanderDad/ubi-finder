@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
  * Calls the Supabase Edge Function 'notify-new-submission' and logs to public.admin_notifications.
  *
  * @param {Object} programData - Program details
- * @returns {Promise<{ success: boolean, notified: boolean }>}
+ * @returns {Promise<{ success: boolean, notified?: boolean, error?: unknown }>}
  */
 export async function notifyAdminsOfNewSubmission(programData) {
   try {

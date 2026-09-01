@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils"
 
 const FALLBACK_IMAGE_URL = "/placeholder.svg" // Replace with an actual local generic fallback if available
 
+/** @type {React.ForwardRefExoticComponent<any>} */
 const Image = React.forwardRef(({ src, className, style, alt = "", onError, ...props }, ref) => {
   const [hasError, setHasError] = React.useState(false)
 

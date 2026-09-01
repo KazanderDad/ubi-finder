@@ -1634,10 +1634,6 @@ export default function Programs() {
                 ) : (
                   <ProgramList 
                     programs={sortedPrograms}
-                    filters={{
-                      status: filterMode === "quick" ? quickFilter : "all",
-                      ...advancedFilters
-                    }}
                     favoritePrograms={favoritePrograms}
                     onToggleFavorite={toggleFavorite}
                     userEmail={user?.email}

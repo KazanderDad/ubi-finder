@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
+  X,
   Lock,
   Share2,
   Check,
@@ -43,6 +44,7 @@ import ManagedApplicationModal from "@/components/ManagedApplicationModal";
 import DonationEncouragementModal from "@/components/DonationEncouragementModal";
 import SupporterGateModal from "@/components/SupporterGateModal";
 import { recordUsageAction } from "@/lib/supporterPoints";
+import { createPageUrl } from "@/utils";
 import {
   DropdownMenu,
   DropdownMenuTrigger,

@@ -4,20 +4,26 @@ import { Minus } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const InputOTP = React.forwardRef(({ className, containerClassName, ...props }, ref) => (
+/** @type {React.ForwardRefExoticComponent<any>} */
+const InputOTP = React.forwardRef(({ className, containerClassName, maxLength, children, ...props }, ref) => (
   <OTPInput
     ref={ref}
     containerClassName={cn("flex items-center gap-2 has-[:disabled]:opacity-50", containerClassName)}
     className={cn("disabled:cursor-not-allowed", className)}
-    {...props} />
+    maxLength={maxLength}
+    {...props}>
+    {children}
+  </OTPInput>
 ))
 InputOTP.displayName = "InputOTP"
 
+/** @type {React.ForwardRefExoticComponent<any>} */
 const InputOTPGroup = React.forwardRef(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("flex items-center", className)} {...props} />
 ))
 InputOTPGroup.displayName = "InputOTPGroup"
 
+/** @type {React.ForwardRefExoticComponent<any>} */
 const InputOTPSlot = React.forwardRef(({ index, className, ...props }, ref) => {
   const inputOTPContext = React.useContext(OTPInputContext)
   const { char, hasFakeCaret, isActive } = inputOTPContext.slots[index]
@@ -43,6 +49,7 @@ const InputOTPSlot = React.forwardRef(({ index, className, ...props }, ref) => {
 })
 InputOTPSlot.displayName = "InputOTPSlot"
 
+/** @type {React.ForwardRefExoticComponent<any>} */
 const InputOTPSeparator = React.forwardRef(({ ...props }, ref) => (
   <div ref={ref} role="separator" {...props}>
     <Minus />
@@ -51,4 +58,3 @@ const InputOTPSeparator = React.forwardRef(({ ...props }, ref) => (
 InputOTPSeparator.displayName = "InputOTPSeparator"
 
 export { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator }
-

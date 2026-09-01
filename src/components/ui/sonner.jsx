@@ -2,14 +2,16 @@
 import { useTheme } from "next-themes"
 import { Toaster as Sonner } from "sonner"
 
+/** @type {React.ComponentType<any>} */
 const Toaster = ({
   ...props
 }) => {
   const { theme = "system" } = useTheme()
+  const resolvedTheme = theme === "light" || theme === "dark" ? theme : "system"
 
   return (
     (<Sonner
-      theme={theme}
+      theme={resolvedTheme}
       className="toaster group"
       toastOptions={{
         classNames: {
@@ -27,4 +29,3 @@ const Toaster = ({
 }
 
 export { Toaster }
-

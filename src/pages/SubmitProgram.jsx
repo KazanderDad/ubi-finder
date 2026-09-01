@@ -521,7 +521,7 @@ export default function SubmitProgram() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => User.login()}>Log In</AlertDialogAction>
+              <AlertDialogAction onClick={() => navigate("/login")}>Log In</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -529,4 +529,3 @@ export default function SubmitProgram() {
     </div>
   );
 }
-

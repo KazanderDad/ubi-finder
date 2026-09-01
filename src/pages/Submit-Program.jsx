@@ -115,6 +115,7 @@ export default function SubmitProgramPage() {
   const [additionalLinks, setAdditionalLinks] = useState([]);
   
   const [formData, setFormData] = useState({
+    program_id: 0,
     name: "",
     organization: "",
     submission_role: "know_of", // "know_of" | "involved"
@@ -331,7 +332,7 @@ export default function SubmitProgramPage() {
           : 0;
         programId = maxId + 1;
       }
-      programId = parseInt(programId, 10);
+      programId = Number.parseInt(String(programId), 10);
 
       const sanitizedMonthlyAmount = formData.monthly_amount_usd !== "" && !isNaN(Number(formData.monthly_amount_usd))
         ? Number(formData.monthly_amount_usd)
@@ -1118,4 +1119,3 @@ export default function SubmitProgramPage() {
     </div>
   );
 }
-
