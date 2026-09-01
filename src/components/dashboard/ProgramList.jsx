@@ -22,7 +22,8 @@ import {
   ShieldCheck,
   GraduationCap,
   FlaskConical,
-  Users
+  Users,
+  Landmark
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -60,6 +61,13 @@ export default function ProgramList({ programs, onToggleFavorite, favoriteProgra
 
   const getDistributionBadge = (type) => {
     switch (type) {
+      case 'permanent_statewide':
+        return (
+          <Badge className="bg-blue-100 text-blue-900 border-blue-200 font-semibold flex items-center gap-1">
+            <Landmark className="w-3 h-3 text-blue-700" />
+            Permanent Statewide Program
+          </Badge>
+        );
       case 'daily_claim_protocol':
         return (
           <Badge className="bg-purple-100 text-purple-900 border-purple-200 font-semibold flex items-center gap-1">

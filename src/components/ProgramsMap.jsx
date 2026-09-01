@@ -78,7 +78,10 @@ const createCustomIcon = (distributionType, involvementLevel) => {
   let bgColor = "#15803d"; // green-700
   let symbol = "🌱";
 
-  if (distributionType === 'daily_claim_protocol' || involvementLevel === 'automated_claim') {
+  if (distributionType === 'permanent_statewide') {
+    bgColor = "#1e40af"; // blue-800
+    symbol = "🏛️";
+  } else if (distributionType === 'daily_claim_protocol' || involvementLevel === 'automated_claim') {
     bgColor = "#7e22ce"; // purple-700
     symbol = "🪙";
   } else if (distributionType === 'lottery_raffle') {
@@ -261,6 +264,10 @@ export default function ProgramsMap({ programs }) {
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-white rounded-xl border border-gray-200 shadow-sm text-xs text-gray-600">
         <div className="flex items-center gap-4 flex-wrap">
           <span className="font-semibold text-gray-800">Map Legend:</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded-full bg-blue-800 text-white flex items-center justify-center text-[10px]">🏛️</span>
+            Permanent Statewide Program
+          </span>
           <span className="flex items-center gap-1.5">
             <span className="w-4 h-4 rounded-full bg-green-700 text-white flex items-center justify-center text-[10px]">🌱</span>
             Guaranteed Cash Pilot

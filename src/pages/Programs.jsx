@@ -666,7 +666,8 @@ export default function Programs() {
     });
 
     const distLabels = {
-      guaranteed_recurrent: "Guaranteed Monthly",
+      permanent_statewide: "Permanent Statewide Program",
+      guaranteed_recurrent: "Guaranteed Monthly (Pilot)",
       daily_claim_protocol: "Daily Claim Protocol",
       lottery_raffle: "Lottery / Raffle",
     };
@@ -999,7 +1000,8 @@ export default function Programs() {
                   <FacetMultiSelect
                     label="Distribution Model"
                     options={[
-                      { value: "guaranteed_recurrent", label: "Guaranteed Monthly" },
+                      { value: "permanent_statewide", label: "Permanent Statewide Program" },
+                      { value: "guaranteed_recurrent", label: "Guaranteed Monthly (Pilot)" },
                       { value: "daily_claim_protocol", label: "Daily Claim Protocol" },
                       { value: "lottery_raffle", label: "Lottery / Raffle" },
                     ]}
