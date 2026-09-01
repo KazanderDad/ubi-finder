@@ -23,7 +23,8 @@ import {
   GraduationCap,
   FlaskConical,
   Globe,
-  BookOpen
+  BookOpen,
+  Activity
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,8 +148,8 @@ export default function Programs() {
   // Filter Mode: "quick" (default) or "advanced" (either/or)
   const [filterMode, setFilterMode] = useState("quick");
 
-  // Quick select status filter (Default: "accepting_applications")
-  const [quickFilter, setQuickFilter] = useState("accepting_applications");
+  // Quick select status filter (Default: "all")
+  const [quickFilter, setQuickFilter] = useState("all");
 
   // Source filter: 'all' | 'stanford' | 'community'
   const [sourceFilter, setSourceFilter] = useState("all");
@@ -280,7 +281,7 @@ export default function Programs() {
   };
 
   const clearAllFilters = () => {
-    setQuickFilter("accepting_applications");
+    setQuickFilter("all");
     setSourceFilter("all");
     setAdvancedFilters({
       statuses: [],
@@ -478,6 +479,73 @@ export default function Programs() {
     community: sourceBasePrograms.filter((p) => p.data_source !== "stanford_basic_income_lab" && !p.stanford_experiment_id).length,
   };
 
+  // Dynamic Status Counts Calculation (respects active search and sourceFilter)
+  const statusBasePrograms = scoredPrograms.filter((program) => {
+    if (program.internal_status === "deleted") return false;
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      const matchName = program.name?.toLowerCase().includes(q);
+      const matchDesc = program.description?.toLowerCase().includes(q);
+      const matchOrg = program.organization?.toLowerCase().includes(q);
+      if (!matchName && !matchDesc && !matchOrg) return false;
+    }
+
+    if (filterMode === "quick") {
+      if (sourceFilter === "stanford") {
+        if (program.data_source !== "stanford_basic_income_lab" && !program.stanford_experiment_id) {
+          return false;
+        }
+      } else if (sourceFilter === "community") {
+        if (program.data_source === "stanford_basic_income_lab" || program.stanford_experiment_id) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      if (!advancedFilters.includeUnverified && !program.verified) return false;
+      if (advancedFilters.sources && advancedFilters.sources.length > 0) {
+        const isStanford = program.data_source === "stanford_basic_income_lab" || !!program.stanford_experiment_id;
+        const matchesSource = advancedFilters.sources.some(s => {
+          if (s === "stanford") return isStanford;
+          if (s === "community") return !isStanford;
+          return true;
+        });
+        if (!matchesSource) return false;
+      }
+      if (advancedFilters.countries.length > 0) {
+        const programRegions = program.available_regions || [];
+        const matchesAnyCountry = advancedFilters.countries.some((c) =>
+          c === "Global"
+            ? programRegions.some((r) => /^(global|worldwide|international|all)$/i.test(r)) || programRegions.length === 0
+            : programRegions.includes(c)
+        );
+        if (!matchesAnyCountry) return false;
+      }
+      if (advancedFilters.distributionTypes.length > 0) {
+        if (!advancedFilters.distributionTypes.includes(program.distribution_type)) return false;
+      }
+      if (advancedFilters.payoutRails.length > 0) {
+        if (!advancedFilters.payoutRails.includes(program.payout_rail)) return false;
+      }
+      if (advancedFilters.fundingSources.length > 0) {
+        if (!advancedFilters.fundingSources.includes(program.funding_source)) return false;
+      }
+      if (advancedFilters.involvementLevels.length > 0) {
+        const progInvolvement = program.involvement_level || "external_self_apply";
+        if (!advancedFilters.involvementLevels.includes(progInvolvement)) return false;
+      }
+      return true;
+    }
+  });
+
+  const statusCounts = {
+    all: statusBasePrograms.length,
+    accepting_applications: statusBasePrograms.filter((p) => matchesProgramStatus(p, "accepting_applications")).length,
+    planned: statusBasePrograms.filter((p) => matchesProgramStatus(p, "planned")).length,
+    closed_ongoing: statusBasePrograms.filter((p) => matchesProgramStatus(p, "closed_ongoing")).length,
+    closed_historical: statusBasePrograms.filter((p) => matchesProgramStatus(p, "closed_historical")).length,
+  };
+
   // 3. Sort Programs (Default to Best Fit when profile data exists)
   const sortedPrograms = [...filteredPrograms].sort((a, b) => {
     if (sortField === 'best_fit' && hasCompletedProfile) {
@@ -633,166 +701,176 @@ export default function Programs() {
           />
 
           {/* ========================================================================= */}
-          {/* EITHER/OR FILTER CONTROLS: QUICK SELECT vs ADVANCED FILTERS */}
+          {/* FILTER CONTROLS: EITHER QUICK SELECT OR ADVANCED FILTERS */}
           {/* ========================================================================= */}
           {filterMode === "quick" ? (
-            <div className="space-y-2">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                {/* Quick Select Status Filter Pills */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setQuickFilter("accepting_applications")}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      quickFilter === "accepting_applications"
-                        ? "bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-700"
-                        : "bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200"
-                    }`}
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Accepting applications
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setQuickFilter("all")}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                      quickFilter === "all"
-                        ? "bg-green-800 text-white shadow-sm ring-1 ring-green-800"
-                        : "bg-white text-gray-700 hover:bg-green-50 border border-gray-200"
-                    }`}
-                  >
-                    All
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setQuickFilter("planned")}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      quickFilter === "planned"
-                        ? "bg-blue-700 text-white shadow-sm ring-1 ring-blue-700"
-                        : "bg-white text-blue-800 hover:bg-blue-50 border border-blue-200"
-                    }`}
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                    Planned
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setQuickFilter("closed_ongoing")}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      quickFilter === "closed_ongoing"
-                        ? "bg-purple-700 text-white shadow-sm ring-1 ring-purple-700"
-                        : "bg-white text-purple-800 hover:bg-purple-50 border border-purple-200"
-                    }`}
-                  >
-                    <Coins className="w-3.5 h-3.5" />
-                    Closed, ongoing
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setQuickFilter("closed_historical")}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      quickFilter === "closed_historical"
-                        ? "bg-gray-700 text-white shadow-sm ring-1 ring-gray-700"
-                        : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                    }`}
-                  >
-                    <History className="w-3.5 h-3.5" />
-                    Closed, historical
-                  </button>
-                </div>
-
-                {/* View Mode Switcher (List vs Map) & Submit Button */}
-                <div className="flex items-center gap-3">
-                  <div className="bg-gray-100 p-1 rounded-xl flex items-center border border-gray-200">
-                    <button
-                      onClick={() => setViewMode("list")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                        viewMode === "list" 
-                          ? "bg-white text-green-950 shadow-sm" 
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      <ListIcon className="w-3.5 h-3.5" />
-                      List View
-                    </button>
-                    <button
-                      onClick={() => setViewMode("map")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                        viewMode === "map" 
-                          ? "bg-white text-green-950 shadow-sm" 
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      <MapIcon className="w-3.5 h-3.5" />
-                      Map View
-                    </button>
-                  </div>
-
-                  <Link to={user ? "/Submit-Program" : "/login?view=signup&redirectTo=/Submit-Program"}>
-                    <Button className="bg-green-700 hover:bg-green-800 text-xs shadow-sm h-9 cursor-pointer">
-                      <Plus className="w-4 h-4 mr-1" />
-                      Submit Program
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Source Filter Pills Bar */}
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100/90">
+            <div className="space-y-2.5">
+              {/* Row 1: Status Filter Pills */}
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-gray-500 mr-1 flex items-center gap-1">
-                  <BookOpen className="w-3.5 h-3.5 text-gray-400" /> Source:
+                  <Activity className="w-3.5 h-3.5 text-gray-400" /> Status:
                 </span>
+
                 <button
                   type="button"
-                  onClick={() => setSourceFilter("all")}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                    sourceFilter === "all"
-                      ? "bg-slate-800 text-white shadow-xs ring-1 ring-slate-800"
-                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                  onClick={() => setQuickFilter("all")}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                    quickFilter === "all"
+                      ? "bg-green-800 text-white shadow-sm ring-1 ring-green-800"
+                      : "bg-white text-gray-700 hover:bg-green-50 border border-gray-200"
                   }`}
                 >
-                  All Sources ({sourceCounts.all})
+                  All ({statusCounts.all})
                 </button>
+
                 <button
                   type="button"
-                  onClick={() => setSourceFilter("stanford")}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    sourceFilter === "stanford"
-                      ? "bg-red-800 text-white shadow-xs ring-1 ring-red-800"
-                      : "bg-white text-red-900 hover:bg-red-50 border border-red-200"
+                  onClick={() => setQuickFilter("accepting_applications")}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    quickFilter === "accepting_applications"
+                      ? "bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-700"
+                      : "bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200"
                   }`}
                 >
-                  <GraduationCap className="w-3.5 h-3.5 text-red-600" />
-                  Stanford Basic Income Lab ({sourceCounts.stanford})
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Open, ongoing ({statusCounts.accepting_applications})
                 </button>
+
                 <button
                   type="button"
-                  onClick={() => setSourceFilter("community")}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    sourceFilter === "community"
-                      ? "bg-emerald-800 text-white shadow-xs ring-1 ring-emerald-800"
-                      : "bg-white text-emerald-900 hover:bg-emerald-50 border border-emerald-200"
+                  onClick={() => setQuickFilter("planned")}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    quickFilter === "planned"
+                      ? "bg-blue-700 text-white shadow-sm ring-1 ring-blue-700"
+                      : "bg-white text-blue-800 hover:bg-blue-50 border border-blue-200"
                   }`}
                 >
-                  <Globe className="w-3.5 h-3.5 text-emerald-600" />
-                  Community Submissions ({sourceCounts.community})
+                  <Clock className="w-3.5 h-3.5" />
+                  Planned ({statusCounts.planned})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setQuickFilter("closed_ongoing")}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    quickFilter === "closed_ongoing"
+                      ? "bg-purple-700 text-white shadow-sm ring-1 ring-purple-700"
+                      : "bg-white text-purple-800 hover:bg-purple-50 border border-purple-200"
+                  }`}
+                >
+                  <Coins className="w-3.5 h-3.5" />
+                  Closed, ongoing ({statusCounts.closed_ongoing})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setQuickFilter("closed_historical")}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    quickFilter === "closed_historical"
+                      ? "bg-gray-700 text-white shadow-sm ring-1 ring-gray-700"
+                      : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
+                >
+                  <History className="w-3.5 h-3.5" />
+                  Closed, historical ({statusCounts.closed_historical})
                 </button>
               </div>
 
-              {/* Inconspicuous small link to switch to advanced filters */}
-              <div className="flex justify-start pt-1">
-                <button
-                  type="button"
-                  onClick={() => setFilterMode("advanced")}
-                  className="text-[11px] text-gray-500 hover:text-green-800 underline transition-colors cursor-pointer inline-flex items-center gap-1"
-                >
-                  <span>Advanced filters</span>
-                  <SlidersHorizontal className="w-3 h-3 text-gray-400" />
-                </button>
+              {/* Row 2: Source Filter Pills & Right-Aligned Submit Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-100/90">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-gray-500 mr-1 flex items-center gap-1">
+                    <BookOpen className="w-3.5 h-3.5 text-gray-400" /> Source:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSourceFilter("all")}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                      sourceFilter === "all"
+                        ? "bg-slate-800 text-white shadow-xs ring-1 ring-slate-800"
+                        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                    }`}
+                  >
+                    All Sources ({sourceCounts.all})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSourceFilter("stanford")}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      sourceFilter === "stanford"
+                        ? "bg-red-800 text-white shadow-xs ring-1 ring-red-800"
+                        : "bg-white text-red-900 hover:bg-red-50 border border-red-200"
+                    }`}
+                  >
+                    <GraduationCap className="w-3.5 h-3.5 text-red-600" />
+                    Stanford Basic Income Lab ({sourceCounts.stanford})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSourceFilter("community")}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      sourceFilter === "community"
+                        ? "bg-emerald-800 text-white shadow-xs ring-1 ring-emerald-800"
+                        : "bg-white text-emerald-900 hover:bg-emerald-50 border border-emerald-200"
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                    Community Submissions ({sourceCounts.community})
+                  </button>
+                </div>
+
+                <Link to={user ? "/Submit-Program" : "/login?view=signup&redirectTo=/Submit-Program"} className="flex-shrink-0">
+                  <Button className="bg-green-700 hover:bg-green-800 text-xs shadow-sm h-8 cursor-pointer">
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    Submit Program
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Row 3: Advanced Filters (Left), Result Count (Center), List/Map Switcher (Right) */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-100/90">
+                {/* Left: Advanced filters button */}
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setFilterMode("advanced")}
+                    className="text-xs text-gray-500 hover:text-green-800 underline transition-colors cursor-pointer inline-flex items-center gap-1.5 font-medium"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-gray-400" />
+                    <span>Advanced filters</span>
+                  </button>
+                </div>
+
+                {/* Center: Result Count Resultant */}
+                <div className="text-xs text-gray-600 text-center font-medium">
+                  Showing <strong className="text-green-950 font-bold text-sm">{sortedPrograms.length}</strong> of {programs.length} programs
+                </div>
+
+                {/* Right: List View / Map View Switcher */}
+                <div className="bg-gray-100 p-1 rounded-xl flex items-center border border-gray-200 self-end sm:self-auto">
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      viewMode === "list" 
+                        ? "bg-white text-green-950 shadow-sm" 
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    <ListIcon className="w-3.5 h-3.5" />
+                    List View
+                  </button>
+                  <button
+                    onClick={() => setViewMode("map")}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      viewMode === "map" 
+                        ? "bg-white text-green-950 shadow-sm" 
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    <MapIcon className="w-3.5 h-3.5" />
+                    Map View
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
