@@ -3,7 +3,7 @@ import { Leaf } from "lucide-react";
 
 export default function PageHeader({ 
   icon: Icon = Leaf, 
-  badgeText, 
+  badgeText = null,
   title, 
   subtitle, 
   className = "" 

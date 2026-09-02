@@ -173,7 +173,10 @@ export default function TopNavBar({ user, userProfile }) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => User.logout()}
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = "/";
+                  }}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
@@ -182,7 +185,9 @@ export default function TopNavBar({ user, userProfile }) {
             </DropdownMenu>
           ) : (
             <Button 
-              onClick={() => User.login()}
+              onClick={() => {
+                window.location.href = "/login";
+              }}
               className="bg-green-700 hover:bg-green-800"
             >
               Login
@@ -193,4 +198,3 @@ export default function TopNavBar({ user, userProfile }) {
     </header>
   );
 }
-

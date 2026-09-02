@@ -1121,7 +1121,7 @@ export default function ManageProgramPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => User.login()}>
+              <AlertDialogAction onClick={() => navigate("/login")}>
                 Log In
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1147,4 +1147,3 @@ export default function ManageProgramPage() {
     </div>
   );
 }
-

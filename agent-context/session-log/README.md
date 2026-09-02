@@ -1,5 +1,19 @@
 # Session Logs
 
-Keep one branch-scoped Markdown log per working branch. Single-app branches use `YYYY-MM-DD-featurebranch.md`; direct work on `main` may use `main.md`.
+Keep one append-only, branch-scoped Markdown log per working branch. Single-app branches use `YYYY-MM-DD-featurebranch.md`; direct work on `main` may use `main.md`. Derive the date from the branch reflog or first unique commit when possible, and replace `/` with `-` in the filename.
 
-Each entry records `timestamp`, `agent`, `branch`, `head`, `summary`, `validation`, and `follow-ups`. Update the current branch log after completing each task and before every commit. Preserve prior entries as durable history.
+Update the current branch log after each completed GitHub Task and immediately before its commit. Preserve prior entries as durable history; corrections should be new entries rather than rewrites.
+
+## Entry template
+
+```md
+## YYYY-MM-DDTHH:MM:SSZ
+
+- **agent:** Codex or human name
+- **branch:** `branch/name`
+- **head:** pre-commit SHA
+- **issue:** linked GitHub Goal or Task
+- **summary:** outcome and important boundaries
+- **validation:** exact commands and evidence
+- **follow-ups:** deferred or blocked work, or `None`
+```

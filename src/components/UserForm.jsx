@@ -82,7 +82,7 @@ function WhyTooltip({ text = WHY_GENDER }) {
   );
 }
 
-export default function UserForm({ onSubmit, onComplete, initialData, isMandatoryModal = false }) {
+export default function UserForm({ onSubmit = null, onComplete = null, initialData = null, isMandatoryModal = false }) {
   const { user, isAuthenticated } = useAuth();
   
   // Read any saved draft from localStorage or initialData

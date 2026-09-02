@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 const ToastProvider = ToastPrimitives.Provider;
 
+/** @type {React.ForwardRefExoticComponent<any>} */
 const ToastViewport = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Viewport
     ref={ref}
@@ -34,6 +35,7 @@ const toastVariants = cva(
   }
 );
 
+/** @type {React.ForwardRefExoticComponent<any>} */
 const Toast = React.forwardRef(({ className, variant, ...props }, ref) => {
   return (
     <ToastPrimitives.Root
@@ -45,18 +47,21 @@ const Toast = React.forwardRef(({ className, variant, ...props }, ref) => {
 });
 Toast.displayName = ToastPrimitives.Root.displayName;
 
-const ToastAction = React.forwardRef(({ className, ...props }, ref) => (
+/** @type {React.ForwardRefExoticComponent<any>} */
+const ToastAction = React.forwardRef(({ className, altText, ...props }, ref) => (
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
       "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive",
       className
     )}
+    altText={altText}
     {...props}
   />
 ));
 ToastAction.displayName = ToastPrimitives.Action.displayName;
 
+/** @type {React.ForwardRefExoticComponent<any>} */
 const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Close
     ref={ref}
@@ -72,6 +77,7 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
 
+/** @type {React.ForwardRefExoticComponent<any>} */
 const ToastTitle = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
@@ -81,6 +87,7 @@ const ToastTitle = React.forwardRef(({ className, ...props }, ref) => (
 ));
 ToastTitle.displayName = ToastPrimitives.Title.displayName;
 
+/** @type {React.ForwardRefExoticComponent<any>} */
 const ToastDescription = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
@@ -99,4 +106,3 @@ export {
   ToastClose,
   ToastAction,
 };
-

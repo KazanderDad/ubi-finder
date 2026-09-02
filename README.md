@@ -1,209 +1,87 @@
-# UBI Finder 🌍🌱
+# UBI Finder
 
-> Discover, verify, and apply for Universal Basic Income (UBI), guaranteed income pilots, and community cash distributions worldwide.
+UBI Finder helps people discover and evaluate Universal Basic Income, guaranteed-income, and community cash-support programs. It also provides program submission, management, community, and builder-service workflows.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Vite](https://img.shields.io/badge/Vite-6.x-646CFF.svg?logo=vite&logoColor=white)](https://vitejs.org/)
-[![React](https://img.shields.io/badge/React-18.x-61DAFB.svg?logo=react&logoColor=black)](https://reactjs.org/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38B2AC.svg?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-Auth%20%26%20Postgres-3ECF8E.svg?logo=supabase&logoColor=white)](https://supabase.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
----
+## Architecture
 
-## 📖 Table of Contents
+The repository contains one React 18/Vite 6 frontend backed by Supabase Auth, PostgreSQL, Storage, Row Level Security, and an Edge Function. The browser performs authorized Supabase reads and writes directly; database policies remain the security boundary.
 
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Architecture & Tech Stack](#architecture--tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Configuration](#environment-configuration)
-  - [Supabase Setup & Migrations](#supabase-setup--migrations)
-  - [Running the App](#running-the-app)
-- [Project Structure](#project-structure)
-- [Available Scripts](#available-scripts)
-- [Repository & Roadmap](#repository--roadmap)
-- [Target User Groups](#target-user-groups)
-- [Contributing](#contributing)
-- [License](#license)
+See [engineering documentation](docs/engineering/README.md) for current architecture, testing, and environment contracts. Future ideas are clearly separated under `docs/engineering/target-state/` and are not the active roadmap.
 
----
+## Prerequisites
 
-## 🌟 Overview
+- Node.js 22
+- npm
+- Docker and Supabase CLI 2.116.0 when validating the local database
+- A local-Supabase coordinator lease when using the shared local runtime
 
-**UBI Finder** bridges the gap between individuals seeking financial support and organizations launching Universal Basic Income or guaranteed cash experiments.
-
-Traditional welfare programs are often burdened with bureaucratic friction, stigmatizing means-tests, and complex qualifications. UBI Finder aggregates verified fiat and crypto-powered income programs into a single searchable directory with instant eligibility matching, personalized dashboards, community discussion hubs, and builder services.
-
----
-
-## 🚀 Key Features
-
-### For Seekers (Recipients)
-* 🔍 **Multi-Step Eligibility Matching:** Answer basic location, household size, and income questions to receive matching program reports.
-* ⚡ **Live Program Previews:** Real-time program count hints based on your selected region.
-* 📬 **Passwordless Magic Link Onboarding:** Frictionless email verification that saves and matches profile preferences automatically.
-* 📊 **Personalized Dashboard:** Track saved programs, calculate Match Score percentages (e.g. `95% Match`), track application status, and view targeted news updates.
-* 💬 **Community Discussion Hub:** Ask questions, share application advice, and tag conversations to specific basic income pilots.
-* 📱 **Mobile-Optimized Program Details:** Clean breakdown of disbursement schedules, currency conversions, verified sources, and floating 1-click apply triggers.
-
-### For Program Managers & Builders
-* 🏢 **B2B Infrastructure Services:** Full technical consulting & deployment rails by [Firebelly.xyz](https://firebelly.xyz) for credit unions, blockchain DAOs, and municipalities.
-* ✍️ **Program Submission & Management:** Self-serve program listing workflows with administrative review pipelines.
-* 🛡️ **Verified Pilot Directory:** Sybil-resistant, KYC/OFAC-compliant architecture with transparent on-chain and fiat payout options.
-
----
-
-## 🛠️ Architecture & Tech Stack
-
-| Layer | Technologies |
-|---|---|
-| **Frontend** | React 18, Vite 6, React Router DOM 6, React Helmet Async (SEO) |
-| **Styling & UI** | TailwindCSS, Radix UI Primitives, Lucide Icons, Shadcn UI Components |
-| **Backend & DB** | Supabase (PostgreSQL), Supabase Auth (Passwordless OTP / Magic Links), Row Level Security (RLS) |
-| **State & Cache** | React Context API (`AuthContext`), LocalStorage state persistence |
-
----
-
-## 🏁 Getting Started
-
-### Prerequisites
-* **Node.js**: `v18.x` or higher (Node 20+ recommended)
-* **npm** or **pnpm** / **yarn**
-* **Docker** (optional, if running local Supabase CLI)
-
-### Installation
+## Install
 
 ```bash
-# Clone the repository
 git clone https://github.com/ubi-labs/ubi-finder.git
 cd ubi-finder
-
-# Install dependencies
-npm install
+npm ci
 ```
 
-### Environment Configuration
+## Configure Supabase
 
-Create a `.env` file in the root directory:
+Local development:
 
 ```bash
-cp .env.example .env
+cp .env.local-supabase.example .env.local-supabase.local
+npm run dev:local
 ```
 
-Set your Supabase project credentials:
-
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-publishable-anon-key
-```
-
-### Supabase Setup & Migrations
-
-If using local Supabase CLI:
+Hosted development:
 
 ```bash
-# Start local Supabase instance
-npx supabase start
-
-# Apply migrations
-npx supabase db push
-
-# (Optional) Seed initial database records
-npx supabase db reset
+cp .env.remote-supabase.example .env.remote-supabase.local
+npm run dev:remote
 ```
 
-All SQL schema migrations are located in [`supabase/migrations/`](./supabase/migrations/).
+Populate both `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. The application does not infer a hosted project or use placeholder credentials. Never commit the `.local` files.
 
-### Running the App
+The local acceptance harness expects an already allocated local Supabase runtime and its public and service-role credentials. It does not start or reset shared infrastructure.
 
-```bash
-# Start Vite development server
-npm run dev
+## Commands
 
-# Build for production
-npm run build
+| Command | Purpose |
+|---|---|
+| `npm run dev:local` | Start Vite in explicit local-Supabase mode. |
+| `npm run dev:remote` | Start Vite in explicit hosted-Supabase mode. |
+| `npm run lint` | Check JavaScript and JSX with ESLint. |
+| `npm run typecheck` | Check JavaScript and JSX types without emitting files. |
+| `npm run test:unit` | Run deterministic unit tests. |
+| `npm run test:coverage` | Run governed core coverage with 80% thresholds. |
+| `npm run test:acceptance:local` | Run Chromium acceptance against allocated local Supabase. |
+| `npm run build` | Build the production bundle. |
+| `npm run preview` | Preview the built frontend. |
 
-# Preview production build locally
-npm run preview
+For database changes, also run a clean `supabase db reset` and `supabase db lint --local --level error` in the allocated environment.
+
+## Repository structure
+
+```text
+src/                           React application, routes, UI, and domain logic
+supabase/                      Canonical config, migrations, seed, and Edge Functions
+tests/unit/                    Deterministic unit coverage
+tests/acceptance/              Playwright browser acceptance and fixtures
+docs/engineering/              Implemented technical documentation
+docs/engineering/target-state/ Unimplemented reference designs
+agent-context/session-log/     Branch-scoped delivery evidence
+.github/workflows/             Application, migration, and deployment CI
 ```
 
----
+## Roadmap and contributions
 
-## 📁 Project Structure
+- [Canonical repository](https://github.com/ubi-labs/ubi-finder)
+- [Issue queue](https://github.com/ubi-labs/ubi-finder/issues)
+- [UBI Finder Project](https://github.com/orgs/ubi-labs/projects/1)
 
-```
-ubi-finder/
-├── .github/
-│   └── workflows/          # GitHub Actions CI pipelines
-├── public/                 # Static assets, robots.txt, sitemap.xml
-├── src/
-│   ├── components/
-│   │   ├── dashboard/      # Dashboard cards, matching program lists, application tracker
-│   │   ├── ui/             # Radix & Tailwind UI primitives (buttons, modals, cards, tabs)
-│   │   ├── Header.jsx      # Sticky navbar with authenticated user dropdown
-│   │   ├── Footer.jsx      # Global footer with ecosystem & legal links
-│   │   └── UserForm.jsx    # Multi-step eligibility intake form
-│   ├── lib/
-│   │   ├── AuthContext.jsx # Native Supabase auth session provider
-│   │   ├── supabaseClient.js # Initialized Supabase client
-│   │   └── utils.js        # Class merger and formatting utilities
-│   ├── pages/
-│   │   ├── Home.jsx        # Landing page with hero, live featured strip & eligibility CTA
-│   │   ├── Programs.jsx    # Filterable program directory with skeleton loaders
-│   │   ├── program-details.jsx # Comprehensive program view with checklist & apply actions
-│   │   ├── Dashboard.jsx   # Logged-in user hub with onboarding checklist
-│   │   ├── Community.jsx   # Discussion forum & announcement boards
-│   │   ├── Services.jsx    # Consultancy & technical infrastructure offerings
-│   │   ├── Blog.jsx        # Educational insights & program news
-│   │   └── Ecosystem.jsx   # External directory of basic income protocols
-│   ├── App.jsx             # React router configuration & layout wrapping
-│   └── main.jsx            # Entrypoint with HelmetProvider
-├── supabase/
-│   ├── migrations/         # PostgreSQL schema migrations
-│   └── seed.sql            # Initial test and program dataset
-├── .env.example            # Environment variable template
-├── package.json
-└── vite.config.js
-```
+GitHub Issues and the Project are the only active roadmap. See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
----
+## License
 
-## 📜 Available Scripts
-
-- `npm run dev` — Launches the development server with Hot Module Replacement (HMR).
-- `npm run build` — Compiles production-ready bundle to `/dist`.
-- `npm run preview` — Locally tests the built production files.
-- `npm run lint` — Runs ESLint checks.
-
----
-
-## 🗺️ Repository & Roadmap
-
-- **Canonical repository:** [ubi-labs/ubi-finder](https://github.com/ubi-labs/ubi-finder)
-- **Issues:** [ubi-labs/ubi-finder/issues](https://github.com/ubi-labs/ubi-finder/issues)
-- **Active roadmap:** [UBI Finder Project](https://github.com/orgs/ubi-labs/projects/1)
-
-Use `ubi-labs/ubi-finder` for clones, links, automation, and new issue references.
-
----
-
-## 👥 Target User Groups
-
-1. **Regular Seekers:**
-   Individuals seeking financial support who want to discover active cash grants or crypto basic income pilots in their region.
-2. **UBI Program Managers & Protocol Builders:**
-   Municipalities, non-profits, credit unions, and Web3 foundations looking to list their programs, reach verified applicants, or contract technical deployment services.
-
----
-
-## 🤝 Contributing
-
-Contributions, bug reports, and program submissions are welcome! Please review [CONTRIBUTING.md](./CONTRIBUTING.md) for details on submitting pull requests.
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](./LICENSE).
+Licensed under the [MIT License](LICENSE).

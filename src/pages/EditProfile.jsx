@@ -523,14 +523,22 @@ export default function EditProfile() {
   const handleSetPrimaryBankAccount = async (accountId) => {
     try {
       // Update all accounts to not be primary
-      await Promise.all(
+      const unsetResults = await Promise.all(
         bankAccounts
           .filter(account => account.is_primary)
-          .map(account => BankAccount.update(account.id, { is_primary: false }))
+          .map(account => supabase.from('bank_accounts').update({ is_primary: false }).eq('id', account.id))
       );
+      const unsetError = unsetResults.find(({ error }) => error)?.error;
+      if (unsetError) throw unsetError;
       
       // Set the selected account as primary
-      (await supabase.from('bank_accounts').update({ is_primary: true }).eq('id', accountId).select().single()).data;
+      const { error: setPrimaryError } = await supabase
+        .from('bank_accounts')
+        .update({ is_primary: true })
+        .eq('id', accountId)
+        .select()
+        .single();
+      if (setPrimaryError) throw setPrimaryError;
       
       // Update the local state
       setBankAccounts(prev => 
@@ -558,14 +566,22 @@ export default function EditProfile() {
   const handleSetPrimaryCryptoWallet = async (walletId) => {
     try {
       // Update all wallets to not be primary
-      await Promise.all(
+      const unsetResults = await Promise.all(
         cryptoWallets
           .filter(wallet => wallet.is_primary)
-          .map(wallet => CryptoWallet.update(wallet.id, { is_primary: false }))
+          .map(wallet => supabase.from('crypto_wallets').update({ is_primary: false }).eq('id', wallet.id))
       );
+      const unsetError = unsetResults.find(({ error }) => error)?.error;
+      if (unsetError) throw unsetError;
       
       // Set the selected wallet as primary
-      (await supabase.from('crypto_wallets').update({ is_primary: true }).eq('id', walletId).select().single()).data;
+      const { error: setPrimaryError } = await supabase
+        .from('crypto_wallets')
+        .update({ is_primary: true })
+        .eq('id', walletId)
+        .select()
+        .single();
+      if (setPrimaryError) throw setPrimaryError;
       
       // Update the local state
       setCryptoWallets(prev => 
@@ -1189,4 +1205,3 @@ export default function EditProfile() {
     </>
   );
 }
-

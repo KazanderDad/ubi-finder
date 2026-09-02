@@ -11,7 +11,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    360,
+    382,
     'Kindergeld (Universal Child Allowance)',
     'Federal Central Tax Office (Familienkasse / BZSt)',
     'Kindergeld is Germany''s foundational universal cash allowance paid unconditionally to parents for every child from birth up to age 18 (and up to age 25 if enrolled in higher education or vocational training), regardless of parental income or employment status. Disbursed monthly to guarantee baseline child subsistence.',
@@ -54,7 +54,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    361,
+    383,
     'Barnetrygd (Universal Child Benefit)',
     'Norwegian Labour and Welfare Administration (NAV)',
     'Barnetrygd is Norway''s universal child benefit providing a non-means-tested, tax-free cash transfer for every child under 18 residing in Norway. Payouts are made monthly directly into parents'' bank accounts to support childhood development and alleviate child poverty universally.',
@@ -97,7 +97,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    362,
+    384,
     'Børne- og ungeydelse (Family / Youth Allowance)',
     'Udbetaling Danmark / Danish Ministry of Taxation',
     'Børne- og ungeydelse is Denmark''s universal tax-free cash benefit disbursed automatically to parents of all children under 18 living in Denmark. The benefit is completely non-means-tested at baseline, scaled slightly by child age cohort, and delivered quarterly or monthly.',
@@ -140,7 +140,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    363,
+    385,
     'Child Benefit (United Kingdom)',
     'HM Revenue & Customs (HMRC)',
     'UK Child Benefit is a universal baseline cash allowance paid regularly for every child under 16 (or under 20 in qualifying education). Issued directly to parents at £25.60/week for the eldest child and £16.95/week for subsequent children without initial means testing.',
@@ -183,7 +183,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    364,
+    386,
     'Child Benefit (Ireland)',
     'Department of Social Protection (An Roinn Coimirce Sóisialaí)',
     'Ireland Child Benefit delivers a universal, non-taxable monthly payment of €140 per child to parents or guardians of all children under 16 (and up to age 18 if in full-time education or with a disability), universally administered regardless of family income.',
@@ -226,7 +226,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    365,
+    387,
     'New Zealand Superannuation (NZ Super)',
     'Ministry of Social Development / Work and Income NZ',
     'New Zealand Superannuation (NZ Super) is a universal, non-means-tested basic income pension for all New Zealand citizens and permanent residents aged 65 and older. Paid fortnightly at a flat baseline rate without regard to other employment earnings, personal wealth, or asset ownership.',
@@ -269,7 +269,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    366,
+    388,
     'Basic Retirement Pension (Mauritius)',
     'Ministry of Social Integration, Social Security and National Solidarity',
     'Mauritius Basic Retirement Pension (BRP) is a non-contributory universal basic income pension provided unconditionally to all Mauritian citizens and permanent residents aged 60 and older. It represents a pillar of universal basic security in the Global South, paid regardless of employment history or private wealth.',
@@ -312,7 +312,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    367,
+    389,
     'Barnbidrag (Universal Child Allowance)',
     'Försäkringskassan (Swedish Social Insurance Agency)',
     'Barnbidrag provides a universal, tax-free cash allowance of 1,250 SEK (~ USD) per month for every child up to age 16 living in Sweden, with additional large-family supplements (flerbarnstillägg) for families with two or more children.',
@@ -355,7 +355,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    368,
+    390,
     'Lapsilisä (Universal Child Benefit)',
     'Kela (Social Insurance Institution of Finland)',
     'Lapsilisä is Finland''s universal, non-taxable monthly child allowance paid to all parents of children under 17 residing in Finland. The cash transfer scales progressively with family size from €94.88/month for the first child to €182.69/month for fifth and subsequent children without means testing.',
@@ -398,7 +398,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    369,
+    391,
     'Familienbeihilfe (Universal Family Allowance)',
     'Federal Ministry of Finance (BMF) & Austrian Tax Office',
     'Familienbeihilfe is a universal child and youth cash allowance paid unconditionally to all families with children residing in Austria. Payouts range between €120 and €180/month per child depending on age, supplemented with tax credits, regardless of parental income.',
@@ -441,7 +441,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    370,
+    392,
     'Allocation Familiale (Luxembourg Universal Child Allowance)',
     'Caisse pour l''avenir des enfants (CAE / Zukunftskeess)',
     'Luxembourg’s universal child benefit provides a flat-rate monthly allowance of €299.86 (~ USD) per child from birth up to age 18 (and up to age 25 if studying), with additional automatic age bonuses added for children over 6 and 12 years old.',
@@ -484,7 +484,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    371,
+    393,
     'Old Age Pension (Botswana)',
     'Department of Social Protection (Botswana)',
     'Botswana''s Old Age Pension is a non-contributory universal basic income pension disbursed monthly to all Botswana citizens aged 65 and older. Delivered via post offices and electronic transfers to guarantee unhindered baseline subsistence across rural and urban districts.',
@@ -527,7 +527,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    372,
+    394,
     'Universal Old Age Grant (Namibia)',
     'Ministry of Gender Equality, Poverty Eradication and Social Welfare',
     'Namibia''s Universal Old Age Grant provides an unconditional, non-means-tested monthly cash grant of N$1,400 to all Namibian citizens and permanent residents upon reaching age 60, constituting one of the few universal basic income pensions in Sub-Saharan Africa.',
@@ -570,7 +570,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    373,
+    395,
     'Renta Dignidad (Bolivia)',
     'Gestora Pública de la Seguridad Social de Largo Plazo (Bolivia)',
     'Renta Dignidad is a universal non-contributory monthly cash pension paid unconditionally to all Bolivian citizens aged 60 and older. Funded by domestic hydrocarbon tax revenues and state enterprise dividends, ensuring nationwide elder economic security.',
@@ -613,7 +613,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    374,
+    396,
     'Old Age Pension Scheme (Brunei)',
     'Community Development Department (JAPEM), Ministry of Culture, Youth and Sports',
     'Brunei’s Old Age Pension is an unconditional, non-means-tested monthly cash transfer of B (~ USD) granted to all citizens and permanent residents aged 60 and older residing in the country.',
@@ -656,7 +656,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    375,
+    397,
     'Senior Citizens Allowance / Elderly Fund (Kiribati)',
     'Ministry of Internal and Social Affairs (Kiribati)',
     'Kiribati provides a universal cash allowance to all elderly citizens aged 65 and older across all islands, funded by the sovereign Revenue Equalization Reserve Fund (RERF) to ensure universal elder subsistence.',
@@ -699,7 +699,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    376,
+    398,
     'Senior Citizens Allowance (Tuvalu)',
     'Department of Social Protection (Tuvalu)',
     'Tuvalu operates an unconditional universal monthly cash allowance for all citizens aged 70 and older residing in Tuvalu, providing baseline non-contributory income support across all outer atolls.',
@@ -742,7 +742,7 @@ INSERT INTO public.programs (
     is_rct, data_source, website, sources, verified
 )
 SELECT
-    377,
+    399,
     'Jido Teate (Universal Child Allowance)',
     'Children and Families Agency (Kodomo Katei-chō)',
     'Japan''s Child Allowance (Jido Teate) is a nationwide cash stipend paid to parents for all children from birth through high school graduation (age 18), providing ¥10,000 to ¥15,000 per month per child, with income caps fully abolished to achieve complete universality.',

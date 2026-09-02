@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 
+/** @param {Record<string, any>} props */
 function Skeleton({
   className,
   ...props
