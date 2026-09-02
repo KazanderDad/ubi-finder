@@ -258,15 +258,22 @@ export async function markEncouragementDismissed(user = null) {
   }
 }
 
-// Reset points upon complete profile submission (grants bonus access with halved thresholds)
+// Reset points upon complete profile submission:
+// - Points are reset to 0 for everyone at time of profile completion.
+// - If the site was previously locked (wasGated), applying profile completion unlocks it with the halved 20/35 pt threshold.
+// - If the site was never locked before profile completion, the normal threshold continues to apply.
 export async function resetPointsWithProfileCompletion(user = null) {
   const local = getLocalSupporterState();
-  if (local.hasUsedProfileReset) {
-    return await getSupporterStatus(user);
-  }
+  const currentHardThreshold = local.isIpHalved ? HALVED_THRESHOLDS.HARD : BASE_THRESHOLDS.HARD;
+  const wasGated = !local.hasDonated && local.points >= currentHardThreshold;
 
+  // Reset points to 0 for everyone at profile completion
   local.points = 0;
-  local.isIpHalved = true;
+
+  // Only apply the halved 20/35 pt threshold if previously locked out
+  if (wasGated) {
+    local.isIpHalved = true;
+  }
   local.hasUsedProfileReset = true;
   saveLocalSupporterState(local);
 
