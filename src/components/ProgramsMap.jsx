@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Zap, ShieldCheck, ExternalLink } from "lucide-react";
+import { MapPin, Zap, ShieldCheck, ExternalLink, Heart } from "lucide-react";
+import { getSupporterStatus } from "@/lib/supporterPoints";
+import SupporterGateModal from "@/components/SupporterGateModal";
 
 // Fallback coordinate dictionary for common regions/cities
 const REGION_COORDINATES = {
@@ -176,6 +178,13 @@ export default function ProgramsMap({ programs }) {
     })
     .filter(Boolean);
 
+  const [isGated, setIsGated] = useState(false);
+  const [supporterModalOpen, setSupporterModalOpen] = useState(false);
+
+  useEffect(() => {
+    getSupporterStatus().then(st => setIsGated(st.isGated && !st.hasDonated));
+  }, []);
+
   return (
     <div className="w-full relative">
       <div className="w-full h-[620px] rounded-2xl overflow-hidden shadow-xl border border-green-200 relative z-0">
@@ -238,25 +247,41 @@ export default function ProgramsMap({ programs }) {
                       </div>
                     )}
 
-                    <div className="pt-1">
-                      {program.involvement_level === 'automated_claim' ? (
+                    {isGated ? (
+                      <div className="pt-2 border-t border-emerald-100 space-y-1.5 text-center">
+                        <p className="text-[11px] text-gray-600 leading-snug">
+                          Support our volunteer community to view full application details & direct links.
+                        </p>
                         <Button
                           size="sm"
-                          onClick={() => navigate(program.custom_claim_path || '/claim/gooddollar')}
-                          className="w-full bg-purple-700 hover:bg-purple-800 text-white text-xs h-8 font-semibold flex items-center justify-center gap-1.5"
+                          onClick={() => setSupporterModalOpen(true)}
+                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 font-semibold flex items-center justify-center gap-1.5"
                         >
-                          <Zap className="w-3 h-3" /> Open Claim Terminal &rarr;
+                          <Heart className="w-3.5 h-3.5 text-pink-300 fill-pink-300" />
+                          <span>Support to Unlock &rarr;</span>
                         </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => navigate('/program-details', { state: { programId: program.program_id } })}
-                          className="w-full bg-green-700 hover:bg-green-800 text-white text-xs h-8 font-semibold"
-                        >
-                          View Program Details &rarr;
-                        </Button>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="pt-1">
+                        {program.involvement_level === 'automated_claim' ? (
+                          <Button
+                            size="sm"
+                            onClick={() => navigate(program.custom_claim_path || '/claim/gooddollar')}
+                            className="w-full bg-purple-700 hover:bg-purple-800 text-white text-xs h-8 font-semibold flex items-center justify-center gap-1.5"
+                          >
+                            <Zap className="w-3 h-3" /> Open Claim Terminal &rarr;
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => navigate('/program-details', { state: { programId: program.program_id } })}
+                            className="w-full bg-green-700 hover:bg-green-800 text-white text-xs h-8 font-semibold"
+                          >
+                            View Program Details &rarr;
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </Popup>
               </Marker>
@@ -264,6 +289,12 @@ export default function ProgramsMap({ programs }) {
           })}
         </MapContainer>
       </div>
+
+      <SupporterGateModal
+        isOpen={supporterModalOpen}
+        onClose={() => setSupporterModalOpen(false)}
+        featureName="the interactive map"
+      />
 
       {/* Map Legend Bar */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-white rounded-xl border border-gray-200 shadow-sm text-xs text-gray-600">

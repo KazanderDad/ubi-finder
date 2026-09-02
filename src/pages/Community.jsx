@@ -15,9 +15,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { MessageSquare, Users, Megaphone, Send, Filter, Plus, Sparkles, Tag, ChevronDown, CheckCircle } from "lucide-react";
+import { MessageSquare, Users, Megaphone, Send, Filter, Plus, Sparkles, Tag, ChevronDown, CheckCircle, Heart } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { getSupporterStatus } from "@/lib/supporterPoints";
+import SupporterGateModal from "@/components/SupporterGateModal";
 
 export default function CommunityPage() {
   const { user, userProfile } = useAuth();
@@ -39,15 +40,24 @@ export default function CommunityPage() {
   const [submitting, setSubmitting] = useState(false);
   const [postSuccess, setPostSuccess] = useState(false);
   const [postError, setPostError] = useState("");
+  const [isSupporterGated, setIsSupporterGated] = useState(false);
+  const [supporterModalOpen, setSupporterModalOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchData();
-  }, []);
+  }, [user]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      const supp = await getSupporterStatus(user);
+      if (supp.isGated && !supp.hasDonated) {
+        setIsSupporterGated(true);
+      } else {
+        setIsSupporterGated(false);
+      }
+
       const [dRes, aRes, pRes] = await Promise.all([
         supabase.from('community_discussions').select('*').order('created_at', { ascending: false }),
         supabase.from('community_announcements').select('*').order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
@@ -204,7 +214,28 @@ export default function CommunityPage() {
           <TabsContent value="discussions" className="space-y-6 mt-0">
             
             {/* 6b: Quick-Post Composer Card */}
-            {user ? (
+            {isSupporterGated ? (
+              <Card className="shadow-md border-emerald-200 bg-white/95 overflow-hidden">
+                <CardContent className="p-6 text-center space-y-3">
+                  <div className="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto">
+                    <Heart className="w-5 h-5 text-pink-500 fill-pink-500" />
+                  </div>
+                  <p className="text-sm font-bold text-gray-900">
+                    Support Our Volunteer Community to Join the Conversation
+                  </p>
+                  <p className="text-xs text-gray-500 max-w-md mx-auto">
+                    Contributions starting at $1 unlock full community discussions, topic creation, and direct replies.
+                  </p>
+                  <Button
+                    onClick={() => setSupporterModalOpen(true)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-6 py-2 rounded-xl"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-300" />
+                    Support UBI Finder to Post &rarr;
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : user ? (
               <Card className="shadow-md border-green-200 bg-white/95 backdrop-blur-sm overflow-hidden">
                 <CardHeader className="pb-3 bg-green-50/60 border-b border-green-100">
                   <div className="flex justify-between items-center">
@@ -483,6 +514,12 @@ export default function CommunityPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <SupporterGateModal
+        isOpen={supporterModalOpen}
+        user={user}
+        featureName="the community discussions"
+      />
     </div>
   );
 }

@@ -36,9 +36,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { Heart } from "lucide-react";
 import { generateUserMatchReport, TIERS, isProfileComplete } from "@/lib/matchingEngine";
 import { syncMatchSnapshotAndDetectDeltas } from "@/lib/matchDeltaService";
 import UserForm from "@/components/UserForm";
+import SupporterGateModal from "@/components/SupporterGateModal";
+import { getSupporterStatus } from "@/lib/supporterPoints";
 
 export default function MyReport() {
   const { user, isAuthenticated } = useAuth();
@@ -55,6 +58,8 @@ export default function MyReport() {
   const [isAnswersExpanded, setIsAnswersExpanded] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showAllDemoted, setShowAllDemoted] = useState(false);
+  const [supporterGated, setSupporterGated] = useState(false);
+  const [supporterModalOpen, setSupporterModalOpen] = useState(false);
   const [dismissedDeltas, setDismissedDeltas] = useState(() => {
     try {
       return sessionStorage.getItem("ubi_dismissed_deltas") === "true";
@@ -79,6 +84,14 @@ export default function MyReport() {
   const loadReportData = async () => {
     setLoading(true);
     try {
+      // Supporter gate check
+      const supp = await getSupporterStatus(user);
+      if (supp.isGated && !supp.hasDonated) {
+        setSupporterGated(true);
+      } else {
+        setSupporterGated(false);
+      }
+
       // 1. Fetch user profile from Supabase or localStorage fallback
       let userProfile = null;
       const profileId = user?.user_metadata?.profile_id || localStorage.getItem("user_profile_id");
@@ -237,6 +250,52 @@ export default function MyReport() {
             isMandatoryModal={true}
           />
         </div>
+      </div>
+    );
+  }
+
+  if (supporterGated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-yellow-50 px-4 py-12">
+        <Helmet>
+          <title>Supporter Access | UBI Finder</title>
+        </Helmet>
+        <div className="max-w-2xl mx-auto">
+          <Card className="border-emerald-200 shadow-2xl rounded-3xl overflow-hidden bg-white text-center">
+            <div className="bg-gradient-to-br from-emerald-700 via-teal-800 to-green-950 p-8 sm:p-10 text-white">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                <Heart className="w-8 h-8 text-pink-300 fill-pink-300" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Unlock Your Custom Eligibility Report</h1>
+              <p className="text-emerald-100 text-sm mt-3 max-w-md mx-auto leading-relaxed font-normal">
+                UBI Finder is 100% volunteer-run and community supported. A contribution starting at just $1 unlocks your complete personalized portfolio, diagnostic breakdown, and automated opportunity alerts.
+              </p>
+            </div>
+            <CardContent className="p-8 space-y-5">
+              <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-100 text-xs text-emerald-950 text-left space-y-1.5 max-w-md mx-auto">
+                <div className="font-bold text-[11px] uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Supporter Benefits</span>
+                </div>
+                <p className="text-gray-700 leading-snug">
+                  • Unlimited personalized qualification scoring and tailored tier ranking.<br />
+                  • Opportunity Alerts: Automated email notifications when new basic income initiatives launch.<br />
+                  • Early access to 1-click auto-enrollment in eligible programs.
+                </p>
+              </div>
+
+              <Button
+                onClick={() => setSupporterModalOpen(true)}
+                className="w-full sm:w-auto px-8 py-6 text-base bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl shadow-lg flex items-center justify-center gap-2 mx-auto transition-all hover:scale-[1.01]"
+              >
+                <Sparkles className="w-5 h-5 text-amber-300" />
+                <span>Support UBI Finder to View Custom Report</span>
+              </Button>
+              <p className="text-xs text-gray-500">Contributions start from $1. Instant lifetime unlock.</p>
+            </CardContent>
+          </Card>
+        </div>
+        <SupporterGateModal isOpen={supporterModalOpen} user={user} featureName="your custom report" />
       </div>
     );
   }

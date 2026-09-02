@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Heart, Sparkles, ShieldCheck, Lock, Globe, CheckCircle2 } from 'lucide-react';
+import { Heart, Sparkles, ShieldCheck, Lock, Globe, CheckCircle2, Bell, Zap, FileText } from 'lucide-react';
 import StripeCheckoutModal from '@/components/StripeCheckoutModal';
 
 export default function SupporterGateModal({ isOpen, user, featureName = "full program details and interactive map exploration" }) {
@@ -55,24 +55,34 @@ export default function SupporterGateModal({ isOpen, user, featureName = "full p
             </DialogTitle>
             
             <DialogDescription className="text-emerald-100 text-sm sm:text-base mt-2.5 max-w-sm mx-auto leading-relaxed font-normal">
-              You're one of our most active researchers! UBI Finder is entirely volunteer-run and non-profit. A small contribution unlocks lifetime unlimited access for your account.
+              You're one of our most active researchers! UBI Finder is entirely volunteer-run and non-profit. A contribution starting at just $1 unlocks lifetime unlimited access for your account.
             </DialogDescription>
           </div>
 
-          {/* Value Highlights */}
-          <div className="px-6 pt-5 pb-1">
-            <div className="grid grid-cols-3 gap-2 text-center text-xs py-2 bg-emerald-50/70 rounded-xl border border-emerald-100">
-              <div className="p-1">
-                <span className="font-bold text-emerald-950 block">100%</span>
-                <span className="text-[10px] text-gray-600">Volunteer Run</span>
+          {/* Benefits List */}
+          <div className="px-6 pt-4 pb-1">
+            <div className="bg-emerald-50/80 p-3.5 rounded-2xl border border-emerald-100 space-y-2">
+              <div className="font-bold text-xs text-emerald-950 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-700" />
+                <span>Supporter Membership Benefits</span>
               </div>
-              <div className="p-1 border-x border-emerald-200/60">
-                <span className="font-bold text-emerald-950 block">290+</span>
-                <span className="text-[10px] text-gray-600">Global Initiatives</span>
-              </div>
-              <div className="p-1">
-                <span className="font-bold text-emerald-950 block">From $1</span>
-                <span className="text-[10px] text-gray-600">Give What You Can</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-gray-700">
+                <div className="flex items-start gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span><strong>Custom Report:</strong> Unlimited personalized match scoring.</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span><strong>Opportunity Alerts:</strong> Email alerts when new pilots open.</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span><strong>Interactive Map:</strong> Full popup deep links & criteria.</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span><strong>Early Access:</strong> 1-click auto-enrollment in eligible programs.</span>
+                </div>
               </div>
             </div>
           </div>

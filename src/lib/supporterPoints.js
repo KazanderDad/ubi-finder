@@ -15,7 +15,7 @@ export const BASE_THRESHOLDS = {
   HARD: 70  // 7th program view (70 pts) or 4th map view (80 pts)
 };
 
-// Halved Thresholds for shared IP
+// Halved Thresholds for shared IP or profile-reset accounts
 export const HALVED_THRESHOLDS = {
   SOFT: 20, // 2nd program view (20 pts) or 1st map view (20 pts)
   HARD: 35  // 4th program view (40 pts) or 2nd map view (40 pts)
@@ -38,7 +38,6 @@ export async function getClientIpHash() {
     if (res.ok) {
       const data = await res.json();
       if (data.ip) {
-        // Simple fast non-reversible hash for privacy
         let hash = 0;
         const str = data.ip + '_ubi_salt';
         for (let i = 0; i < str.length; i++) {
@@ -51,7 +50,7 @@ export async function getClientIpHash() {
       }
     }
   } catch (err) {
-    // Fallback to stable client-generated UUID
+    // Fallback
   }
 
   let fallback = localStorage.getItem('ubi_client_anon_id');
@@ -81,7 +80,8 @@ export function getLocalSupporterState() {
     encouragementShown: false,
     hasDonated: false,
     totalDonatedUsd: 0,
-    isIpHalved: false
+    isIpHalved: false,
+    hasUsedProfileReset: false
   };
 }
 
@@ -144,7 +144,6 @@ export function getSupporterCategory(user = null) {
 export async function checkIsIpHalved(ipHash, userId) {
   try {
     if (!supabase) return false;
-    // Check if any other user record on same IP crossed hard threshold
     const { data } = await supabase
       .from('user_usage_points')
       .select('points_total, user_id')
@@ -152,12 +151,11 @@ export async function checkIsIpHalved(ipHash, userId) {
       .gte('points_total', BASE_THRESHOLDS.HARD);
 
     if (data && data.length > 0) {
-      // If there exists a record for a different user on this IP that crossed threshold
       const otherUserGated = data.some(d => d.user_id !== userId);
       return otherUserGated;
     }
   } catch (e) {
-    // Graceful fallback
+    // Fallback
   }
   return false;
 }
@@ -192,6 +190,7 @@ export async function getSupporterStatus(user = null) {
     hasDonated: local.hasDonated,
     totalDonatedUsd: local.totalDonatedUsd,
     isIpHalved,
+    hasUsedProfileReset: local.hasUsedProfileReset || false,
     softThreshold,
     hardThreshold,
     isGated,
@@ -233,9 +232,7 @@ export async function recordUsageAction(actionType, user = null) {
           last_action_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,ip_hash' });
-      } catch (err) {
-        // Silently tolerate sync errors
-      }
+      } catch (err) {}
     })();
   }
 
@@ -257,10 +254,37 @@ export async function markEncouragementDismissed(user = null) {
         encouragement_shown: true,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id,ip_hash' });
-    } catch (e) {
-      // Ignore
-    }
+    } catch (e) {}
   }
+}
+
+// Reset points upon complete profile submission (grants bonus access with halved thresholds)
+export async function resetPointsWithProfileCompletion(user = null) {
+  const local = getLocalSupporterState();
+  if (local.hasUsedProfileReset) {
+    return await getSupporterStatus(user);
+  }
+
+  local.points = 0;
+  local.isIpHalved = true;
+  local.hasUsedProfileReset = true;
+  saveLocalSupporterState(local);
+
+  const ipHash = await getClientIpHash();
+  const userId = user?.id || null;
+
+  if (supabase) {
+    try {
+      await supabase.from('user_usage_points').upsert({
+        user_id: userId,
+        ip_hash: ipHash,
+        points_total: 0,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,ip_hash' });
+    } catch (e) {}
+  }
+
+  return await getSupporterStatus(user);
 }
 
 // Record successful donation and unlock permanently
@@ -276,7 +300,6 @@ export async function recordSuccessfulDonation(amountUsd, stripeSessionId = null
 
   if (supabase) {
     try {
-      // Record donation
       await supabase.from('donations').insert({
         user_id: userId,
         user_email: userEmail,
@@ -286,7 +309,6 @@ export async function recordSuccessfulDonation(amountUsd, stripeSessionId = null
         status: 'completed'
       });
 
-      // Update points state
       await supabase.from('user_usage_points').upsert({
         user_id: userId,
         ip_hash: ipHash,

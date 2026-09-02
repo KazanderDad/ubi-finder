@@ -44,7 +44,7 @@ import ProgramList from "../components/dashboard/ProgramList";
 import ProgramsMap from "../components/ProgramsMap";
 import DonationEncouragementModal from "@/components/DonationEncouragementModal";
 import SupporterGateModal from "@/components/SupporterGateModal";
-import { recordUsageAction } from "@/lib/supporterPoints";
+import { recordUsageAction, getSupporterStatus } from "@/lib/supporterPoints";
 import { Link } from 'react-router-dom';
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -195,6 +195,14 @@ export default function Programs() {
       
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user;
+
+      // Supporter gate check
+      const supp = await getSupporterStatus(currentUser);
+      if (supp.isGated && !supp.hasDonated) {
+        setSupporterGated(true);
+      } else {
+        setSupporterGated(false);
+      }
       
       let effectiveProfile = null;
 
@@ -764,9 +772,17 @@ export default function Programs() {
 
                 <button
                   type="button"
-                  onClick={() => setQuickFilter("accepting_applications")}
+                  onClick={() => {
+                    if (supporterGated) {
+                      setSupporterGated(true);
+                      return;
+                    }
+                    setQuickFilter("accepting_applications");
+                  }}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    quickFilter === "accepting_applications"
+                    supporterGated
+                      ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-75"
+                      : quickFilter === "accepting_applications"
                       ? "bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-700"
                       : "bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200"
                   }`}
@@ -872,7 +888,13 @@ export default function Programs() {
                 <div className="flex items-center">
                   <button
                     type="button"
-                    onClick={() => setFilterMode("advanced")}
+                    onClick={() => {
+                      if (supporterGated) {
+                        setSupporterGated(true);
+                        return;
+                      }
+                      setFilterMode("advanced");
+                    }}
                     className="text-xs text-gray-500 hover:text-green-800 underline transition-colors cursor-pointer inline-flex items-center gap-1.5 font-medium"
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5 text-gray-400" />

@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Heart, Sparkles, ShieldCheck, ArrowRight, X } from 'lucide-react';
+import { Heart, Sparkles, ShieldCheck, ArrowRight, X, Bell, Zap, FileText, CheckCircle2 } from 'lucide-react';
 import { markEncouragementDismissed } from '@/lib/supporterPoints';
 import StripeCheckoutModal from '@/components/StripeCheckoutModal';
 
@@ -67,21 +67,42 @@ export default function DonationEncouragementModal({ isOpen, onClose, user }) {
               Enjoying UBI Finder?
             </DialogTitle>
             
-            {/* Larger Prose */}
             <DialogDescription className="text-emerald-50 text-sm sm:text-base mt-2.5 max-w-sm mx-auto leading-relaxed font-normal">
               This platform is 100% volunteer-run and open-source. Help us keep universal basic income data free and accessible for everyone.
             </DialogDescription>
           </div>
 
+          {/* Benefits Grid */}
+          <div className="px-6 pt-4 pb-0">
+            <div className="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-100 space-y-1.5 text-xs text-emerald-950">
+              <div className="font-bold text-[11px] uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>What Your Contribution Unlocks</span>
+              </div>
+              <ul className="space-y-1 text-[11px] text-gray-700 leading-snug">
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+                  <span><strong>Full Platform Access:</strong> Complete criteria & direct application links.</span>
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+                  <span><strong>Opportunity Alerts:</strong> Email notifications when new programs open.</span>
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+                  <span><strong>Early Access:</strong> Upcoming auto-enrollment into eligible programs.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
           {/* Content Body */}
-          <div className="p-6 space-y-4">
+          <div className="p-6 pt-3 space-y-4">
             <div>
-              {/* CTA Heading */}
               <h3 className="text-base font-bold text-gray-900 mb-0.5">
                 Please consider donating
               </h3>
               
-              {/* Reduced font size for sub-label */}
               <label className="text-[11px] font-medium text-gray-500 block mb-2.5">
                 Select a Contribution Amount
               </label>
