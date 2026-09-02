@@ -89,8 +89,54 @@ export function getLocalSupporterState() {
 export function saveLocalSupporterState(state) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.dispatchEvent(new Event('ubi_supporter_state_changed'));
   } catch (e) {
     // Ignore
+  }
+}
+
+// Compute supporter tier / category
+export function getSupporterCategory(user = null) {
+  const local = getLocalSupporterState();
+  if (!local.hasDonated && (!local.totalDonatedUsd || local.totalDonatedUsd <= 0)) {
+    return {
+      category: 'Member',
+      badgeClass: 'text-gray-500 bg-gray-100 border-gray-200',
+      isSupporter: false,
+      amount: 0
+    };
+  }
+
+  const amount = Number(local.totalDonatedUsd || 0);
+
+  if (amount >= 500) {
+    return {
+      category: 'Patron',
+      badgeClass: 'text-amber-900 bg-amber-100 border-amber-300 font-bold',
+      isSupporter: true,
+      amount
+    };
+  } else if (amount >= 50) {
+    return {
+      category: 'Champion',
+      badgeClass: 'text-emerald-900 bg-emerald-100 border-emerald-300 font-bold',
+      isSupporter: true,
+      amount
+    };
+  } else if (amount >= 5) {
+    return {
+      category: 'Supporter',
+      badgeClass: 'text-teal-900 bg-teal-100 border-teal-300 font-bold',
+      isSupporter: true,
+      amount
+    };
+  } else {
+    return {
+      category: 'Member+',
+      badgeClass: 'text-blue-900 bg-blue-100 border-blue-300 font-bold',
+      isSupporter: true,
+      amount
+    };
   }
 }
 

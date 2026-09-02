@@ -30,6 +30,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import UserForm from "@/components/UserForm";
 import { getUserNotifications, markNotificationsAsRead } from "@/lib/matchDeltaService";
+import { getSupporterCategory } from "@/lib/supporterPoints";
 
 export default function Header() {
   const { user, signOut } = useAuth();
@@ -38,6 +39,7 @@ export default function Header() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [supporterInfo, setSupporterInfo] = useState(() => getSupporterCategory(user));
   const location = useLocation();
   const navigate = useNavigate();
   const [eligibilityModalOpen, setEligibilityModalOpen] = useState(false);
@@ -50,6 +52,15 @@ export default function Header() {
     setBannerDismissed(true);
     localStorage.setItem("dismissedLaunchBanner", "true");
   };
+
+  useEffect(() => {
+    const updateTier = () => {
+      setSupporterInfo(getSupporterCategory(user));
+    };
+    updateTier();
+    window.addEventListener('ubi_supporter_state_changed', updateTier);
+    return () => window.removeEventListener('ubi_supporter_state_changed', updateTier);
+  }, [user, location]);
 
   useEffect(() => {
     if (user?.id) {
@@ -230,10 +241,15 @@ export default function Header() {
               </button>
             </DropdownMenuTrigger>
             
-            <DropdownMenuContent align="end" className="w-52 bg-white/95 backdrop-blur-md shadow-xl border-gray-200">
-              <div className="p-2 border-b border-gray-100 text-xs">
+            <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-md shadow-xl border-gray-200">
+              <div className="p-2.5 border-b border-gray-100 text-xs">
                 <p className="font-semibold text-gray-900 truncate">{user.email}</p>
-                <p className="text-gray-400 text-[11px]">Member</p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${supporterInfo.badgeClass}`}>
+                    {supporterInfo.isSupporter && <Sparkles className="w-2.5 h-2.5 text-amber-500" />}
+                    <span>{supporterInfo.category}</span>
+                  </span>
+                </div>
               </div>
 
               <DropdownMenuGroup className="p-1">
@@ -335,8 +351,12 @@ export default function Header() {
 
         {user ? (
           <>
-            <div className="pt-3 pb-1 border-t border-gray-100">
+            <div className="pt-3 pb-1 border-t border-gray-100 flex items-center justify-between">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Account ({user.email})</p>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${supporterInfo.badgeClass}`}>
+                {supporterInfo.isSupporter && <Sparkles className="w-2.5 h-2.5 text-amber-500" />}
+                <span>{supporterInfo.category}</span>
+              </span>
             </div>
             <Link to="/My-Report" className="py-2 border-b border-gray-50 flex items-center gap-2 text-green-950 font-bold">
               <Sparkles className="w-4 h-4 text-green-700" />
